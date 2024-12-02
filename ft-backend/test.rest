@@ -1,0 +1,8 @@
+POST https://localhost:3000/api/agent/register
+
+{
+    "name" : "salah",
+    "email" : "agent@hotmail.com",
+    "password" : "test@1234",
+    "phone" : "0987654321"
+}
