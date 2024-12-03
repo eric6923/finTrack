@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import prisma from "../../prisma/client";
+import prisma from "../../../prisma/client";
 
 const adminLogin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -22,5 +22,7 @@ const adminLogin = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error logging in", error });
   }
 };
+
+
 
 export { adminLogin };

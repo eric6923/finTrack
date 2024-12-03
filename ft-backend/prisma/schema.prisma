@@ -5,9 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider    = "prisma-client-js"
   postInstall = "ts-node prisma/seed.ts"
-
 }
 
 datasource db {
@@ -17,21 +16,39 @@ datasource db {
 
 model Admin {
   id        Int      @id @default(autoincrement())
-  name      String   
+  name      String
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Agent {
+model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
+  userName  String   @unique
   password  String
   phone     String
   address   Json?
-  gstin     String?  // Optional
+  gstin     String? // Optional
+  aadhar    String      @unique
+  pan       String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+model PendingUser {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  userName  String   @unique
+  password  String
+  phone     String
+  address   Json?
+  gstin     String? // Optional
+  aadhar    String      @unique
+  pan       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
 }
