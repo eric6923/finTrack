@@ -1,32 +1,33 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import Prospects from "./Prospects";
-import Transactions from "./Transactions";
-import Pricing from "./Pricing";
-import Agentsettings from "./Agentsettings";
-import Test from "./Test"
+import Sidebar from "./User/Sidebar";
+import Prospects from "./User/Prospects";
+import Transactions from "./User/Transactions";
+import Pricing from "./User/Pricing";
+import Agentsettings from "./User/Agentsettings";
+import Usersignup from "./User/Usersignup";
+import Userlogin from "./User/Userlogin";
+import Adminsidebar from "./Admin/Adminsidebar";
+import Adminlogin from "./Admin/Adminlogin";
+import Requests from "./Admin/Requests";
+import Adminprospects from "./Admin/Adminprospects";
 const App = () => {
   return (
+   
     <Router>
-      <div className="flex">
-        {/* Sidebar */}
-        <Sidebar />
-        <Test/>
-
-
-
-
-        {/* Main Content */}
-        {/* <div className="flex-1 bg-gray-100 h-screen overflow-y-auto">
           <Routes>
-            <Route path="/" element={<Prospects />} />
-            <Route path="/transactions" element={<Transactions />} />
+          
+            <Route path="/" element={<Prospects/>} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/settings" element={<Agentsettings />} />
+            <Route path="/signup" element={<Usersignup />} />
+            <Route path="/login" element={<Userlogin />} />
+            <Route path="/adminlogin" element={<Adminlogin/>}/>
+            <Route path= "/admin" element={<Adminsidebar/>}/>
+            <Route path="/adminprospects" element={<Adminprospects/>} />
+            <Route path="/adminrequests" element={<Requests />} />
           </Routes>
-        </div> */}
-      </div>
+        
     </Router>
   );
 };
