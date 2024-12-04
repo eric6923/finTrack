@@ -18,30 +18,50 @@ const userRegister = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
-    // Check for existing users with unique fields
-    const existingUserByEmail = await prisma.pendingUser.findUnique({ where: { email } });
-    if (existingUserByEmail) {
-      return res.status(400).json({ message: "Email already exists" });
+    // Check if user already exists in pendingUser or AllRequest
+    const existingUserInPending = await prisma.pendingUser.findUnique({ where: { email } });
+    if (existingUserInPending) {
+      return res.status(400).json({ message: "Email already exists in pending requests" });
+    }
+
+    const existingUserInAllRequest = await prisma.allRequest.findUnique({ where: { email } });
+    if (existingUserInAllRequest) {
+      return res.status(400).json({ message: "Email already exists in all requests" });
     }
 
     const existingUserByUsername = await prisma.pendingUser.findUnique({ where: { userName } });
     if (existingUserByUsername) {
-      return res.status(400).json({ message: "Username already exists" });
+      return res.status(400).json({ message: "Username already exists in pending requests" });
     }
 
     const existingUserByAadhar = await prisma.pendingUser.findUnique({ where: { aadhar: aadhar.toString() } });
     if (existingUserByAadhar) {
-      return res.status(400).json({ message: "Aadhar number already registered" });
+      return res.status(400).json({ message: "Aadhar number already registered in pending requests" });
     }
 
-    const existingUserByPan = await prisma.pendingUser.findUnique({ where: { pan:pan.toString() } });
+    const existingUserByPan = await prisma.pendingUser.findUnique({ where: { pan: pan.toString() } });
     if (existingUserByPan) {
-      return res.status(400).json({ message: "PAN number already registered" });
+      return res.status(400).json({ message: "PAN number already registered in pending requests" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Insert into both PendingUser and AllRequest tables
     const newUser = await prisma.pendingUser.create({
+      data: { 
+        name, 
+        email, 
+        userName,
+        password: hashedPassword, 
+        phone, 
+        address, 
+        gstin,
+        aadhar,
+        pan 
+      },
+    });
+
+    await prisma.allRequest.create({
       data: { 
         name, 
         email, 
@@ -100,7 +120,7 @@ const userLogin = async (req: Request, res: Response) => {
       role: "user",
       userName: user.userName 
     }, process.env.JWT_SECRET!, {
-      expiresIn: "1h",
+      expiresIn: process.env.EXPIRES_IN,
     });
 
     res.status(200).json({ 
