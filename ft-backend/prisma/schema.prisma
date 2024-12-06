@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider    = "prisma-client-js"
@@ -24,34 +20,38 @@ model Admin {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  userName  String   @unique
-  password  String
-  phone     String
-  address   Json?
-  gstin     String? // Optional
-  aadhar    String      @unique
-  pan       String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  userName     String        @unique
+  password     String
+  phone        String
+  address      Json?
+  gstin        String? // Optional
+  aadhar       String        @unique
+  pan          String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[] @relation("UserTransactions")
+  categories   Category[]
 }
+
 model PendingUser {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  userName  String   @unique
-  password  String
-  phone     String
-  address   Json?
-  gstin     String? // Optional
-  aadhar    String      @unique
-  pan       String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  email               String               @unique
+  userName            String               @unique
+  password            String
+  phone               String
+  address             Json?
+  gstin               String? // Optional
+  aadhar              String               @unique
+  pan                 String               @unique
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   paymentVerification PaymentVerification?
 }
+
 model AllRequest {
   id        Int      @id @default(autoincrement())
   name      String
@@ -61,25 +61,94 @@ model AllRequest {
   phone     String
   address   Json?
   gstin     String? // Optional
-  aadhar    String      @unique
+  aadhar    String   @unique
   pan       String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model PaymentVerification {
-  id             Int      @id @default(autoincrement())
-  pendingUserId  Int      @unique
-  pendingUser    PendingUser @relation(fields: [pendingUserId], references: [id], onDelete: Cascade)
-  amount         Decimal
-  paymentMethod  PaymentMethod
-  upiTransactionId String?
-  isVerified     Boolean  @default(false)
-  verifiedBy     Int?     // Admin who verified
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model Transaction {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  desc            String
+  logType         LogType
+  amount          Decimal          // Changed from String to Decimal
+  modeOfPayment   PaymentMethod
+  transactionNo   String?          // Nullable, only required for UPI
+  categoryId      Int
+  category        Category         @relation(fields: [categoryId], references: [id])
+  remarks         String?
+  payLater        Boolean          @default(false) // Enables PayLater section if true
+  payLaterDetails PayLaterDetails? // Optional, only if PayLater is true
+  commission      Commission?
+  collection      Collection?
+  dueAmount       Decimal?         // Changed from String to Decimal, relevant only for PayLater transactions
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
+
+model PayLaterDetails {
+  id            Int         @id @default(autoincrement())
+  transactionId Int         @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  busName       String
+  from          String
+  to            String
+  travelDate    DateTime    // Changed from String to DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Commission {
+  id            Int         @id @default(autoincrement())
+  transactionId Int         @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  agentName     String
+  amount        Decimal     // Changed from Float to Decimal
+}
+
+model Collection {
+  id            Int         @id @default(autoincrement())
+  transactionId Int         @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  operatorName  String
+  amount        Decimal     // Changed from Float to Decimal
+}
+
+enum LogType {
+  CREDIT
+  DEBIT
+}
+
 enum PaymentMethod {
   CASH
   UPI
 }
+
+model PaymentVerification {
+  id               Int           @id @default(autoincrement())
+  pendingUserId    Int           @unique
+  pendingUser      PendingUser   @relation(fields: [pendingUserId], references: [id], onDelete: Cascade)
+  amount           Decimal
+  paymentMethod    PaymentMethod
+  upiTransactionId String?
+  isVerified       Boolean       @default(false)
+  verifiedBy       Int? // Admin who verified
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+
+
+
+
+model Category {
+  id           Int           @id @default(autoincrement())
+  name         String        
+  createdBy    Int
+  user         User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+}
+
+
