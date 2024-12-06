@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from "../../../prisma/client";
-import { startOfDay, endOfDay, parseISO } from 'date-fns';
+import { parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
+
 
 
 
@@ -129,62 +130,97 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
 export const getTransactions = async (req: CustomRequest, res: Response) => {
   try {
     const userId = Number(req.user?.id);
-    const { Date: date } = req.query; // Get the 'Date' query parameter
+    const { Date: dateParam, startDate, endDate } = req.query;
 
     if (!userId) {
       return res.status(400).json({ message: 'Invalid user ID.' });
     }
 
-    // Validate the date query parameter
-    if (!date || typeof date !== 'string') {
-      return res.status(400).json({ message: 'Date query parameter is required and must be a string.' });
+    // Handle date range filtering (startDate and endDate)
+    if (startDate && endDate) {
+      let parsedStartDate, parsedEndDate;
+
+      try {
+        parsedStartDate = startOfDay(parseISO(String(startDate)));
+        parsedEndDate = endOfDay(parseISO(String(endDate)));
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD for startDate and endDate.' });
+      }
+
+      return getTransactionsForPeriod(userId, parsedStartDate, parsedEndDate, res);
     }
 
-    // Try parsing the date
-    let parsedDate;
-    try {
-      parsedDate = parseISO(date); // Parse the provided date string into a Date object
-    } catch (error) {
-      return res.status(400).json({ message: 'Invalid date format.' });
+    // Check if the Date parameter is in YYYY-MM-DD or YYYY-MM format
+    const dateParts = dateParam && typeof dateParam === 'string' ? dateParam.split('-') : [];
+    
+    // If it's a full date (YYYY-MM-DD), filter for that specific day
+    if (dateParts.length === 3) {
+      const [year, month, day] = dateParts;
+      const fullDate = `${year}-${month}-${day}`;
+
+      let parsedDate;
+      try {
+        parsedDate = parseISO(fullDate);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD.' });
+      }
+
+      const startOfDayUTC = startOfDay(parsedDate);
+      const endOfDayUTC = endOfDay(parsedDate);
+
+      return getTransactionsForPeriod(userId, startOfDayUTC, endOfDayUTC, res);
     }
 
-    if (isNaN(parsedDate.getTime())) {
-      return res.status(400).json({ message: 'Invalid date format.' });
+    // If it's a month (YYYY-MM), filter for the entire month
+    if (dateParts.length === 2) {
+      const [year, month] = dateParts;
+
+      let parsedMonth;
+      try {
+        parsedMonth = new Date(`${year}-${month}-01`);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid month format. Please use YYYY-MM.' });
+      }
+
+      const startOfMonthUTC = startOfMonth(parsedMonth);
+      const endOfMonthUTC = endOfMonth(parsedMonth);
+
+      return getTransactionsForPeriod(userId, startOfMonthUTC, endOfMonthUTC, res);
     }
 
-    // Start and end of the day (in UTC)
-    const startOfDayUTC = startOfDay(parsedDate); // start of the day
-    const endOfDayUTC = endOfDay(parsedDate);     // end of the day
-
-    // Fetch transactions from the database for the specific user and date range
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: userId,
-        createdAt: {
-          gte: startOfDayUTC, // Greater than or equal to the start of the day in UTC
-          lte: endOfDayUTC,   // Less than or equal to the end of the day in UTC
-        },
-      },
-      include: {
-        category: true,
-        payLaterDetails: true,
-        commission: true,
-        collection: true,
-      },
-    });
-
-    // If no transactions are found for the day, return an error message
-    if (transactions.length === 0) {
-      return res.status(404).json({ message: 'No logs found for the selected date.' });
-    }
-
-    // Return the filtered transactions
-    res.status(200).json(transactions);
+    res.status(400).json({ message: 'Invalid Date format. Please use YYYY-MM-DD, YYYY-MM, or provide startDate and endDate.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching transactions', error });
   }
 };
+
+// Helper function to handle the filtering of transactions by date range
+const getTransactionsForPeriod = async (userId: number, startDate: Date, endDate: Date, res: Response) => {
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId: userId,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    include: {
+      category: true,
+      payLaterDetails: true,
+      commission: true,
+      collection: true,
+    },
+  });
+
+  if (transactions.length === 0) {
+    return res.status(404).json({ message: 'No logs found for the selected period.' });
+  }
+
+  return res.status(200).json(transactions);
+};
+
+
 
 export const getAllTransactions = async (req: CustomRequest, res: Response) => {
   try {
