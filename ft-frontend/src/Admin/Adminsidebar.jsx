@@ -5,8 +5,8 @@ const Adminsidebar = () => {
   const [open, setOpen] = useState(true);
 
   const Menus = [
-    { title: "Prospects", src: "User", path: "/Adminprospects" },
-    { title: "Requests", src: "Folder", path: "/requests" },
+    { title: "All Users", src: "User", path: "/allusers" },
+    { title: "Pending", src: "Folder", path: "/pending" },
   ];
 
   const userInfo = {
@@ -16,7 +16,6 @@ const Adminsidebar = () => {
 
   const location = useLocation(); // Hook to get current route
 
-  // Hardcoded zoom level
   const zoomLevel = 1.4; // Equivalent to clicking "Zoom In" 4 times
 
   return (
@@ -27,8 +26,8 @@ const Adminsidebar = () => {
           open ? "w-64" : "w-20"
         } bg-black h-full p-4 pt-6 relative duration-300 flex flex-col justify-between`}
         style={{
-          transform: `scale(${zoomLevel})`, // Apply zoom scaling
-          transformOrigin: "left top", // Ensure scaling aligns from the top-left corner
+          transform: `scale(${zoomLevel})`,
+          transformOrigin: "left top",
         }}
       >
         <div>
@@ -63,19 +62,13 @@ const Adminsidebar = () => {
               !open && "hidden"
             }`}
           >
-            {/* Avatar */}
             <div className="MuiAvatar-root MuiAvatar-square bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg">
               {userInfo.name.charAt(0)}
             </div>
 
-            {/* User Info */}
             <div className="ml-4 flex flex-col">
-              <p className="text-sm font-semibold truncate">
-                {userInfo.name}
-              </p>
-              <p className="text-xs text-gray-300 truncate">
-                {userInfo.phone}
-              </p>
+              <p className="text-sm font-semibold truncate">{userInfo.name}</p>
+              <p className="text-xs text-gray-300 truncate">{userInfo.phone}</p>
             </div>
           </div>
 
@@ -87,14 +80,11 @@ const Adminsidebar = () => {
                 className={`flex rounded-lg p-2 cursor-pointer text-gray-300 text-sm items-center gap-x-3 
                 mt-2 truncate ${
                   location.pathname === Menu.path
-                    ? "bg-gray-800" // Active state
+                    ? "bg-gray-800"
                     : "hover:bg-gray-800"
                 }`}
               >
-                <Link
-                  to={Menu.path}
-                  className="flex items-center gap-x-3 w-full"
-                >
+                <Link to={Menu.path} className="flex items-center gap-x-3 w-full">
                   <img
                     src={`./src/assets/${Menu.src}.png`}
                     alt={Menu.title}
