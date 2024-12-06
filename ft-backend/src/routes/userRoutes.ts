@@ -5,7 +5,8 @@ import {
   getAllTransactions, 
   getTransactionById, 
   updateTransaction, 
-  deleteTransaction 
+  deleteTransaction,
+  getTransactions
 } from "../controllers/user-feature/transactionController";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
@@ -53,9 +54,17 @@ router.get('/category',verifyUser, async (req: Request , res:Response)=>{
 // Get all categories created by a user
 
 // Get all transactions for a user
-router.get('/user/:userId', async (req: Request, res: Response) => {
+router.get('/transactions',verifyUser, async (req: Request, res: Response) => {
   try {
     await getAllTransactions(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching transactions." });
+  }
+});
+
+router.get('/transaction',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getTransactions(req, res); // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "Error fetching transactions." });
   }
