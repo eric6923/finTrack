@@ -6,7 +6,8 @@ import {
   getTransactionById, 
   updateTransaction, 
   deleteTransaction,
-  getTransactions
+  getTransactions,
+  getPayLaterTransactions
 } from "../controllers/user-feature/transactionController";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
@@ -57,6 +58,14 @@ router.get('/category',verifyUser, async (req: Request , res:Response)=>{
 router.get('/transactions',verifyUser, async (req: Request, res: Response) => {
   try {
     await getAllTransactions(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching transactions." });
+  }
+});
+
+router.get('/transactions/paylater',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getPayLaterTransactions(req, res); // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "Error fetching transactions." });
   }

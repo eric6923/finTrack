@@ -195,6 +195,43 @@ export const getTransactions = async (req: CustomRequest, res: Response) => {
   }
 };
 
+
+export const getPayLaterTransactions = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = Number(req.user?.id);
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'Invalid user ID.' });
+    }
+
+    // Fetch transactions where payLater is true (payLaterDetails is not null)
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: userId,
+        payLaterDetails: {
+          isNot: null, // Filter only transactions with payLater details
+        },
+      },
+      include: {
+        category: true,
+        payLaterDetails: true,
+        commission: true,
+        collection: true,
+      },
+    });
+
+    if (transactions.length === 0) {
+      return res.status(404).json({ message: 'No pay later transactions found.' });
+    }
+
+    return res.status(200).json(transactions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching pay later transactions', error });
+  }
+};
+
+
 // Helper function to handle the filtering of transactions by date range
 const getTransactionsForPeriod = async (userId: number, startDate: Date, endDate: Date, res: Response) => {
   const transactions = await prisma.transaction.findMany({
