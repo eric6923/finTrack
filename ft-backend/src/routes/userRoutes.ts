@@ -12,8 +12,11 @@ import {
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
 
+import { setOwnerPassword } from "../controllers/user-feature/password/passwordController";
+
 import { verifyUser } from "../middleware/userMiddleware";
 import { verify } from "jsonwebtoken";
+import { checkOwner } from "../middleware/checkOwner";
 
 const router = express.Router();
 
@@ -105,5 +108,28 @@ router.delete('transaction/:id', async (req: Request, res: Response) => {
     res.status(500).json({ error: "Error deleting transaction." });
   }
 });
+
+router.post('/set-owner-password',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await setOwnerPassword(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error setting password" });
+  }
+});
+
+
+
+
+//prtected routes
+
+router.get('/settings',verifyUser,checkOwner, async (req: Request, res: Response) => {
+  try {
+    await res.send("setting") // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error seeing settings" });
+  }
+});
+
+
 
 export default router;

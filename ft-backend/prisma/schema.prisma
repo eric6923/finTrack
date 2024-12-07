@@ -34,6 +34,17 @@ model User {
   updatedAt    DateTime      @updatedAt
   transactions Transaction[] @relation("UserTransactions")
   categories   Category[]
+  ownerPassword OwnerPassword? 
+}
+
+model OwnerPassword {
+  id         Int    @id @default(autoincrement())
+  userId     Int    @unique
+  password   String // Hashed password for security
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade) // Relating to User
 }
 
 model PendingUser {
