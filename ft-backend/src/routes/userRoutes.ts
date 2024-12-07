@@ -80,7 +80,7 @@ router.get('/transaction',verifyUser, async (req: Request, res: Response) => {
 });
 
 // Get a specific transaction by ID
-router.get('transaction/:id', async (req: Request, res: Response) => {
+router.get('/transaction/:id',verifyUser, async (req: Request, res: Response) => {
   try {
     await getTransactionById(req, res); // Ensure this is awaited
   } catch (error) {
@@ -89,7 +89,7 @@ router.get('transaction/:id', async (req: Request, res: Response) => {
 });
 
 // Update a transaction
-router.put('transaction/:id', async (req: Request, res: Response) => {
+router.put('transaction/:id',verifyUser, async (req: Request, res: Response) => {
   try {
     await updateTransaction(req, res); // Ensure this is awaited
   } catch (error) {

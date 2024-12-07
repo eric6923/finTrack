@@ -34,7 +34,6 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       payLaterDetails,
       commission,
       collection,
-      dueAmount,
     } = req.body;
 
     // Ensure 'amount' is provided and is a valid number
@@ -61,9 +60,8 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         return res.status(400).json({ message: 'Commission details (agentName, amount) are required when PayLater is true.' });
       }
 
-      if (!dueAmount || isNaN(parseFloat(dueAmount))) {
-        return res.status(400).json({ message: 'Due amount is required when PayLater is true.' });
-      }
+      // Automatically calculate dueAmount
+      req.body.dueAmount = parseFloat(commission.amount) + parseFloat(collection.amount);
     }
 
     // If mode of payment is UPI, ensure that transactionNo is provided
@@ -83,7 +81,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         categoryId,
         remarks,
         payLater,
-        dueAmount,
+        dueAmount: req.body.dueAmount, // Use the calculated dueAmount
         payLaterDetails: payLater
           ? {
               create: {
@@ -125,6 +123,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: 'Error creating transaction', error });
   }
 };
+
 
 // Get all transactions for a user
 export const getTransactions = async (req: CustomRequest, res: Response) => {
