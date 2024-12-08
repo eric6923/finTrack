@@ -35,6 +35,9 @@ model User {
   transactions Transaction[] @relation("UserTransactions")
   categories   Category[]
   ownerPassword OwnerPassword? 
+  buses        Bus[]
+  agents       Agent[]
+  operators    Operator[]
 }
 
 model OwnerPassword {
@@ -103,28 +106,34 @@ model PayLaterDetails {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  busName       String
+  busId         Int         // Foreign Key to Bus
   from          String
   to            String
-  travelDate    DateTime    // Changed from String to DateTime
+  travelDate    DateTime
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  bus           Bus         @relation(fields: [busId], references: [id])
 }
 
 model Commission {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  agentName     String
-  amount        Decimal     // Changed from Float to Decimal
+  agentId       Int         // Foreign Key to Agent
+  amount        Decimal
+
+  agent         Agent       @relation(fields: [agentId], references: [id])
 }
 
 model Collection {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  operatorName  String
-  amount        Decimal     // Changed from Float to Decimal
+  operatorId    Int         // Foreign Key to Operator
+  amount        Decimal
+
+  operator      Operator    @relation(fields: [operatorId], references: [id])
 }
 
 enum LogType {
@@ -150,10 +159,6 @@ model PaymentVerification {
   updatedAt        DateTime      @updatedAt
 }
 
-
-
-
-
 model Category {
   id           Int           @id @default(autoincrement())
   name         String        
@@ -162,4 +167,32 @@ model Category {
   transactions Transaction[]
 }
 
+model Bus {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  userId   Int
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  payLaterDetails PayLaterDetails[]
+}
 
+model Agent {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  userId   Int
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  commissions Commission[]
+}
+
+model Operator {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  userId   Int
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  collections Collection[]
+}
