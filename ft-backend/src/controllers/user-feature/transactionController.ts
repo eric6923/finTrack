@@ -320,32 +320,40 @@ export const updateTransaction = async (req: CustomRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = Number(req.user?.id); // Get userId from token
-    const updateData = req.body;
+    const { password, transaction } = req.body; // Extract password and transaction fields
 
-    const transaction = await prisma.transaction.findUnique({
+    if (!transaction) {
+      return res.status(400).json({ message: 'Transaction data is required.' });
+    }
+
+    const existingTransaction = await prisma.transaction.findUnique({
       where: { id: parseInt(id, 10) },
     });
 
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+    if (!existingTransaction) {
+      return res.status(404).json({ message: 'Transaction not found.' });
     }
 
     // Check if the user is authorized to update the transaction
-    if (transaction.userId !== userId) {
+    if (existingTransaction.userId !== userId) {
       return res.status(403).json({ message: 'You are not authorized to update this transaction.' });
     }
 
+    
+
+    // Update the transaction
     const updatedTransaction = await prisma.transaction.update({
       where: { id: parseInt(id, 10) },
-      data: updateData,
+      data: transaction, // Use the nested transaction object
     });
 
-    res.status(200).json(updatedTransaction);
+    res.status(200).json({ message: 'Transaction successfully updated.', updatedTransaction });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error updating transaction', error });
   }
 };
+
 
 // Delete a transaction
 export const deleteTransaction = async (req: CustomRequest, res: Response) => {
@@ -370,7 +378,7 @@ export const deleteTransaction = async (req: CustomRequest, res: Response) => {
       where: { id: parseInt(id, 10) },
     });
 
-    res.status(204).send();
+    res.status(200).json({ message: 'Transaction successfully deleted.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error deleting transaction', error });

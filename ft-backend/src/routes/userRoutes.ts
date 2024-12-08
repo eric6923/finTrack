@@ -92,7 +92,7 @@ router.get('/transaction/:id',verifyUser, async (req: Request, res: Response) =>
 });
 
 // Update a transaction
-router.put('transaction/:id',verifyUser, async (req: Request, res: Response) => {
+router.put('/transaction/:id',verifyUser,checkOwner, async (req: Request, res: Response) => {
   try {
     await updateTransaction(req, res); // Ensure this is awaited
   } catch (error) {
@@ -120,7 +120,7 @@ router.post('/set-owner-password',verifyUser, async (req: Request, res: Response
 
 
 
-//prtected routes
+//protected routes
 
 router.get('/settings',verifyUser,checkOwner, async (req: Request, res: Response) => {
   try {
