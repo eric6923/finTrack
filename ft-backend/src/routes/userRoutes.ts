@@ -101,7 +101,7 @@ router.put('transaction/:id',verifyUser, async (req: Request, res: Response) => 
 });
 
 // Delete a transaction
-router.delete('transaction/:id', async (req: Request, res: Response) => {
+router.delete('/transaction/:id',verifyUser,checkOwner, async (req: Request, res: Response) => {
   try {
     await deleteTransaction(req, res); // Ensure this is awaited
   } catch (error) {
