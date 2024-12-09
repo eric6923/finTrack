@@ -251,3 +251,87 @@ export const createBus = async (req: CustomRequest, res: Response) => {
       });
     }
   };
+
+  export const getBuses = async (req: CustomRequest, res: Response) => {
+    const userId = Number(req.user?.id);
+  
+    if (!userId) {
+      return res.status(401).json({ message: 'User authentication failed' });
+    }
+  
+    try {
+      // Fetch all buses for the authenticated user
+      const buses = await prisma.bus.findMany({
+        where: { userId },
+      });
+  
+      if (!buses || buses.length === 0) {
+        return res.status(404).json({ message: 'No buses found for this user' });
+      }
+  
+      return res.status(200).json(buses);
+    } catch (error) {
+      console.error('Error fetching buses:', error);
+      return res.status(500).json({ 
+        message: 'Error fetching buses',
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
+  
+  export const getAgents = async (req: CustomRequest, res: Response) => {
+    const userId = Number(req.user?.id);
+  
+    if (!userId) {
+      return res.status(401).json({ message: 'User authentication failed' });
+    }
+  
+    try {
+      // Fetch all agents for the authenticated user
+      const agents = await prisma.agent.findMany({
+        where: { userId },
+      });
+  
+      if (!agents || agents.length === 0) {
+        return res.status(404).json({ message: 'No agents found for this user' });
+      }
+  
+      return res.status(200).json(agents);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      return res.status(500).json({ 
+        message: 'Error fetching agents',
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
+  
+  export const getOperators = async (req: CustomRequest, res: Response) => {
+    const userId = Number(req.user?.id);
+  
+    if (!userId) {
+      return res.status(401).json({ message: 'User authentication failed' });
+    }
+  
+    try {
+      // Fetch all operators for the authenticated user
+      const operators = await prisma.operator.findMany({
+        where: { userId },
+      });
+  
+      if (!operators || operators.length === 0) {
+        return res.status(404).json({ message: 'No operators found for this user' });
+      }
+  
+      return res.status(200).json(operators);
+    } catch (error) {
+      console.error('Error fetching operators:', error);
+      return res.status(500).json({ 
+        message: 'Error fetching operators',
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+  

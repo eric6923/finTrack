@@ -17,6 +17,7 @@ import { setOwnerPassword } from "../controllers/user-feature/password/passwordC
 import { verifyUser } from "../middleware/userMiddleware";
 import { verify } from "jsonwebtoken";
 import { checkOwner } from "../middleware/checkOwner";
+import { getAgents,getBuses,getOperators } from "../controllers/user-feature/controlPanelController";
 
 const router = express.Router();
 
@@ -91,6 +92,32 @@ router.get('/transaction/:id',verifyUser, async (req: Request, res: Response) =>
   }
 });
 
+router.get('/bus',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getBuses(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching bus." });
+  }
+});
+
+router.get('/agent',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getAgents(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching agent" });
+  }
+});
+
+router.get('/operator',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getOperators(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching operators" });
+  }
+});
+
+
+//protected routes
 // Update a transaction
 router.put('/transaction/:id',verifyUser,checkOwner, async (req: Request, res: Response) => {
   try {
