@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import prisma from "../../../prisma/client";
 import { parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 
-
-
-
 interface CustomRequest extends Request {
   user?: {
     id: string; // User ID from the token
@@ -48,20 +45,80 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
 
     // If logType is 'CREDIT' and payLater is true, ensure required fields are provided
     if (logType === 'CREDIT' && payLater) {
-      if (!payLaterDetails?.busName || !payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
-        return res.status(400).json({ message: 'Bus details (busName, from, to, travelDate) are required when PayLater is true.' });
+      if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
+        return res.status(400).json({ message: 'Bus details (from, to, travelDate) are required when PayLater is true.' });
       }
 
-      if (!collection || !collection.operatorName || !collection.amount) {
-        return res.status(400).json({ message: 'Collection details (operatorName, amount) are required when PayLater is true.' });
+      if (!collection || !collection.operatorId || !collection.amount) {
+        return res.status(400).json({ message: 'Collection details (operatorId, amount) are required when PayLater is true.' });
       }
 
-      if (!commission || !commission.agentName || !commission.amount) {
-        return res.status(400).json({ message: 'Commission details (agentName, amount) are required when PayLater is true.' });
+      if (!commission || !commission.agentId || !commission.amount) {
+        return res.status(400).json({ message: 'Commission details (agentId, amount) are required when PayLater is true.' });
+      }
+
+      // Check if the referenced Bus, Operator, and Agent exist
+      const bus = await prisma.bus.findUnique({ where: { id: payLaterDetails.busId } });
+      if (!bus) {
+        return res.status(404).json({ message: 'Bus not found.' });
+      }
+
+      const operator = await prisma.operator.findUnique({ where: { id: collection.operatorId } });
+      if (!operator) {
+        return res.status(404).json({ message: 'Operator not found.' });
+      }
+
+      const agent = await prisma.agent.findUnique({ where: { id: commission.agentId } });
+      if (!agent) {
+        return res.status(404).json({ message: 'Agent not found.' });
       }
 
       // Automatically calculate dueAmount
       req.body.dueAmount = parseFloat(commission.amount) + parseFloat(collection.amount);
+
+      // Create the transaction
+      const transaction = await prisma.transaction.create({
+        data: {
+          userId,
+          logType,
+          desc,
+          amount: parseFloat(amount), // Ensure amount is a valid Decimal
+          modeOfPayment,
+          transactionNo,
+          categoryId,
+          remarks,
+          payLater,
+          dueAmount: req.body.dueAmount, // Use the calculated dueAmount
+          payLaterDetails: {
+            create: {
+              busId: bus.id,
+              from: payLaterDetails.from,
+              to: payLaterDetails.to,
+              travelDate: new Date(payLaterDetails.travelDate), // Ensure correct Date format
+            },
+          },
+          commission: {
+            create: {
+              agentId: agent.id,
+              amount: parseFloat(commission.amount), // Ensure amount is a valid Decimal
+            },
+          },
+          collection: {
+            create: {
+              operatorId: operator.id,
+              amount: parseFloat(collection.amount), // Ensure amount is a valid Decimal
+            },
+          },
+        },
+        include: {
+          category: true,
+          payLaterDetails: true,
+          commission: true,
+          collection: true,
+        },
+      });
+
+      return res.status(201).json(transaction);
     }
 
     // If mode of payment is UPI, ensure that transactionNo is provided
@@ -69,51 +126,21 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(400).json({ message: 'Transaction number is mandatory for UPI transactions.' });
     }
 
-    // Create the transaction
+    // Create transaction without PayLater details
     const transaction = await prisma.transaction.create({
       data: {
         userId,
         logType,
         desc,
-        amount,
+        amount: parseFloat(amount), // Ensure amount is a valid Decimal
         modeOfPayment,
         transactionNo,
         categoryId,
         remarks,
-        payLater,
-        dueAmount: req.body.dueAmount, // Use the calculated dueAmount
-        payLaterDetails: payLater
-          ? {
-              create: {
-                busName: payLaterDetails.busName,
-                from: payLaterDetails.from,
-                to: payLaterDetails.to,
-                travelDate: payLaterDetails.travelDate,
-              },
-            }
-          : undefined,
-        commission: commission
-          ? {
-              create: {
-                agentName: commission.agentName,
-                amount: commission.amount,
-              },
-            }
-          : undefined,
-        collection: collection
-          ? {
-              create: {
-                operatorName: collection.operatorName,
-                amount: collection.amount,
-              },
-            }
-          : undefined,
+        payLater: false,
       },
       include: {
         category: true,
-        payLaterDetails: true,
-        commission: true,
-        collection: true,
       },
     });
 
@@ -123,6 +150,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: 'Error creating transaction', error });
   }
 };
+
 
 
 // Get all transactions for a user
