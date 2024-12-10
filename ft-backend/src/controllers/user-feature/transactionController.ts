@@ -62,7 +62,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     // Balance adjustment logic
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { boxBalance: true, accountBalance: true },
+      select: { boxBalance: true, accountBalance: true, due: true },
     });
 
     if (!user) {
@@ -71,6 +71,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
 
     let updatedBoxBalance = user.boxBalance || new Decimal(0);  // Ensure it's a Decimal
     let updatedAccountBalance = user.accountBalance || new Decimal(0);  // Ensure it's a Decimal
+    let updatedDueBalance = user.due || new Decimal(0); // Ensure it's a Decimal
 
     if (modeOfPayment === "CASH") {
       if (logType === "CREDIT") {
@@ -198,7 +199,22 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         },
       });
 
-      return res.status(201).json(transaction);
+      // Update user's 'Due' balance by adding the dueAmount
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          due: updatedDueBalance.add(req.body.dueAmount),
+        },
+      });
+
+      return res.status(201).json({
+        transaction,
+        balances: {
+          boxBalance: updatedBoxBalance.toString(),
+          accountBalance: updatedAccountBalance.toString(),
+          due: updatedDueBalance.add(req.body.dueAmount).toString(),
+        },
+      });
     }
 
     // Create transaction without PayLater details
@@ -219,11 +235,12 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       },
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       transaction,
       balances: {
-        boxBalance: updatedBoxBalance.toString(),  // Convert Decimal to string for response
-        accountBalance: updatedAccountBalance.toString(),  // Convert Decimal to string for response
+        boxBalance: updatedBoxBalance.toString(),
+        accountBalance: updatedAccountBalance.toString(),
+        due: updatedDueBalance.toString(),
       },
     });
   } catch (error) {
@@ -231,6 +248,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: "Error creating transaction", error });
   }
 };
+
 
 // Get all transactions for a user
 export const getTransactions = async (req: CustomRequest, res: Response) => {

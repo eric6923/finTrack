@@ -40,6 +40,7 @@ model User {
   operators      Operator[]
   boxBalance     Decimal        @default(0.0)
   accountBalance Decimal        @default(0.0)
+  due            Decimal        @default(0.0)
 }
 
 model OwnerPassword {
