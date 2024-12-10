@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const UserLogin = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ const UserLogin = () => {
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     setFormData({
@@ -19,7 +21,7 @@ const UserLogin = () => {
     e.preventDefault(); // Prevent page reload
     setErrorMessage("");
     setSuccessMessage("");
-
+  
     try {
       const response = await fetch("http://localhost:5000/api/user/login", {
         method: "POST",
@@ -31,42 +33,32 @@ const UserLogin = () => {
           password: formData.password,
         }),
       });
-
+  
       const result = await response.json();
-
-      // Check if response is ok
+  
       if (!response.ok) {
         throw new Error(result.message || "Login failed. Please check your credentials.");
       }
-
-      // Debugging: Log the response
-      console.log("Backend Response:", result);
-
-      // Check if token exists in the response
-      if (!result.token) {
-        throw new Error("Token not found in response.");
+  
+      if (!result.token || !result.user) {
+        throw new Error("Token or user information not found in response.");
       }
-
-      // Store token in localStorage
+  
+      // Store token and user info in localStorage
       localStorage.setItem("token", result.token);
-
-      // Log to confirm token storage
-      const storedToken = localStorage.getItem("token");
-      console.log("Stored Token:", storedToken);
-
-      if (storedToken !== result.token) {
-        throw new Error("Token was not correctly stored in localStorage.");
-      }
-
+      localStorage.setItem("userInfo", JSON.stringify(result.user));
+  
       setSuccessMessage("Login successful!");
-      console.log("User details:", result.user);
-      console.log("Token:", result.token);
-
+  
+      // Navigate to /sidebar
+      navigate("/sidebar");
     } catch (error) {
       console.error("Error during login:", error);
       setErrorMessage(error.message || "An error occurred during login.");
     }
   };
+  
+  
 
   return (
     <div>
