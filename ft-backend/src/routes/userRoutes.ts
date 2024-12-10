@@ -8,7 +8,8 @@ import {
   deleteTransaction,
   getTransactions,
   getPayLaterTransactions,
-  getTotalCreditAndDebit
+  getTotalCreditAndDebit,
+  getUserBalance
 } from "../controllers/user-feature/transactionController";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
@@ -122,6 +123,14 @@ router.get('/total',verifyUser, async (req: Request, res: Response) => {
     await getTotalCreditAndDebit(req, res); // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "Error fetching values" });
+  }
+});
+
+router.get('/balances',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getUserBalance(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching Balances" });
   }
 });
 

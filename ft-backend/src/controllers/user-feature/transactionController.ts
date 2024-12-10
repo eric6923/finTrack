@@ -249,7 +249,6 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
   }
 };
 
-
 // Get all transactions for a user
 export const getTransactions = async (req: CustomRequest, res: Response) => {
   try {
@@ -611,5 +610,39 @@ export const getTotalCreditAndDebit = async (req: CustomRequest, res: Response) 
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error calculating totals', error });
+  }
+};
+
+export const getUserBalance = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = Number(req.user?.id); // Get userId from token or request
+
+    // Fetch the user balances and due from the database
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        boxBalance: true,
+        accountBalance: true,
+        due: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Calculate total balance (boxBalance + accountBalance)
+    const totalBalance = user.boxBalance.add(user.accountBalance);
+
+    // Return the balances
+    return res.status(200).json({
+      boxBalance: user.boxBalance.toString(), // Convert to string if using Decimal
+      accountBalance: user.accountBalance.toString(), // Convert to string if using Decimal
+      totalBalance: totalBalance.toString(), // Convert to string if using Decimal
+      due: user.due.toString(), // Convert to string if using Decimal
+    });
+  } catch (error) {
+    console.error("Error fetching user balance:", error);
+    res.status(500).json({ message: "Error fetching user balance", error });
   }
 };
