@@ -43,6 +43,11 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(400).json({ message: 'PayLater can only be true for CREDIT transactions.' });
     }
 
+    // Check if description is required based on the logType and payLater
+    if ((!desc || desc.trim() === '') && !(logType === 'CREDIT' && payLater)) {
+      return res.status(400).json({ message: 'Description is required unless logType is CREDIT and PayLater is true.' });
+    }
+
     // If logType is 'CREDIT' and payLater is true, ensure required fields are provided
     if (logType === 'CREDIT' && payLater) {
       if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
@@ -81,7 +86,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         data: {
           userId,
           logType,
-          desc,
+          desc, // Description can be empty here
           amount: parseFloat(amount), // Ensure amount is a valid Decimal
           modeOfPayment,
           transactionNo,
@@ -131,7 +136,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       data: {
         userId,
         logType,
-        desc,
+        desc, // Description is mandatory here if not CREDIT and payLater
         amount: parseFloat(amount), // Ensure amount is a valid Decimal
         modeOfPayment,
         transactionNo,
@@ -150,7 +155,6 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: 'Error creating transaction', error });
   }
 };
-
 
 
 // Get all transactions for a user
@@ -222,7 +226,6 @@ export const getTransactions = async (req: CustomRequest, res: Response) => {
   }
 };
 
-
 export const getPayLaterTransactions = async (req: CustomRequest, res: Response) => {
   try {
     const userId = Number(req.user?.id);
@@ -258,7 +261,6 @@ export const getPayLaterTransactions = async (req: CustomRequest, res: Response)
   }
 };
 
-
 // Helper function to handle the filtering of transactions by date range
 const getTransactionsForPeriod = async (userId: number, startDate: Date, endDate: Date, res: Response) => {
   const transactions = await prisma.transaction.findMany({
@@ -283,7 +285,6 @@ const getTransactionsForPeriod = async (userId: number, startDate: Date, endDate
 
   return res.status(200).json(transactions);
 };
-
 
 
 export const getAllTransactions = async (req: CustomRequest, res: Response) => {

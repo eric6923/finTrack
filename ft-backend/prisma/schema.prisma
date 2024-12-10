@@ -85,7 +85,7 @@ model Transaction {
   id              Int              @id @default(autoincrement())
   userId          Int
   user            User             @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
-  desc            String
+  desc            String?
   logType         LogType
   amount          Decimal          // Changed from String to Decimal
   modeOfPayment   PaymentMethod
