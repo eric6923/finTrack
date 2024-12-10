@@ -335,3 +335,50 @@ export const createBus = async (req: CustomRequest, res: Response) => {
     }
   };
   
+  export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
+    try {
+      const userId = req.user?.id; // Extract user ID from token
+      const { boxBalance, accountBalance } = req.body;
+  
+      // Ensure user ID is provided
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized access." });
+      }
+  
+      // Validate the balances
+      if (boxBalance === undefined || accountBalance === undefined) {
+        return res
+          .status(400)
+          .json({ message: "Both boxBalance and accountBalance are required." });
+      }
+  
+      if (isNaN(parseFloat(boxBalance)) || isNaN(parseFloat(accountBalance))) {
+        return res
+          .status(400)
+          .json({ message: "Both balances must be valid numbers." });
+      }
+      const totalBalance = boxBalance + accountBalance
+  
+      // Update the user's balances in the database
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          boxBalance: parseFloat(boxBalance),
+          accountBalance: parseFloat(accountBalance),
+        },
+        select: {
+          id: true,
+          name: true,
+          boxBalance: true,
+          accountBalance: true,
+        },
+      });
+  
+      return res
+        .status(200)
+        .json({ message: "Opening balances set successfully.", user: updatedUser,totalBalance });
+    } catch (error) {
+      console.error("Error setting opening balance:", error);
+      return res.status(500).json({ message: "An error occurred.", error });
+    }
+  };

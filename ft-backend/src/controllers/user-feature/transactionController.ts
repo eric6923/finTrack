@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from "../../../prisma/client";
 import { parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
+import { Decimal } from '@prisma/client/runtime/library';
+
 
 interface CustomRequest extends Request {
   user?: {
@@ -16,7 +18,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     const logType = req.query.logType as string; // Get logType from query params
 
     // Ensure logType is valid (either CREDIT or DEBIT)
-    if (logType !== 'CREDIT' && logType !== 'DEBIT') {
+    if (logType !== "CREDIT" && logType !== "DEBIT") {
       return res.status(400).json({ message: 'Invalid logType. Must be either "CREDIT" or "DEBIT".' });
     }
 
@@ -35,83 +37,156 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
 
     // Ensure 'amount' is provided and is a valid number
     if (!amount || isNaN(parseFloat(amount))) {
-      return res.status(400).json({ message: 'Invalid amount provided.' });
+      return res.status(400).json({ message: "Invalid amount provided." });
     }
 
+    const parsedAmount = new Decimal(amount);  // Convert to Decimal
+
     // Ensure payLater can only be true for logType === 'CREDIT'
-    if (payLater && logType !== 'CREDIT') {
-      return res.status(400).json({ message: 'PayLater can only be true for CREDIT transactions.' });
+    if (payLater && logType !== "CREDIT") {
+      return res
+        .status(400)
+        .json({ message: "PayLater can only be true for CREDIT transactions." });
     }
 
     // Check if description is required based on the logType and payLater
-    if ((!desc || desc.trim() === '') && !(logType === 'CREDIT' && payLater)) {
-      return res.status(400).json({ message: 'Description is required unless logType is CREDIT and PayLater is true.' });
+    if ((!desc || desc.trim() === "") && !(logType === "CREDIT" && payLater)) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Description is required unless logType is CREDIT and PayLater is true.",
+        });
     }
 
-    // If logType is 'CREDIT' and payLater is true, ensure required fields are provided
-    if (logType === 'CREDIT' && payLater) {
+    // Balance adjustment logic
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { boxBalance: true, accountBalance: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    let updatedBoxBalance = user.boxBalance || new Decimal(0);  // Ensure it's a Decimal
+    let updatedAccountBalance = user.accountBalance || new Decimal(0);  // Ensure it's a Decimal
+
+    if (modeOfPayment === "CASH") {
+      if (logType === "CREDIT") {
+        updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
+      } else if (logType === "DEBIT") {
+        if (updatedBoxBalance.lessThan(parsedAmount)) {
+          return res.status(400).json({ message: "Insufficient box balance." });
+        }
+        updatedBoxBalance = updatedBoxBalance.sub(parsedAmount);
+      }
+    } else if (modeOfPayment === "UPI") {
+      if (logType === "CREDIT") {
+        updatedAccountBalance = updatedAccountBalance.add(parsedAmount);
+      } else if (logType === "DEBIT") {
+        if (updatedAccountBalance.lessThan(parsedAmount)) {
+          return res.status(400).json({ message: "Insufficient account balance." });
+        }
+        updatedAccountBalance = updatedAccountBalance.sub(parsedAmount);
+      }
+    }
+
+    // Update user balances in the database
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        boxBalance: updatedBoxBalance,
+        accountBalance: updatedAccountBalance,
+      },
+    });
+
+    // If logType is 'CREDIT' and payLater is true, process related details
+    if (logType === "CREDIT" && payLater) {
       if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
-        return res.status(400).json({ message: 'Bus details (from, to, travelDate) are required when PayLater is true.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Bus details (from, to, travelDate) are required when PayLater is true.",
+          });
       }
 
       if (!collection || !collection.operatorId || !collection.amount) {
-        return res.status(400).json({ message: 'Collection details (operatorId, amount) are required when PayLater is true.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Collection details (operatorId, amount) are required when PayLater is true.",
+          });
       }
 
       if (!commission || !commission.agentId || !commission.amount) {
-        return res.status(400).json({ message: 'Commission details (agentId, amount) are required when PayLater is true.' });
+        return res
+          .status(400)
+          .json({
+            message:
+              "Commission details (agentId, amount) are required when PayLater is true.",
+          });
       }
 
       // Check if the referenced Bus, Operator, and Agent exist
-      const bus = await prisma.bus.findUnique({ where: { id: payLaterDetails.busId } });
+      const bus = await prisma.bus.findUnique({
+        where: { id: payLaterDetails.busId },
+      });
       if (!bus) {
-        return res.status(404).json({ message: 'Bus not found.' });
+        return res.status(404).json({ message: "Bus not found." });
       }
 
-      const operator = await prisma.operator.findUnique({ where: { id: collection.operatorId } });
+      const operator = await prisma.operator.findUnique({
+        where: { id: collection.operatorId },
+      });
       if (!operator) {
-        return res.status(404).json({ message: 'Operator not found.' });
+        return res.status(404).json({ message: "Operator not found." });
       }
 
-      const agent = await prisma.agent.findUnique({ where: { id: commission.agentId } });
+      const agent = await prisma.agent.findUnique({
+        where: { id: commission.agentId },
+      });
       if (!agent) {
-        return res.status(404).json({ message: 'Agent not found.' });
+        return res.status(404).json({ message: "Agent not found." });
       }
 
       // Automatically calculate dueAmount
-      req.body.dueAmount = parseFloat(commission.amount) + parseFloat(collection.amount);
+      req.body.dueAmount =
+        new Decimal(commission.amount).add(new Decimal(collection.amount));
 
-      // Create the transaction
+      // Create the transaction with PayLater details
       const transaction = await prisma.transaction.create({
         data: {
           userId,
           logType,
-          desc, // Description can be empty here
-          amount: parseFloat(amount), // Ensure amount is a valid Decimal
+          desc,
+          amount: parsedAmount,
           modeOfPayment,
           transactionNo,
           categoryId,
           remarks,
           payLater,
-          dueAmount: req.body.dueAmount, // Use the calculated dueAmount
+          dueAmount: req.body.dueAmount,
           payLaterDetails: {
             create: {
               busId: bus.id,
               from: payLaterDetails.from,
               to: payLaterDetails.to,
-              travelDate: new Date(payLaterDetails.travelDate), // Ensure correct Date format
+              travelDate: new Date(payLaterDetails.travelDate),
             },
           },
           commission: {
             create: {
               agentId: agent.id,
-              amount: parseFloat(commission.amount), // Ensure amount is a valid Decimal
+              amount: new Decimal(commission.amount),
             },
           },
           collection: {
             create: {
               operatorId: operator.id,
-              amount: parseFloat(collection.amount), // Ensure amount is a valid Decimal
+              amount: new Decimal(collection.amount),
             },
           },
         },
@@ -126,18 +201,13 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(201).json(transaction);
     }
 
-    // If mode of payment is UPI, ensure that transactionNo is provided
-    if (modeOfPayment === 'UPI' && !transactionNo) {
-      return res.status(400).json({ message: 'Transaction number is mandatory for UPI transactions.' });
-    }
-
     // Create transaction without PayLater details
     const transaction = await prisma.transaction.create({
       data: {
         userId,
         logType,
-        desc, // Description is mandatory here if not CREDIT and payLater
-        amount: parseFloat(amount), // Ensure amount is a valid Decimal
+        desc,
+        amount: parsedAmount,
         modeOfPayment,
         transactionNo,
         categoryId,
@@ -149,13 +219,18 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       },
     });
 
-    res.status(201).json(transaction);
+    res.status(201).json({
+      transaction,
+      balances: {
+        boxBalance: updatedBoxBalance.toString(),  // Convert Decimal to string for response
+        accountBalance: updatedAccountBalance.toString(),  // Convert Decimal to string for response
+      },
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating transaction', error });
+    console.error("Error creating transaction:", error);
+    res.status(500).json({ message: "Error creating transaction", error });
   }
 };
-
 
 // Get all transactions for a user
 export const getTransactions = async (req: CustomRequest, res: Response) => {
@@ -383,7 +458,6 @@ export const updateTransaction = async (req: CustomRequest, res: Response) => {
   }
 };
 
-
 // Delete a transaction
 export const deleteTransaction = async (req: CustomRequest, res: Response) => {
   try {
@@ -411,5 +485,113 @@ export const deleteTransaction = async (req: CustomRequest, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error deleting transaction', error });
+  }
+};
+
+// Helper function to calculate credit and debit totals for a specific date range
+const getTotalsForPeriod = async (userId: number, startDate: Date, endDate: Date, res: Response) => {
+  const totals = await prisma.transaction.groupBy({
+    by: ['logType'],
+    where: {
+      userId: userId,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalCredit = totals.find(t => t.logType === 'CREDIT')?._sum.amount || 0;
+  const totalDebit = totals.find(t => t.logType === 'DEBIT')?._sum.amount || 0;
+
+  return res.status(200).json({
+    totalCredit,
+    totalDebit,
+  });
+};
+
+export const getTotalCreditAndDebit = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = Number(req.user?.id); // Get the user ID from the token
+    const { Date: dateParam, startDate, endDate } = req.query; // Get date-related query params
+
+    if (!userId) {
+      return res.status(400).json({ message: 'Invalid user ID.' });
+    }
+
+    // Handle custom date range filtering (startDate and endDate)
+    if (startDate && endDate) {
+      let parsedStartDate, parsedEndDate;
+
+      try {
+        parsedStartDate = startOfDay(parseISO(String(startDate)));
+        parsedEndDate = endOfDay(parseISO(String(endDate)));
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD for startDate and endDate.' });
+      }
+
+      return getTotalsForPeriod(userId, parsedStartDate, parsedEndDate, res);
+    }
+
+    // Check if the Date parameter is in YYYY-MM-DD or YYYY-MM format
+    const dateParts = dateParam && typeof dateParam === 'string' ? dateParam.split('-') : [];
+    
+    // If it's a full date (YYYY-MM-DD), filter for that specific day
+    if (dateParts.length === 3) {
+      const [year, month, day] = dateParts;
+      const fullDate = `${year}-${month}-${day}`;
+
+      let parsedDate;
+      try {
+        parsedDate = parseISO(fullDate);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid date format. Please use YYYY-MM-DD.' });
+      }
+
+      const startOfDayUTC = startOfDay(parsedDate);
+      const endOfDayUTC = endOfDay(parsedDate);
+
+      return getTotalsForPeriod(userId, startOfDayUTC, endOfDayUTC, res);
+    }
+
+    // If it's a month (YYYY-MM), filter for the entire month
+    if (dateParts.length === 2) {
+      const [year, month] = dateParts;
+
+      let parsedMonth;
+      try {
+        parsedMonth = new Date(`${year}-${month}-01`);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid month format. Please use YYYY-MM.' });
+      }
+
+      const startOfMonthUTC = startOfMonth(parsedMonth);
+      const endOfMonthUTC = endOfMonth(parsedMonth);
+
+      return getTotalsForPeriod(userId, startOfMonthUTC, endOfMonthUTC, res);
+    }
+
+    // If no valid date filter is provided, return all transactions for the user
+    const allTransactions = await prisma.transaction.groupBy({
+      by: ['logType'],
+      where: { userId },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const totalCredit = allTransactions.find(t => t.logType === 'CREDIT')?._sum.amount || 0;
+    const totalDebit = allTransactions.find(t => t.logType === 'DEBIT')?._sum.amount || 0;
+
+    return res.status(200).json({
+      totalCredit,
+      totalDebit,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error calculating totals', error });
   }
 };

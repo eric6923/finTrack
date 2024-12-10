@@ -7,7 +7,8 @@ import {
   updateTransaction, 
   deleteTransaction,
   getTransactions,
-  getPayLaterTransactions
+  getPayLaterTransactions,
+  getTotalCreditAndDebit
 } from "../controllers/user-feature/transactionController";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
@@ -113,6 +114,14 @@ router.get('/operator',verifyUser, async (req: Request, res: Response) => {
     await getOperators(req, res); // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "Error fetching operators" });
+  }
+});
+
+router.get('/total',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getTotalCreditAndDebit(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching values" });
   }
 });
 

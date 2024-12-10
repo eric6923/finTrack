@@ -20,34 +20,36 @@ model Admin {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  userName     String        @unique
-  password     String
-  phone        String
-  address      Json?
-  gstin        String? // Optional
-  aadhar       String        @unique
-  pan          String        @unique
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[] @relation("UserTransactions")
-  categories   Category[]
-  ownerPassword OwnerPassword? 
-  buses        Bus[]
-  agents       Agent[]
-  operators    Operator[]
+  id             Int            @id @default(autoincrement())
+  name           String
+  email          String         @unique
+  userName       String         @unique
+  password       String
+  phone          String
+  address        Json?
+  gstin          String? // Optional
+  aadhar         String         @unique
+  pan            String         @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  transactions   Transaction[]  @relation("UserTransactions")
+  categories     Category[]
+  ownerPassword  OwnerPassword?
+  buses          Bus[]
+  agents         Agent[]
+  operators      Operator[]
+  boxBalance     Decimal        @default(0.0)
+  accountBalance Decimal        @default(0.0)
 }
 
 model OwnerPassword {
-  id         Int    @id @default(autoincrement())
-  userId     Int    @unique
-  password   String // Hashed password for security
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  password  String // Hashed password for security
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade) // Relating to User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // Relating to User
 }
 
 model PendingUser {
@@ -87,9 +89,9 @@ model Transaction {
   user            User             @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
   desc            String?
   logType         LogType
-  amount          Decimal          // Changed from String to Decimal
+  amount          Decimal // Changed from String to Decimal
   modeOfPayment   PaymentMethod
-  transactionNo   String?          // Nullable, only required for UPI
+  transactionNo   String? // Nullable, only required for UPI
   categoryId      Int
   category        Category         @relation(fields: [categoryId], references: [id])
   remarks         String?
@@ -97,7 +99,7 @@ model Transaction {
   payLaterDetails PayLaterDetails? // Optional, only if PayLater is true
   commission      Commission?
   collection      Collection?
-  dueAmount       Decimal?         // Changed from String to Decimal, relevant only for PayLater transactions
+  dueAmount       Decimal? // Changed from String to Decimal, relevant only for PayLater transactions
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -106,34 +108,34 @@ model PayLaterDetails {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  busId         Int         // Foreign Key to Bus
+  busId         Int // Foreign Key to Bus
   from          String
   to            String
   travelDate    DateTime
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  bus           Bus         @relation(fields: [busId], references: [id])
+  bus Bus @relation(fields: [busId], references: [id])
 }
 
 model Commission {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  agentId       Int         // Foreign Key to Agent
+  agentId       Int // Foreign Key to Agent
   amount        Decimal
 
-  agent         Agent       @relation(fields: [agentId], references: [id])
+  agent Agent @relation(fields: [agentId], references: [id])
 }
 
 model Collection {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  operatorId    Int         // Foreign Key to Operator
+  operatorId    Int // Foreign Key to Operator
   amount        Decimal
 
-  operator      Operator    @relation(fields: [operatorId], references: [id])
+  operator Operator @relation(fields: [operatorId], references: [id])
 }
 
 enum LogType {
@@ -161,38 +163,38 @@ model PaymentVerification {
 
 model Category {
   id           Int           @id @default(autoincrement())
-  name         String        
+  name         String
   createdBy    Int
   user         User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   transactions Transaction[]
 }
 
 model Bus {
-  id       Int     @id @default(autoincrement())
-  name     String  @unique
-  userId   Int
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  userId          Int
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   payLaterDetails PayLaterDetails[]
 }
 
 model Agent {
-  id       Int     @id @default(autoincrement())
-  name     String  @unique
-  userId   Int
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  userId      Int
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   commissions Commission[]
 }
 
 model Operator {
-  id       Int     @id @default(autoincrement())
-  name     String  @unique
-  userId   Int
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  userId      Int
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   collections Collection[]
 }

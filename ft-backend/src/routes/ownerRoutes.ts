@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { verifyControlPanelPassword,createBus,createAgent,createOperator } from "../controllers/user-feature/controlPanelController";
+import { verifyControlPanelPassword,createBus,createAgent,createOperator ,setOpeningBalance} from "../controllers/user-feature/controlPanelController";
 import { verifyUser } from "../middleware/userMiddleware";
 
 const router = express.Router();
@@ -29,11 +29,20 @@ router.post("/agent",verifyUser, async (req: Request, res: Response) => {
       res.status(500).json({ error: "Error during registering agent." });
     }
   });
+
 router.post("/operator",verifyUser, async (req: Request, res: Response) => {
     try {
       await createOperator(req, res); // Ensure this is awaited
     } catch (error) {
       res.status(500).json({ error: "Error during registering BusOperator." });
+    }
+  });
+
+router.post("/balance",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await setOpeningBalance(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error setting  balance." });
     }
   });
 
