@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Pending = () => {
@@ -14,7 +14,7 @@ const Pending = () => {
   const [verificationMessage, setVerificationMessage] = useState('');
   const [isVerified, setIsVerified] = useState(false);
 
-  const navigate = useNavigate(); // Initialize navigate function
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPendingUsers = async () => {
@@ -164,85 +164,96 @@ const Pending = () => {
         <p>No pending users.</p>
       )}
 
-      {selectedUser && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white p-8 rounded shadow-lg w-96">
-            <h3 className="text-xl font-bold mb-4">User Details</h3>
-            <p><strong>Name:</strong> {selectedUser.name}</p>
-            <p><strong>Phone:</strong> {selectedUser.phone}</p>
-
-            <label className="block mt-4">
-              <span>Amount:</span>
-              <input
-                type="number"
-                name="amount"
-                value={transactionDetails.amount}
-                onChange={handleInputChange}
-                className="block w-full mt-2 border rounded px-2 py-1"
-              />
-            </label>
-
-            <label className="block mt-4">
-              <span>Mode of Payment:</span>
-              <select
-                name="paymentMethod"
-                value={transactionDetails.paymentMethod}
-                onChange={handleInputChange}
-                className="block w-full mt-2 border rounded px-2 py-1"
-              >
-                <option value="Cash">Cash</option>
-                <option value="UPI">UPI</option>
-              </select>
-            </label>
-
-            {transactionDetails.paymentMethod === 'UPI' && (
-              <label className="block mt-4">
-                <span>Transaction ID:</span>
-                <input
-                  type="text"
-                  name="upiTransactionId"
-                  value={transactionDetails.upiTransactionId}
-                  onChange={handleInputChange}
-                  className="block w-full mt-2 border rounded px-2 py-1"
-                />
-              </label>
-            )}
-
-            {verificationMessage && (
-              <p className="mt-4 text-green-500 font-semibold">{verificationMessage}</p>
-            )}
-
-            <button
-              className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded"
-              onClick={handleVerify}
-            >
-              Verify
-            </button>
-
-            <button
-              className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-              onClick={handleApprove}
-              disabled={!isVerified} // Disable if not verified
-            >
-              Approve
-            </button>
-
-            <button
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-              onClick={handleReject}
-            >
-              Reject
-            </button>
-
-            <button
-              className="mt-4 ml-2 px-4 py-2 bg-gray-500 text-white rounded"
-              onClick={() => setSelectedUser(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+{selectedUser && (
+  <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+    <div className="bg-white p-8 rounded shadow-lg w-96">
+      <h3 className="text-xl font-bold mb-4">User Details</h3>
+      <p><strong>ID:</strong> {selectedUser.id}</p>
+      <p><strong>Name:</strong> {selectedUser.name}</p>
+      <p><strong>Email:</strong> {selectedUser.email}</p>
+      <p><strong>Username:</strong> {selectedUser.userName}</p>
+      <p><strong>Aadhar:</strong> {selectedUser.aadhar}</p>
+      <p><strong>PAN:</strong> {selectedUser.pan}</p>
+      <p><strong>GSTIN:</strong> {selectedUser.gstin || 'N/A'}</p>
+      <p><strong>Phone:</strong> {selectedUser.phone}</p>
+      <p><strong>Created At:</strong> {new Date(selectedUser.createdAt).toLocaleString()}</p>
+      {selectedUser.address && (
+        <p><strong>Address:</strong> {JSON.stringify(selectedUser.address)}</p>
       )}
+
+      <label className="block mt-4">
+        <span>Amount:</span>
+        <input
+          type="number"
+          name="amount"
+          value={transactionDetails.amount}
+          onChange={handleInputChange}
+          className="block w-full mt-2 border rounded px-2 py-1"
+        />
+      </label>
+
+      <label className="block mt-4">
+        <span>Mode of Payment:</span>
+        <select
+          name="paymentMethod"
+          value={transactionDetails.paymentMethod}
+          onChange={handleInputChange}
+          className="block w-full mt-2 border rounded px-2 py-1"
+        >
+          <option value="Cash">Cash</option>
+          <option value="UPI">UPI</option>
+        </select>
+      </label>
+
+      {transactionDetails.paymentMethod === 'UPI' && (
+        <label className="block mt-4">
+          <span>Transaction ID:</span>
+          <input
+            type="text"
+            name="upiTransactionId"
+            value={transactionDetails.upiTransactionId}
+            onChange={handleInputChange}
+            className="block w-full mt-2 border rounded px-2 py-1"
+          />
+        </label>
+      )}
+
+      {verificationMessage && (
+        <p className="mt-4 text-green-500 font-semibold">{verificationMessage}</p>
+      )}
+
+      <button
+        className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded"
+        onClick={handleVerify}
+      >
+        Verify
+      </button>
+
+      <button
+        className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+        onClick={handleApprove}
+        disabled={!isVerified} // Disable if not verified
+      >
+        Approve
+      </button>
+
+      <button
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+        onClick={handleReject}
+      >
+        Reject
+      </button>
+
+      <button
+        className="mt-4 ml-2 px-4 py-2 bg-gray-500 text-white rounded"
+        onClick={() => setSelectedUser(null)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

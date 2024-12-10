@@ -5,7 +5,7 @@ const Adminsidebar = () => {
   const [open, setOpen] = useState(true);
 
   const Menus = [
-    { title: "All Users", src: "User", path: "/allusers" },
+    { title: "All Users", src: "User", path: "/all-users" },
     { title: "Pending", src: "Folder", path: "/pending" },
   ];
 

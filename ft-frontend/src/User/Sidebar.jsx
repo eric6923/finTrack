@@ -1,29 +1,38 @@
-import { useState } from "react"; 
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
+  const [userInfo, setUserInfo] = useState(null);
 
   const Menus = [
-    { title: "Prospects", src: "User", path: "/" },
-    { title: "Transactions", src: "Folder", path: "/transactions" },
-    { title: "Pricing", src: "Chart", path: "/pricing" },
-    { title: "Settings", src: "Setting", path: "/settings" },
+    { title: "Transactions", src: "User", path: "/transactions" },
+    { title: "Paylater", src: "Folder", path: "/paylater" },
+    { title: "Reports", src: "Chart", path: "/reports" },
   ];
 
-  const userInfo = {
-    name: "John Doe",
-    phone: "9940062385",
-  };
+  const location = useLocation();
+  const zoomLevel = 1.4; // Zoom level
 
-  const location = useLocation(); // Hook to get current route
+  // Retrieve user info on component mount
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem("userInfo");
+    if (storedUserInfo) {
+      setUserInfo(JSON.parse(storedUserInfo));
+      console.log(storedUserInfo)
+    }
+  }, []);
 
   return (
-    <div className="flex">
+    <div className="flex h-screen overflow-hidden">
       <div
         className={`${
           open ? "w-56" : "w-14"
-        } bg-black h-screen p-3 pt-6 relative duration-300 flex flex-col justify-between`}
+        } bg-black h-full p-3 pt-6 relative duration-300 flex flex-col justify-between`}
+        style={{
+          transform: `scale(${zoomLevel})`,
+          transformOrigin: "left top",
+        }}
       >
         <div>
           {/* Control Button */}
@@ -52,22 +61,25 @@ const Sidebar = () => {
           </div>
 
           {/* User Info Box */}
-          <div
-            className={`mt-4 flex items-center bg-gray-800 text-white p-3 rounded-lg shadow-md ${
-              !open && "hidden"
-            }`}
-          >
-            {/* Avatar */}
-            <div className="MuiAvatar-root MuiAvatar-square bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
-              {userInfo.name.charAt(0)}
-            </div>
+          {userInfo ? (
+            <div
+              className={`mt-4 flex items-center bg-gray-800 text-white p-3 rounded-lg shadow-md ${
+                !open && "hidden"
+              }`}
+            >
+              {/* Avatar */}
+              <div className="MuiAvatar-root MuiAvatar-square bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                {userInfo.name.charAt(0)}
+              </div>
 
-            {/* User Info */}
-            <div className="ml-3 flex flex-col">
-              <p className="text-sm font-semibold">{userInfo.name}</p>
-              <p className="text-xs text-gray-300">{userInfo.phone}</p>
+              {/* User Info */}
+              <div className="ml-3 flex flex-col">
+                <p className="text-sm font-semibold">{userInfo.userName}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-4 text-gray-500">No user info found</div>
+          )}
 
           {/* Menu Items */}
           <ul className="pt-6">
@@ -75,19 +87,18 @@ const Sidebar = () => {
               <li
                 key={index}
                 className={`flex rounded-md p-1 cursor-pointer text-gray-300 text-xs items-center gap-x-2 
-                mt-1 ${
-                  location.pathname === Menu.path 
-                    ? "bg-gray-800" // Active state
-                    : "hover:bg-gray-800"
-                }`}
+                mt-1 ${location.pathname === Menu.path ? "bg-gray-800" : "hover:bg-gray-800"}`}
               >
-                <Link
-                  to={Menu.path}
-                  className="flex items-center gap-x-2 w-full"
-                >
-                  <img src={`./src/assets/${Menu.src}.png`} alt={Menu.title} />
+                <Link to={Menu.path} className="flex items-center gap-x-2 w-full">
+                  <img
+                    src={`./src/assets/${Menu.src}.png`}
+                    alt={Menu.title}
+                    className="scale-110"
+                  />
                   <span
-                    className={`${!open && "hidden"} origin-left duration-200`}
+                    className={`${
+                      !open && "hidden"
+                    } origin-left duration-200 truncate`}
                   >
                     {Menu.title}
                   </span>
@@ -96,22 +107,11 @@ const Sidebar = () => {
             ))}
           </ul>
         </div>
+      </div>
 
-        {/* Logout Section */}
-        <div className="mt-1">
-          <li
-            className="flex rounded-md p-1 cursor-pointer hover:bg-gray-800 text-gray-300 text-xs items-center gap-x-2"
-          >
-            <img
-              src="./src/assets/logou.png"
-              alt="Logout"
-              className="w-4 h-4"
-            />
-            <span className={`${!open && "hidden"} origin-left duration-200`}>
-              Logout
-            </span>
-          </li>
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 p-4 bg-gray-100">
+        {/* Main content */}
       </div>
     </div>
   );
