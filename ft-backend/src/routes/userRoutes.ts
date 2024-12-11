@@ -16,6 +16,7 @@ import { payLater } from "../controllers/user-feature/paylaterController";
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
 
 import { setOwnerPassword } from "../controllers/user-feature/password/passwordController";
+import { calculateProfitByDateRange } from "../controllers/user-feature/profitController";
 
 import { verifyUser } from "../middleware/userMiddleware";
 import { verify } from "jsonwebtoken";
@@ -182,6 +183,15 @@ router.get('/filter-transaction',verifyUser, async (req: Request, res: Response)
     await getFilteredTransactions(req, res); // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "error fetching filters" });
+  }
+});
+
+//TP - profit
+router.get('/profit',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await calculateProfitByDateRange(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error fetching profit value" });
   }
 });
 
