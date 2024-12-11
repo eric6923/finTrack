@@ -11,6 +11,7 @@ import {
   getTotalCreditAndDebit,
   getUserBalance
 } from "../controllers/user-feature/transactionController";
+import { payLater } from "../controllers/user-feature/paylaterController";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
 
@@ -20,6 +21,8 @@ import { verifyUser } from "../middleware/userMiddleware";
 import { verify } from "jsonwebtoken";
 import { checkOwner } from "../middleware/checkOwner";
 import { getAgents,getBuses,getOperators } from "../controllers/user-feature/controlPanelController";
+
+import { getFilteredTransactions } from "../controllers/user-feature/filterController";
 
 const router = express.Router();
 
@@ -161,6 +164,28 @@ router.post('/set-owner-password',verifyUser, async (req: Request, res: Response
     res.status(500).json({ error: "error setting password" });
   }
 });
+
+//paylater
+
+router.post('/paylater/:transactionId',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await payLater(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error clearing Dues" });
+  }
+});
+
+//filter
+
+router.get('/filter-transaction',verifyUser, async (req: Request, res: Response) => {
+  try {
+    await getFilteredTransactions(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error fetching filters" });
+  }
+});
+
+
 
 
 

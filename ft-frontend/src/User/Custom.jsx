@@ -7,7 +7,6 @@ export default function Custom() {
   const today = new Date();
 
   const formatDate = (date) => date.toISOString().split("T")[0];
-
   const [startDate, setStartDate] = useState(formatDate(yesterday));
   const [endDate, setEndDate] = useState(formatDate(today));
   const [logs, setLogs] = useState([]);

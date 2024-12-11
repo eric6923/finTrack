@@ -97,12 +97,18 @@ model Transaction {
   category        Category         @relation(fields: [categoryId], references: [id])
   remarks         String?
   payLater        Boolean          @default(false) // Enables PayLater section if true
-  payLaterDetails PayLaterDetails? // Optional, only if PayLater is true
+  payLaterDetails PayLaterDetails?
   commission      Commission?
   collection      Collection?
-  dueAmount       Decimal? // Changed from String to Decimal, relevant only for PayLater transactions
+  dueAmount       Decimal?
+  paymentType     PaymentType?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+}
+
+enum PaymentType {
+  FULL
+  PARTIAL
 }
 
 model PayLaterDetails {

@@ -3,7 +3,6 @@ import prisma from "../../../prisma/client";
 import { parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { Decimal } from '@prisma/client/runtime/library';
 
-
 interface CustomRequest extends Request {
   user?: {
     id: string; // User ID from the token

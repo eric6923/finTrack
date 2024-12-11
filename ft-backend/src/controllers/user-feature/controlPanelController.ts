@@ -112,7 +112,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
     }
   };
   
-  export const createAgent = async (req: CustomRequest, res: Response) => {
+export const createAgent = async (req: CustomRequest, res: Response) => {
     const { name } = req.body;
     const userId = Number(req.user?.id);
     const normalizedName = name.trim().toUpperCase();
@@ -182,7 +182,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
     }
   };
   
-  export const createOperator = async (req: CustomRequest, res: Response) => {
+export const createOperator = async (req: CustomRequest, res: Response) => {
     const { name } = req.body;
     const userId = Number(req.user?.id);
     const normalizedName = name.trim().toUpperCase();
@@ -252,7 +252,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
     }
   };
 
-  export const getBuses = async (req: CustomRequest, res: Response) => {
+export const getBuses = async (req: CustomRequest, res: Response) => {
     const userId = Number(req.user?.id);
   
     if (!userId) {
@@ -280,7 +280,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
   };
 
   
-  export const getAgents = async (req: CustomRequest, res: Response) => {
+export const getAgents = async (req: CustomRequest, res: Response) => {
     const userId = Number(req.user?.id);
   
     if (!userId) {
@@ -308,7 +308,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
   };
 
   
-  export const getOperators = async (req: CustomRequest, res: Response) => {
+export const getOperators = async (req: CustomRequest, res: Response) => {
     const userId = Number(req.user?.id);
   
     if (!userId) {
@@ -335,7 +335,7 @@ export const createBus = async (req: CustomRequest, res: Response) => {
     }
   };
   
-  export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
+export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
     try {
       const userId = req.user?.id; // Extract user ID from token
       const { boxBalance, accountBalance } = req.body;
