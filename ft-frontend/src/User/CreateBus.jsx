@@ -2,33 +2,34 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CreateBus = () => {
-  const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState('');
+  const [buses, setBuses] = useState([]);
+  const [newBusName, setNewBusName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
 
-  const fetchCategories = async () => {
+  // Function to fetch bus data
+  const fetchBuses = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/user/categories', {
+      const response = await axios.get('http://localhost:5000/api/user/bus', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setCategories(response.data);
+      setBuses(response.data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching buses:', error);
     }
   };
 
   useEffect(() => {
-    fetchCategories();
+    fetchBuses();
   }, []);
 
+  // Function to handle creating a new bus
   const handleCreateBus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const payload = { name: newCategoryName };
+      const payload = { name: newBusName };
 
       const response = await axios.post(
         'http://localhost:5000/api/user/bus',
@@ -41,8 +42,9 @@ const CreateBus = () => {
         }
       );
 
-      setCategories([...categories, response.data]);
-      setNewCategoryName('');
+      // Add the new bus to the existing list of buses
+      setBuses([...buses, response.data]);
+      setNewBusName('');
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Error creating bus:', error.response ? error.response.data : error.message);
@@ -51,11 +53,12 @@ const CreateBus = () => {
 
   return (
     <div>
-      <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
-        <option value="">Select Category</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.name}>
-            {category.name}
+      <h1>Bus Category</h1>
+      <select>
+        <option value="">Select Bus</option>
+        {buses.map((bus) => (
+          <option key={bus.id} value={bus.name}>
+            {bus.name}
           </option>
         ))}
       </select>
@@ -64,11 +67,11 @@ const CreateBus = () => {
       {isDialogOpen && (
         <div>
           <div>
-            <h3>Create New Category</h3>
+            <h3>Create New Bus</h3>
             <input
               type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+              value={newBusName}
+              onChange={(e) => setNewBusName(e.target.value)}
             />
             <button onClick={handleCreateBus}>Create</button>
             <button onClick={() => setIsDialogOpen(false)}>Cancel</button>

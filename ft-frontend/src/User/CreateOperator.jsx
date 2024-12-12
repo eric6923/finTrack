@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CreateOperator = () => {
@@ -6,6 +6,26 @@ const CreateOperator = () => {
   const [newOperatorName, setNewOperatorName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Function to fetch operators
+  const fetchOperators = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/user/operator', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setOperators(response.data);
+    } catch (error) {
+      console.error('Error fetching operators:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchOperators();
+  }, []);
+
+  // Function to handle creating a new operator
   const handleCreateOperator = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -22,6 +42,7 @@ const CreateOperator = () => {
         }
       );
 
+      // Add the new operator to the existing list of operators
       setOperators([...operators, response.data]);
       setNewOperatorName('');
       setIsDialogOpen(false);

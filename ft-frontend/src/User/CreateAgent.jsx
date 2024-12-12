@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CreateAgent = () => {
@@ -6,6 +6,26 @@ const CreateAgent = () => {
   const [newAgentName, setNewAgentName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Function to fetch agents
+  const fetchAgents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/user/agent', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setAgents(response.data);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  // Function to handle creating a new agent
   const handleCreateAgent = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -22,6 +42,7 @@ const CreateAgent = () => {
         }
       );
 
+      // Add the new agent to the existing list of agents
       setAgents([...agents, response.data]);
       setNewAgentName('');
       setIsDialogOpen(false);

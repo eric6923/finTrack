@@ -24,10 +24,14 @@ import Allusers from "./Admin/Allusers";
 import Pending from "./Admin/Pending";
 import { AuthProvider } from "./Admin/AuthContext";
 import Custom from "./User/Custom";
-
-
-
-
+import OwnerPassword from "./Owner/OwnerPassword";
+import OwnerDashboard from "./Owner/OwnerDashboard";
+import ViewCandDLog from "./User/ViewCandDLog";
+import TodayCandDLog from "./Header/TodayCandDLog";
+import MonthCandDLog from "./Header/MonthCandDLog";
+import CustomCandDLog from "./Header/CustomCandDLog";
+import UserBalance from "./Header/UserBalance";
+import Header from "./Header/Header";
 
 const App = () => {
   return (
@@ -50,6 +54,16 @@ const App = () => {
             <Route path="/paylater" element={<Paylater />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/custom" element={<Custom />} />
+            {/* Headers */}
+            <Route path="/header" element={<Header />} />
+            <Route path="/total-credit-debit" element={<ViewCandDLog />} />
+            <Route path="/today-credit-debit" element={<TodayCandDLog />} />
+            <Route path="/monthly-credit-debit" element={<MonthCandDLog />} />
+            <Route path="/custom-credit-debit" element={<CustomCandDLog />} />
+            <Route path="/userbalance" element={<UserBalance />} />
+
+            <Route path="/ownerpassword" element={<OwnerPassword />} />
+            <Route path="/dashboard" element={<OwnerDashboard />} />
 
             <Route path="/adminlogin" element={<Adminlogin/>}/>
             <Route path="/pending" element={<Pending />} />
