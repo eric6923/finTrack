@@ -5,8 +5,8 @@ import { Prisma } from '@prisma/client';
 
 interface CustomRequest extends Request {
   user?: {
-    id: number; // User ID from the token
-    role: string; // User role, e.g., "user" or "admin"
+    id: number; 
+    role: string;
   };
 }
 

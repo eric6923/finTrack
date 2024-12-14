@@ -68,10 +68,57 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    let updatedBoxBalance = user.boxBalance || new Decimal(0);  // Ensure it's a Decimal
-    let updatedAccountBalance = user.accountBalance || new Decimal(0);  // Ensure it's a Decimal
-    let updatedDueBalance = user.due || new Decimal(0); // Ensure it's a Decimal
+    let updatedBoxBalance = user.boxBalance || new Decimal(0);
+    let updatedAccountBalance = user.accountBalance || new Decimal(0);
+    let updatedDueBalance = user.due || new Decimal(0);
 
+    // New logic for shareholder finance category deduction
+    if (logType === 'DEBIT') {
+      // Check if the category is a shareholder finance category
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+      });
+    
+      if (category && category.name.endsWith(' FINANCE')) {
+        // Extract shareholder name from category
+        const shareholderName = category.name.replace(' FINANCE', '').trim();
+    
+        const shareholder = await prisma.shareholder.findFirst({
+          where: {
+            name: shareholderName,
+            companyShareDetails: {
+              userId: userId, // Ensure shareholder belongs to the user's company
+            },
+          },
+        });
+    
+        if (!shareholder) {
+          return res.status(400).json({
+            message: 'Shareholder not found for this finance category.',
+          });
+        }
+    
+        // Validate if the debit amount exceeds the shareholder's shareProfit
+        // if (debitAmount.greaterThan(shareholder.shareProfit)) {
+        //   return res.status(400).json({
+        //     message: 'Debit amount exceeds available share profit.',
+        //     availableShareProfit: shareholder.shareProfit.toString(),
+        //   });
+        // }
+    
+        // Deduct the transaction amount from the shareholder's shareProfit
+        const debitAmount = new Decimal(amount);
+        await prisma.shareholder.update({
+          where: { id: shareholder.id },
+          data: {
+            finance: shareholder.finance.add(debitAmount), // Add the debit amount to finance
+          },
+        });
+      }
+    }
+    
+
+    // Existing mode of payment balance adjustment logic
     if (modeOfPayment === "CASH") {
       if (logType === "CREDIT") {
         updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
@@ -101,7 +148,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       },
     });
 
-    // If logType is 'CREDIT' and payLater is true, process related details
+    // Existing PayLater logic (unchanged)
     if (logType === "CREDIT" && payLater) {
       if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
         return res
@@ -245,6 +292,41 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
   } catch (error) {
     console.error("Error creating transaction:", error);
     res.status(500).json({ message: "Error creating transaction", error });
+  }
+};
+
+// Helper function to calculate total profit by month
+const getTotalProfitByMonth = async (startDate: string, endDate: string): Promise<number> => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        logType: 'CREDIT',
+        OR: [
+          { payLater: false }, 
+          { payLater: true, dueAmount: 0 },
+        ],
+      },
+      include: {
+        commission: true, 
+        collection: true, 
+      },
+    });
+
+    const totalProfit = transactions.reduce((sum, transaction) => {
+      const agentAmount = transaction.commission?.amount.toNumber() || 0;
+      const operatorAmount = transaction.collection?.amount.toNumber() || 0;
+      const profit = transaction.amount.toNumber() - (agentAmount + operatorAmount);
+      return sum + profit;
+    }, 0);
+
+    return totalProfit;
+  } catch (error) {
+    console.error('Error calculating monthly profit:', error);
+    return 0;
   }
 };
 

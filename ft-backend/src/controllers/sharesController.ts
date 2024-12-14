@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { calculateProfitByDateRange } from './user-feature/profitController';
 import { parseISO } from 'date-fns';
 
+import { Decimal } from '@prisma/client/runtime/library';
+
 const prisma = new PrismaClient();
 
 interface CustomRequest extends Request {
@@ -24,7 +26,6 @@ export const createCompanyShares = async (req: CustomRequest, res: Response) => 
   } = req.body;
 
   try {
-    // Find the user by userId (assuming userId is passed via the session or token)
     const userId = Number(req.user?.id);
 
     // If the businessType is 'sole proprietorship' or 'OPC', skip numberOfShareHolders
@@ -58,6 +59,9 @@ export const createCompanyShares = async (req: CustomRequest, res: Response) => 
       },
     });
 
+    // Automatically generate finance categories for shareholders
+    await generateFinanceCategories(userId, shareholders);
+
     return res.status(201).json({
       message: 'Company shares created successfully!',
       data: companyShareDetails,
@@ -67,6 +71,100 @@ export const createCompanyShares = async (req: CustomRequest, res: Response) => 
     return res.status(500).json({
       error: 'Failed to create company shares',
     });
+  }
+};
+
+// Controller for handling finance category transactions
+// export const recordShareholderTransaction = async (req: CustomRequest, res: Response) => {
+//   const { shareholderName, transactionType, amount, categoryId } = req.body;
+
+//   try {
+//     const userId = Number(req.user?.id);
+
+//     // Fetch the shareholder's current share amount
+//     const shareholder = await prisma.shareholder.findFirst({
+//       where: {
+//         userId,
+//         name: shareholderName,
+//       },
+//     });
+
+//     if (!shareholder) {
+//       return res.status(400).json({ error: 'Shareholder not found' });
+//     }
+
+//     // Fetch the associated category for the shareholder finance
+//     const category = await prisma.category.findFirst({
+//       where: {
+//         createdBy: userId,
+//         name: `${shareholderName} Finance`.toUpperCase(),
+//       },
+//     });
+
+//     if (!category) {
+//       return res.status(400).json({ error: 'Finance category not found' });
+//     }
+
+//     // Handle debit or credit transaction based on type
+//     if (transactionType === 'DEBIT') {
+//       if (shareholder.shareAmount < amount) {
+//         return res.status(400).json({ error: 'Insufficient share amount for debit' });
+//       }
+
+//       // Deduct the amount from shareholder's share
+//       await prisma.shareholder.update({
+//         where: { id: shareholder.id },
+//         data: {
+//           shareAmount: shareholder.shareAmount - amount,
+//         },
+//       });
+//     }
+
+//     // Record the transaction under the finance category
+//     await prisma.transaction.create({
+//       data: {
+//         amount,
+//         categoryId,
+//         transactionType,
+//         shareholderId: shareholder.id,
+//       },
+//     });
+
+//     return res.status(201).json({ message: 'Transaction recorded successfully' });
+//   } catch (error) {
+//     console.error('Error recording transaction:', error);
+//     return res.status(500).json({
+//       error: 'Failed to record transaction',
+//     });
+//   }
+// };
+
+// Helper function for generating finance categories based on shareholder names
+export const generateFinanceCategories = async (
+  userId: number,
+  shareholders: { name: string }[]
+) => {
+  try {
+    // Map shareholder names to finance categories
+    const financeCategories = shareholders.map((shareholder) => ({
+      name: `${shareholder.name} Finance`.toUpperCase(),
+      createdBy: userId,
+    }));
+
+    // Check for existing categories to avoid duplicates
+    for (const category of financeCategories) {
+      const existingCategory = await prisma.category.findFirst({
+        where: { name: category.name, createdBy: userId },
+      });
+
+      if (!existingCategory) {
+        await prisma.category.create({
+          data: category,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error generating finance categories:', error);
   }
 };
 
@@ -107,6 +205,7 @@ export const getTotalProfitByMonth = async (startDate: string, endDate: string):
   };
 
 
+
   export const calculateShareDistribution = async (req: CustomRequest, res: Response) => {
     try {
       const userId = Number(req.user?.id);
@@ -134,20 +233,40 @@ export const getTotalProfitByMonth = async (startDate: string, endDate: string):
       const endOfMonth = new Date(startOfMonth);
       endOfMonth.setMonth(startOfMonth.getMonth() + 1);
   
-      // Call the new function to get the total profit for the specified month
-      const totalProfit = await getTotalProfitByMonth(startOfMonth.toISOString(), endOfMonth.toISOString());
+      // Fetch the total profit for the specified month
+      const totalProfit = await getTotalProfitByMonth(
+        startOfMonth.toISOString(),
+        endOfMonth.toISOString()
+      );
   
-      // Distribute profit among shareholders
-      const shareDistribution = companyShares.shareholders.map((shareholder) => {
-        const shareholderProfit = (totalProfit * shareholder.sharePercentage) / 100;
-        return {
-          shareholder: shareholder.name,
-          percentage: shareholder.sharePercentage,
-          shareProfit: shareholderProfit,
-        };
-      });
+      // Distribute profit among shareholders and update their shareProfit
+      const shareDistribution = await Promise.all(
+        companyShares.shareholders.map(async (shareholder) => {
+          const shareholderProfit = new Decimal((totalProfit * shareholder.sharePercentage) / 100); // Convert profit to Decimal
   
-      // Return distribution details
+          // Calculate the final profit after deducting finance value
+          const financeValue = shareholder.finance || new Decimal(0);
+          const finalProfit = shareholderProfit.minus(financeValue);
+  
+          // Update the shareProfit field in the database
+          await prisma.shareholder.update({
+            where: { id: shareholder.id },
+            data: {
+              shareProfit: shareholder.shareProfit.plus(finalProfit), // Update with the remaining profit
+            },
+          });
+  
+          return {
+            shareholder: shareholder.name,
+            percentage: shareholder.sharePercentage,
+            originalProfit: shareholderProfit.toNumber(), // Profit before finance deduction
+            financeDeducted: financeValue.toNumber(), // Finance value deducted
+            finalProfit: finalProfit.toNumber(), // Profit after finance deduction
+          };
+        })
+      );
+  
+      // Return the distribution details
       res.status(200).json({
         month: date,
         totalProfit,
@@ -158,4 +277,6 @@ export const getTotalProfitByMonth = async (startDate: string, endDate: string):
       res.status(500).json({ error: 'Failed to calculate share distribution' });
     }
   };
+  
+  
   
