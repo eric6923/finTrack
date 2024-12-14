@@ -266,7 +266,7 @@ export const getBuses = async (req: CustomRequest, res: Response) => {
       });
   
       if (!buses || buses.length === 0) {
-        return res.status(404).json({ message: 'No buses found for this user' });
+        return res.status(200).json({ message: 'No buses found for this user' });
       }
   
       return res.status(200).json(buses);
@@ -294,7 +294,7 @@ export const getAgents = async (req: CustomRequest, res: Response) => {
       });
   
       if (!agents || agents.length === 0) {
-        return res.status(404).json({ message: 'No agents found for this user' });
+        return res.status(200).json({ message: 'No agents found for this user' });
       }
   
       return res.status(200).json(agents);
@@ -322,7 +322,7 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
       });
   
       if (!operators || operators.length === 0) {
-        return res.status(404).json({ message: 'No operators found for this user' });
+        return res.status(200).json({ message: 'No operators found for this user' });
       }
   
       return res.status(200).json(operators);
