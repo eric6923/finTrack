@@ -434,7 +434,6 @@ export const getTransactionById = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: 'Error fetching transaction', error });
   }
 };
-
 // Update a transaction
 // Update a transaction
 export const updateTransaction = async (req: CustomRequest, res: Response) => {
@@ -536,7 +535,6 @@ export const updateTransaction = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: 'Error updating transaction', error });
   }
 };
-
 
 // Delete a transaction
 export const deleteTransaction = async (req: CustomRequest, res: Response) => {

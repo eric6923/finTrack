@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { verifyControlPanelPassword,createBus,createAgent,createOperator ,setOpeningBalance} from "../controllers/user-feature/controlPanelController";
 import { calculateShareDistribution } from "../controllers/sharesController";
 import { createCompanyShares } from "../controllers/sharesController";
+import { checkOnboard } from "../controllers/user-feature/checkOnboard"; 
 import { verifyUser } from "../middleware/userMiddleware";
 
 const router = express.Router();
@@ -63,6 +64,14 @@ router.get("/shares",verifyUser, async (req: Request, res: Response) => {
       await calculateShareDistribution(req, res); // Ensure this is awaited
     } catch (error) {
       res.status(500).json({ error: "Error fetching shares." });
+    }
+  });
+
+router.get("/check-onboard",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await checkOnboard(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error fetching details." });
     }
   });
 
