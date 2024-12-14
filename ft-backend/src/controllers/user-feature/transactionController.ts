@@ -436,6 +436,7 @@ export const getTransactionById = async (req: CustomRequest, res: Response) => {
 };
 
 // Update a transaction
+// Update a transaction
 export const updateTransaction = async (req: CustomRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -446,6 +447,7 @@ export const updateTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(400).json({ message: 'Transaction data is required.' });
     }
 
+    // Check if the transaction exists
     const existingTransaction = await prisma.transaction.findUnique({
       where: { id: parseInt(id, 10) },
     });
@@ -459,20 +461,82 @@ export const updateTransaction = async (req: CustomRequest, res: Response) => {
       return res.status(403).json({ message: 'You are not authorized to update this transaction.' });
     }
 
-    
+    // Prepare the update object
+    const updateData: any = {
+      desc: transaction.desc,
+      amount: transaction.amount,
+      modeOfPayment: transaction.modeOfPayment,
+      transactionNo: transaction.transactionNo,
+      categoryId: transaction.categoryId,
+      remarks: transaction.remarks,
+      payLater: transaction.payLater,
+    };
+
+    // Handle nested updates for payLaterDetails
+    if (transaction.payLaterDetails) {
+      updateData.payLaterDetails = {
+        upsert: {
+          create: {
+            from: transaction.payLaterDetails.from,
+            to: transaction.payLaterDetails.to,
+            travelDate: new Date(transaction.payLaterDetails.travelDate),
+            busId: transaction.payLaterDetails.busId,
+          },
+          update: {
+            from: transaction.payLaterDetails.from,
+            to: transaction.payLaterDetails.to,
+            travelDate: new Date(transaction.payLaterDetails.travelDate),
+            busId: transaction.payLaterDetails.busId,
+          },
+        },
+      };
+    }
+
+    // Handle nested updates for commission
+    if (transaction.commission) {
+      updateData.commission = {
+        upsert: {
+          create: {
+            agentId: transaction.commission.agentId,
+            amount: transaction.commission.amount,
+          },
+          update: {
+            agentId: transaction.commission.agentId,
+            amount: transaction.commission.amount,
+          },
+        },
+      };
+    }
+
+    // Handle nested updates for collection
+    if (transaction.collection) {
+      updateData.collection = {
+        upsert: {
+          create: {
+            operatorId: transaction.collection.operatorId,
+            amount: transaction.collection.amount,
+          },
+          update: {
+            operatorId: transaction.collection.operatorId,
+            amount: transaction.collection.amount,
+          },
+        },
+      };
+    }
 
     // Update the transaction
     const updatedTransaction = await prisma.transaction.update({
       where: { id: parseInt(id, 10) },
-      data: transaction, // Use the nested transaction object
+      data: updateData,
     });
 
     res.status(200).json({ message: 'Transaction successfully updated.', updatedTransaction });
   } catch (error) {
-    console.error(error);
+    console.error('Error updating transaction:', error);
     res.status(500).json({ message: 'Error updating transaction', error });
   }
 };
+
 
 // Delete a transaction
 export const deleteTransaction = async (req: CustomRequest, res: Response) => {
