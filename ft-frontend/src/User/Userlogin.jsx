@@ -21,44 +21,71 @@ const UserLogin = () => {
     e.preventDefault(); // Prevent page reload
     setErrorMessage("");
     setSuccessMessage("");
-  
+
     try {
-      const response = await fetch("http://localhost:5000/api/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userName: formData.user_name,
-          password: formData.password,
-        }),
-      });
-  
-      const result = await response.json();
-  
-      if (!response.ok) {
-        throw new Error(result.message || "Login failed. Please check your credentials.");
+      // Login API call
+      const loginResponse = await fetch(
+        "http://localhost:5000/api/user/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userName: formData.user_name,
+            password: formData.password,
+          }),
+        }
+      );
+
+      const loginResult = await loginResponse.json();
+
+      if (!loginResponse.ok) {
+        throw new Error(
+          loginResult.message || "Login failed. Please check your credentials."
+        );
       }
-  
-      if (!result.token || !result.user) {
+
+      if (!loginResult.token || !loginResult.user) {
         throw new Error("Token or user information not found in response.");
       }
-  
+
       // Store token and user info in localStorage
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("userInfo", JSON.stringify(result.user));
-  
-      setSuccessMessage("Login successful!");
-  
-      // Navigate to /sidebar
-      navigate("/sidebar");
+      localStorage.setItem("token", loginResult.token);
+      localStorage.setItem("userInfo", JSON.stringify(loginResult.user));
+
+      // Check Onboard API call
+      const checkOnboardResponse = await fetch(
+        "http://localhost:5000/api/user/check-onboard",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${loginResult.token}`, // Pass token for authentication
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const checkOnboardResult = await checkOnboardResponse.json();
+
+      // Check the conditions for navigation
+      if (
+        checkOnboardResult.details.companyShareDetails &&
+        checkOnboardResult.details.ownerPassword
+      ) {
+        // Both conditions are true
+        navigate("/transactions");
+      } else {
+        // Redirect to /welcome
+        navigate("/welcome");
+      }
     } catch (error) {
-      console.error("Error during login:", error);
-      setErrorMessage(error.message || "An error occurred during login.");
+      console.error("Error during login or onboarding check:", error);
+      setErrorMessage(
+        error.message || "An error occurred during login or onboarding check."
+      );
     }
   };
-  
-  
 
   return (
     <div>
@@ -126,7 +153,9 @@ const UserLogin = () => {
 
                 {/* Success Message */}
                 {successMessage && (
-                  <p className="mt-4 text-sm text-green-600">{successMessage}</p>
+                  <p className="mt-4 text-sm text-green-600">
+                    {successMessage}
+                  </p>
                 )}
 
                 <div className="col-span-6 mt-6 sm:flex sm:flex-col sm:items-start sm:gap-4">
@@ -136,6 +165,16 @@ const UserLogin = () => {
                   >
                     Log In
                   </button>
+                  {/* Signup Link */}
+                  <div className="mt-4 text-sm text-gray-700">
+                    Don't have an account?{" "}
+                    <span
+                      onClick={() => navigate("/signup")}
+                      className="font-medium text-blue-600 cursor-pointer hover:underline"
+                    >
+                      Sign up
+                    </span>
+                  </div>
                 </div>
               </form>
             </div>

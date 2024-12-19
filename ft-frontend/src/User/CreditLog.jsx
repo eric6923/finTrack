@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 
 const Credit = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [payLater, setPayLater] = useState(false);
-  const [dueAmount, setDueAmount] = useState(null); // Added state for dueAmount
+  const [payLater, setPayLater] = useState(true); // Default to true
+  const [dueAmount, setDueAmount] = useState(null);
   const [formData, setFormData] = useState({
     desc: "",
     amount: "",
@@ -29,6 +29,12 @@ const Credit = () => {
   useEffect(() => {
     const fetchOptions = async () => {
       const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.error("Token not found in localStorage. Please log in.");
+        return;
+      }
+
       try {
         const [categoryRes, busRes, agentRes, operatorRes] = await Promise.all([
           fetch("http://localhost:5000/api/user/category/", {
@@ -44,10 +50,11 @@ const Credit = () => {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
         ]);
+
         setCategoryOptions(categoryRes);
-        setBusOptions(busRes);
-        setAgentOptions(agentRes);
-        setOperatorOptions(operatorRes);
+        setBusOptions(Array.isArray(busRes) ? busRes : []);
+        setAgentOptions(Array.isArray(agentRes) ? agentRes : []); // Ensure agentRes is an array
+        setOperatorOptions(Array.isArray(operatorRes) ? operatorRes : []); // Ensure operatorRes is an array
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -66,14 +73,17 @@ const Credit = () => {
     if (newCategory) {
       const token = localStorage.getItem("token");
       try {
-        const response = await fetch("http://localhost:5000/api/user/category/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ name: newCategory }),
-        });
+        const response = await fetch(
+          "http://localhost:5000/api/user/category/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name: newCategory }),
+          }
+        );
 
         if (response.ok) {
           const category = await response.json();
@@ -96,7 +106,13 @@ const Credit = () => {
       return;
     }
 
-    if (payLater && (!formData.from || !formData.to || !formData.travelDate || !formData.busId)) {
+    if (
+      payLater &&
+      (!formData.from ||
+        !formData.to ||
+        !formData.travelDate ||
+        !formData.busId)
+    ) {
       alert("Please fill in all 'Pay Later' details.");
       return;
     }
@@ -146,9 +162,9 @@ const Credit = () => {
 
       const data = await response.json();
       if (response.ok) {
-        setDueAmount(data.dueAmount); // Set the dueAmount from the API response
+        setDueAmount(data.dueAmount);
         alert("Credit log created successfully!");
-        setIsModalOpen(false); // Close modal on success
+        setIsModalOpen(false);
       } else {
         alert("Failed to create credit log: " + data.message);
       }
@@ -170,275 +186,320 @@ const Credit = () => {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-3xl">
             <h2 className="text-lg font-semibold mb-4">Create Credit Log</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="flex items-center space-x-2">
-                <span>Pay Later:</span>
-                <input
-                  type="checkbox"
-                  checked={payLater}
-                  onChange={(e) => setPayLater(e.target.checked)}
-                  className="form-checkbox"
-                />
-              </label>
 
-              {payLater && dueAmount !== null && (
-                <div className="p-4 bg-yellow-100 text-yellow-700 rounded">
-                  Due Amount: ₹{dueAmount}
-                </div>
-              )}
+            <div className="flex space-x-4 mb-4">
+              <button
+                onClick={() => setPayLater(true)}
+                className={`px-4 py-2 rounded ${
+                  payLater ? "bg-blue-500 text-white" : "bg-gray-300"
+                }`}
+              >
+                Pay Later
+              </button>
+              <button
+                onClick={() => setPayLater(false)}
+                className={`px-4 py-2 rounded ${
+                  !payLater ? "bg-blue-500 text-white" : "bg-gray-300"
+                }`}
+              >
+                Others
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               {payLater ? (
                 <>
-                <label>
-            From:
-            <input
-              type="text"
-              name="from"
-              value={formData.from}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            To:
-            <input
-              type="text"
-              name="to"
-              value={formData.to}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Amount:
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Mode of Payment:
-            <select
-              name="modeOfPayment"
-              value={formData.modeOfPayment}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="CASH">Cash</option>
-              <option value="UPI">UPI</option>
-            </select>
-          </label>
-          {formData.modeOfPayment === "UPI" && (
-            <label>
-              Transaction ID:
-              <input
-                type="text"
-                name="transactionId"
-                value={formData.transactionId}
-                onChange={handleChange}
-              />
-            </label>
-          )}
-          <label>
-            Category:
-            <select
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={handleCreateCategory}>
-              Add Category
-            </button>
-          </label>
-          <label>
-            Bus Name:
-            <select
-              name="busId"
-              value={formData.busId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {busOptions.map((bus) => (
-                <option key={bus.id} value={bus.id}>
-                  {bus.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Travel Date:
-            <input
-              type="datetime-local"
-              name="travelDate"
-              value={formData.travelDate}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Commission Amount:
-            <input
-              type="number"
-              name="commissionAmount"
-              value={formData.commissionAmount}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Agent:
-            <select
-              name="agentId"
-              value={formData.agentId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {agentOptions.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Collection Amount:
-            <input
-              type="number"
-              name="collectionAmount"
-              value={formData.collectionAmount}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Operator:
-            <select
-              name="operatorId"
-              value={formData.operatorId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {operatorOptions.map((operator) => (
-                <option key={operator.id} value={operator.id}>
-                  {operator.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Description:
-            <input
-              type="text"
-              name="desc"
-              value={formData.desc}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Remarks:
-            <input
-              type="text"
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-            />
-          </label>
                   {/* Pay Later fields */}
-                  {/* Add your Tailwind-styled Pay Later inputs here */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Row 1 */}
+                    <label className="flex flex-col">
+                      From:
+                      <input
+                        type="text"
+                        name="from"
+                        value={formData.from}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    <label className="flex flex-col">
+                      To:
+                      <input
+                        type="text"
+                        name="to"
+                        value={formData.to}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+
+                    {/* Row 2 */}
+                    <label className="flex flex-col">
+                      Amount:
+                      <input
+                        type="number"
+                        name="amount"
+                        value={formData.amount}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    <label className="flex flex-col">
+                      Mode of Payment:
+                      <select
+                        name="modeOfPayment"
+                        value={formData.modeOfPayment}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        <option value="CASH">Cash</option>
+                        <option value="UPI">UPI</option>
+                      </select>
+                    </label>
+
+                    {formData.modeOfPayment === "UPI" && (
+                      <label className="flex flex-col sm:col-span-2">
+                        Transaction ID:
+                        <input
+                          type="text"
+                          name="transactionId"
+                          value={formData.transactionId}
+                          onChange={handleChange}
+                          className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </label>
+                    )}
+
+                    {/* Row 3 */}
+                    <label className="flex flex-col">
+                      Category:
+                      <div className="flex items-center space-x-2 mt-1">
+                        <select
+                          name="categoryId"
+                          value={formData.categoryId}
+                          onChange={handleChange}
+                          required
+                          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select</option>
+                          {categoryOptions.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleCreateCategory}
+                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </label>
+                    <label className="flex flex-col">
+                      Bus Name:
+                      <select
+                        name="busId"
+                        value={formData.busId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        {Array.isArray(busOptions) &&
+                          busOptions.map((bus) => (
+                            <option key={bus.id} value={bus.id}>
+                              {bus.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+
+                    <label className="flex flex-col">
+                      Collection Amount:
+                      <input
+                        type="number"
+                        name="collectionAmount"
+                        value={formData.collectionAmount}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    {/* Row 4 */}
+                    <label className="flex flex-col">
+                      Travel Date:
+                      <input
+                        type="datetime-local"
+                        name="travelDate"
+                        value={formData.travelDate}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+
+                    {/* Row 5 */}
+                    <label className="flex flex-col">
+                      Agent:
+                      <select
+                        name="agentId"
+                        value={formData.agentId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        {agentOptions.map((agent) => (
+                          <option key={agent.id} value={agent.id}>
+                            {agent.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="flex flex-col">
+                      Commission Amount:
+                      <input
+                        type="number"
+                        name="commissionAmount"
+                        value={formData.commissionAmount}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+
+                    {/* Row 6 */}
+                    <label className="flex flex-col">
+                      Type:
+                      <select
+                        name="operatorId"
+                        value={formData.operatorId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        {operatorOptions.map((operator) => (
+                          <option key={operator.id} value={operator.id}>
+                            {operator.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex flex-col">
+                      Remarks:
+                      <input
+                        type="text"
+                        name="remarks"
+                        value={formData.remarks}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                  </div>
                 </>
               ) : (
                 <>
-                <label>
-            Description:
-            <input
-              type="text"
-              name="desc"
-              value={formData.desc}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Amount:
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Mode of Payment:
-            <select
-              name="modeOfPayment"
-              value={formData.modeOfPayment}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="CASH">Cash</option>
-              <option value="UPI">UPI</option>
-            </select>
-          </label>
-          {formData.modeOfPayment === "UPI" && (
-            <label>
-              Transaction ID:
-              <input
-                type="text"
-                name="transactionId"
-                value={formData.transactionId}
-                onChange={handleChange}
-              />
-            </label>
-          )}
-          <label>
-            Category:
-            <select
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={handleCreateCategory}>
-              Add Category
-            </button>
-          </label>
-          <label>
-            Remarks:
-            <input
-              type="text"
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-            />
-          </label>
                   {/* Non-Pay Later fields */}
-                  {/* Add your Tailwind-styled Non-Pay Later inputs here */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Row 1 */}
+                    <label className="flex flex-col">
+                      Description:
+                      <input
+                        type="text"
+                        name="desc"
+                        value={formData.desc}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    <label className="flex flex-col">
+                      Amount:
+                      <input
+                        type="number"
+                        name="amount"
+                        value={formData.amount}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+
+                    {/* Row 2 */}
+                    <label className="flex flex-col">
+                      Mode of Payment:
+                      <select
+                        name="modeOfPayment"
+                        value={formData.modeOfPayment}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        <option value="CASH">Cash</option>
+                        <option value="UPI">UPI</option>
+                      </select>
+                    </label>
+                    {formData.modeOfPayment === "UPI" && (
+                      <label className="flex flex-col">
+                        Transaction ID:
+                        <input
+                          type="text"
+                          name="transactionId"
+                          value={formData.transactionId}
+                          onChange={handleChange}
+                          className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </label>
+                    )}
+
+                    {/* Row 3 */}
+                    <label className="flex flex-col">
+                      Category:
+                      <div className="flex items-center space-x-2 mt-1">
+                        <select
+                          name="categoryId"
+                          value={formData.categoryId}
+                          onChange={handleChange}
+                          required
+                          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select</option>
+                          {categoryOptions.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleCreateCategory}
+                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </label>
+                    <label className="flex flex-col">
+                      Remarks:
+                      <input
+                        type="text"
+                        name="remarks"
+                        value={formData.remarks}
+                        onChange={handleChange}
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                  </div>
                 </>
               )}
-
-              {/* Other input fields here */}
-              {/* Keep all functionality intact */}
 
               <div className="flex justify-end space-x-4">
                 <button

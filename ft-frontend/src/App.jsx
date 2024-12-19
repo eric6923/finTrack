@@ -11,18 +11,20 @@ import ViewSpecificLogs from "./User/ViewSpecificLogs";
 import Sidebar from "./User/Sidebar";
 import CreateBus from "./User/CreateBus";
 import CreateAgent from "./User/CreateAgent";
-import CreateOperator from "./User/CreateOperator"
+import CreateOperator from "./User/CreateOperator";
 import Credit from "./User/Credit";
 import Paylater from "./User/Paylater";
 import Transactions from "./User/Transactions";
 import Reports from "./User/Reports";
 
-import Admin from "./Admin/Admin"
+import Admin from "./Admin/Admin";
 import Adminsidebar from "./Admin/Adminsidebar";
 import Adminlogin from "./Admin/Adminlogin";
 import Allusers from "./Admin/Allusers";
 import Pending from "./Admin/Pending";
 import { AuthProvider } from "./Admin/AuthContext";
+import ControlPanel from "./Admin/ControlPanel";
+
 import Custom from "./User/Custom";
 import OwnerPassword from "./Owner/OwnerPassword";
 import OwnerDashboard from "./Owner/OwnerDashboard";
@@ -32,49 +34,70 @@ import MonthCandDLog from "./Header/MonthCandDLog";
 import CustomCandDLog from "./Header/CustomCandDLog";
 import UserBalance from "./Header/UserBalance";
 import Header from "./Header/Header";
+import Welcome from "./Owner/Welcome";
+import StartingAccount from "./Owner/StartingAccount";
+import SecretPassword from "./Owner/SecretPassword";
+import BackToHome from "./PayLater/BackToHome";
+import ViewShare from "./Owner/ViewShare";
 
 const App = () => {
   return (
-    
-    <AuthProvider>
     <Router>
-          <Routes>
-            <Route path = "/debit" element={<DebitLog/>}/>
-            <Route path = "/credit" element={<CreditLog/>}/>
-            <Route path = "/view" element={<ViewAllLogs/>}/>
-            <Route path = "/userrequest" element={<UserRequest/>}/>
-            <Route path="/signup" element={<Usersignup />} />
-            <Route path="/login" element={<Userlogin />} />
-            <Route path="/sidebar" element={<Sidebar />} />
-            <Route path = "/viewcategory" element={<VCategory/>}/>
-            <Route path="/bus" element={<CreateBus />} />
-            <Route path="/agent" element={<CreateAgent />} />
-            <Route path="/operator" element={<CreateOperator />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/paylater" element={<Paylater />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/custom" element={<Custom />} />
-            {/* Headers */}
-            <Route path="/header" element={<Header />} />
-            <Route path="/total-credit-debit" element={<ViewCandDLog />} />
-            <Route path="/today-credit-debit" element={<TodayCandDLog />} />
-            <Route path="/monthly-credit-debit" element={<MonthCandDLog />} />
-            <Route path="/custom-credit-debit" element={<CustomCandDLog />} />
-            <Route path="/userbalance" element={<UserBalance />} />
+      <Routes>
+        {/* Routes without Sidebar */}
+        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/startingaccount" element={<StartingAccount />} />
+        <Route path="/secret" element={<SecretPassword />} />
+        <Route path="/share" element={<ViewShare />} />
+        <Route path="/signup" element={<Usersignup />} />
+        <Route path="/login" element={<Userlogin />} />
+        <Route path="/userrequest" element={<UserRequest />} />
+        <Route path="/viewcategory" element={<VCategory />} />
+        <Route path="/bus" element={<CreateBus />} />
+        <Route path="/agent" element={<CreateAgent />} />
+        <Route path="/operator" element={<CreateOperator />} />
+        <Route path="/custom" element={<Custom />} />
+        <Route path="/header" element={<Header />} />
+        <Route path="/total-credit-debit" element={<ViewCandDLog />} />
+        <Route path="/today-credit-debit" element={<TodayCandDLog />} />
+        <Route path="/monthly-credit-debit" element={<MonthCandDLog />} />
+        <Route path="/custom-credit-debit" element={<CustomCandDLog />} />
+        <Route path="/userbalance" element={<UserBalance />} />
+        <Route path="/ownerpassword" element={<OwnerPassword />} />
+        <Route path="/adminlogin" element={<Adminlogin />} />
+        <Route path="/pending" element={<Pending />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/all-users" element={<Allusers />} />
+        <Route path="/admin-sidebar" element={<Adminsidebar />} />
+        <Route path="/controlpannel" element={<OwnerDashboard />} />
 
-            <Route path="/ownerpassword" element={<OwnerPassword />} />
-            <Route path="/dashboard" element={<OwnerDashboard />} />
-
-            <Route path="/adminlogin" element={<Adminlogin/>}/>
-            <Route path="/pending" element={<Pending />} />
-            <Route path= "/admin" element={<Admin/>}/>
-            <Route path="/all-users" element={<Allusers/>} />
-            <Route path="/admin-sidebar" element={<Adminsidebar/>} />
-      
-          </Routes>
-        
+        {/* Routes with Sidebar */}
+        <Route
+          path="/transactions"
+          element={
+            <Sidebar>
+              <Transactions />
+            </Sidebar>
+          }
+        />
+        <Route
+          path="/paylater"
+          element={
+            <Sidebar>
+              <Paylater />
+            </Sidebar>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <Sidebar>
+              <Custom />
+            </Sidebar>
+          }
+        />
+      </Routes>
     </Router>
-    </AuthProvider>
   );
 };
 

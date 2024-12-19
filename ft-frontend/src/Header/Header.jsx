@@ -44,6 +44,8 @@ const Header = () => {
             },
           }
         );
+        console.log('Balances Response:', balancesResponse.data);
+        
 
         // Fetch total profit data
         const profitResponse = await axios.get(
