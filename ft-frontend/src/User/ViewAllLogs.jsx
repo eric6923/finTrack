@@ -1,134 +1,371 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import DropdownMenu from './DropdownMenu';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import DropdownMenu from "./DropdownMenu";
+import ViewTransaction from "../3DotFeatures/ViewTransaction";
+import PasswordModal from "../3DotFeatures/PasswordModal";
+import EditTransaction from "../3DotFeatures/EditTransaction";
+import DeleteTransaction from "../3DotFeatures/DeleteTransaction";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import PartialPayment from "../PayLater/PartialPayment"; // Import PartialPayment component
 
 const ViewAllLogs = () => {
   const [logs, setLogs] = useState([]);
   const [busData, setBusData] = useState([]);
   const [error, setError] = useState(null);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [selectedLogForEdit, setSelectedLogForEdit] = useState(null);
+  const [selectedLogForDelete, setSelectedLogForDelete] = useState(null);
+  const [selectedLogForPartialPayment, setSelectedLogForPartialPayment] =
+    useState(null); // Track selected log for partial payment
+  const [showFullPaymentModal, setShowFullPaymentModal] = useState(false); // State to control full payment modal
+  const [selectedLogForFullPayment, setSelectedLogForFullPayment] =
+    useState(null); // Track selected log for full payment
+  const history = useNavigate(); // Initialize useNavigate
+  const [successMessage, setSuccessMessage] = useState(""); // For full payment success message
 
   useEffect(() => {
-    // Fetch logs and bus data
     const fetchLogs = async () => {
       try {
-        const token = localStorage.getItem('token'); // Retrieve token from local storage
-        if (!token) {
-          throw new Error('No token found in local storage');
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No token found in local storage");
+  
+        const responseLogs = await axios.get(
+          "http://localhost:5000/api/user/transactions/",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+  
+        // Merge logs with payment status from localStorage
+        const logsWithPaymentStatus = responseLogs.data.map((log) => {
+          const isPaid =
+            localStorage.getItem(`paymentStatus-${log.id}`) === "paid";
+          return { ...log, isPaid };
+        });
+  
+        // Set the logs with the payment status
+        setLogs(logsWithPaymentStatus);
+  
+        const responseBus = await axios.get(
+          "http://localhost:5000/api/user/bus",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+  
+        if (responseBus.status === 200 && responseBus.data.length === 0) {
+          setError("Please create Bus, Agent, and Operator first.");
+        } else {
+          setBusData(responseBus.data);
+          setError(null); // Clear any previous errors
         }
-
-        const responseLogs = await axios.get('http://localhost:5000/api/user/transactions/', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setLogs(responseLogs.data);
-
-        // Fetch bus details
-        const responseBus = await axios.get('http://localhost:5000/api/user/bus', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setBusData(responseBus.data); // Store bus data
       } catch (error) {
-        setError('Error fetching logs or bus data. Please try again.');
-        console.error('Error fetching data:', error);
+        if (error.response && error.response.status === 404) {
+          setError("Please create Bus, Agent, and Operator first.");
+        } else {
+          setError("Error fetching logs or bus data. Please try again.");
+        }
+        console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchLogs();
   }, []);
+  
 
-  if (error) {
-    return <div className="container mx-auto px-4"><p className="text-red-500">{error}</p></div>;
-  }
-
-  // Function to get bus name by busId
   const getBusName = (busId) => {
-    const bus = busData.find((bus) => bus.id === busId);
-    return bus ? bus.name : 'N/A';
+    const bus = busData.find((b) => b.id === busId);
+    return bus ? bus.name : "Unknown Bus";
   };
 
-  const formatAmount = (amount) => {
-    if (amount === null || amount === undefined) return 'N/A';
-    return typeof amount === 'object' ? JSON.stringify(amount) : amount;
+  const handleView = async (log) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `http://localhost:5000/api/user/transaction/${log.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSelectedLog(response.data);
+    } catch (error) {
+      console.error("Error fetching log details:", error);
+    }
   };
 
-  const handleView = (log) => {
-    console.log('View', log);
-    // Implement view logic here
+  const handleUpdate = (updatedLog) => {
+    setLogs((prevLogs) =>
+      prevLogs.map((log) => (log.id === updatedLog.id ? updatedLog : log))
+    );
+  };
+
+  const handleDelete = (logId) => {
+    setLogs((prevLogs) => prevLogs.filter((log) => log.id !== logId));
+  };
+
+  const closeView = () => {
+    setSelectedLog(null);
   };
 
   const handleEdit = (log) => {
-    console.log('Edit', log);
-    // Implement edit logic here
+    setSelectedLogForEdit(log);
+    setIsPasswordModalOpen(true);
   };
 
-  const handleDelete = (log) => {
-    console.log('Delete', log);
-    // Implement delete logic here
+  const handlePasswordVerified = (isValid) => {
+    setIsPasswordModalOpen(false);
+    if (isValid) {
+      setSelectedLogForEdit((log) => {
+        const logToEdit = logs.find((l) => l.id === log.id);
+        return logToEdit;
+      });
+    } else {
+      alert("Invalid password! Editing not allowed.");
+      setSelectedLogForEdit(null);
+    }
   };
+
+  const handleDeleteRequest = (log) => {
+    setSelectedLogForDelete(log);
+  };
+
+  // Handle the updated due amount after partial payment
+  const handlePartialPaymentSuccess = (updatedDueAmount, logId) => {
+    setLogs((prevLogs) =>
+      prevLogs.map((log) =>
+        log.id === logId ? { ...log, dueAmount: updatedDueAmount } : log
+      )
+    );
+    setSelectedLogForPartialPayment(null); // Close partial payment form
+  };
+
+  // Handle full payment and mark as paid
+  const handleFullPayment = async (logId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `http://localhost:5000/api/user/paylater/${logId}`,
+        { paymentType: "FULL" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      setLogs((prevLogs) =>
+        prevLogs.map((log) =>
+          log.id === logId
+            ? { ...log, dueAmount: 0, logType: "Paid", isPaid: true }
+            : log
+        )
+      );
+  
+      localStorage.setItem(`paymentStatus-${logId}`, "paid");
+      setShowFullPaymentModal(false);
+      setSuccessMessage(response.data.message || "Payment marked as paid successfully!");
+    } catch (error) {
+      console.error("Error making full payment:", error);
+      alert("Error making full payment");
+    }
+  };
+  
 
   return (
     <div className="container mx-auto px-4">
-      {/* <h1 className="text-2xl font-bold mb-4">Transaction Logs</h1> */}
-      <br />
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b">Description</th>
-              <th className="py-2 px-4 border-b">Log Type</th>
-              <th className="py-2 px-4 border-b">Amount</th>
-              <th className="py-2 px-4 border-b">Payment Mode</th>
-              <th className="py-2 px-4 border-b">Remarks</th>
-              <th className="py-2 px-4 border-b">Category</th>
-              <th className="py-2 px-4 border-b">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <React.Fragment key={log.id}>
-                <tr className="hover:bg-gray-100">
-                  <td className="py-2 px-4 border-b">{log.desc}</td>
-                  <td className="py-2 px-4 border-b">{log.logType}</td>
-                  <td className="py-2 px-4 border-b">{log.amount}</td>
-                  <td className="py-2 px-4 border-b">{log.modeOfPayment}</td>
-                  <td className="py-2 px-4 border-b">{log.remarks}</td>
-                  <td className="py-2 px-4 border-b">{log.category.name}</td>
-                  <td className="py-2 px-4 border-b">
-                    <DropdownMenu
-                      onView={() => handleView(log)}
-                      onEdit={() => handleEdit(log)}
-                      onDelete={() => handleDelete(log)}
-                    />
-                  </td>
-                </tr>
-                {log.payLater && log.payLaterDetails && (
-                  <tr className="bg-gray-100">
-                    <td colSpan="7" className="py-2 px-4 border-b">
-                      <div className="p-4 border rounded bg-white">
-                        <strong>Pay Later Details:</strong> <br />
-                        <div><strong>Bus Name:</strong> {getBusName(log.payLaterDetails.busId)}</div>
-                        <div><strong>From:</strong> {log.payLaterDetails.from}</div>
-                        <div><strong>To:</strong> {log.payLaterDetails.to}</div>
-                        <div><strong>Travel Date:</strong> {new Date(log.payLaterDetails.travelDate).toLocaleString()}</div>
-                        <div><strong>Commission Amount:</strong> {formatAmount(log.commission.amount)}</div>
-                        <div><strong>Collection Amount:</strong> {formatAmount(log.collection.amount)}</div>
-                        {log.dueAmount && (
-                          <div><strong>Due Amount:</strong> {log.dueAmount}</div>
-                        )}
-                      </div>
+      {isPasswordModalOpen && (
+        <PasswordModal
+          onClose={() => setIsPasswordModalOpen(false)}
+          onVerify={(isValid) => handlePasswordVerified(isValid)}
+        />
+      )}
+      {selectedLogForEdit && !isPasswordModalOpen && (
+        <EditTransaction
+          log={selectedLogForEdit}
+          onUpdate={handleUpdate}
+          onClose={() => setSelectedLogForEdit(null)}
+        />
+      )}
+      {selectedLogForDelete && (
+        <DeleteTransaction
+          log={selectedLogForDelete}
+          onDelete={handleDelete}
+          onClose={() => setSelectedLogForDelete(null)}
+        />
+      )}
+  
+      {/* Inline Partial Payment Form */}
+      {selectedLogForPartialPayment && (
+        <PartialPayment
+          log={selectedLogForPartialPayment}
+          onUpdateDueAmount={handlePartialPaymentSuccess}
+          onClose={() => setSelectedLogForPartialPayment(null)}
+        />
+      )}
+  
+      {/* Full Payment Modal */}
+      {showFullPaymentModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h4 className="text-lg font-semibold mb-4">Confirm Full Payment</h4>
+            <p className="mb-4">
+              Are you sure you want to proceed with the full payment and mark
+              this transaction as paid?
+            </p>
+            <div className="flex justify-around">
+              <button
+                onClick={() => handleFullPayment(selectedLogForFullPayment.id)}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Yes, Mark as Paid
+              </button>
+              <button
+                onClick={() => setShowFullPaymentModal(false)} // Close the modal if canceled
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+  
+      {selectedLog ? (
+        <ViewTransaction log={selectedLog} onClose={closeView} />
+      ) : (
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto"> {/* Added scroll here */}
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b">Description</th>
+                <th className="py-2 px-4 border-b">Log Type</th>
+                <th className="py-2 px-4 border-b">Amount</th>
+                <th className="py-2 px-4 border-b">Payment Mode</th>
+                <th className="py-2 px-4 border-b">Remarks</th>
+                <th className="py-2 px-4 border-b">Category</th>
+                <th className="py-2 px-4 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <React.Fragment key={log.id}>
+                  <tr className="hover:bg-gray-100">
+                    <td className="py-2 px-4 border-b ">{log.desc}</td>
+                    <td className="py-2 px-4 border-b text-center">{log.logType}</td>
+                    <td className="py-2 px-4 border-b text-center">{log.amount}</td>
+                    <td className="py-2 px-4 border-b text-center">{log.modeOfPayment}</td>
+                    <td className="py-2 px-4 border-b text-center">{log.remarks}</td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {log.category?.name || "N/A"}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center">
+                      <DropdownMenu
+                        onView={() => handleView(log)}
+                        onEdit={() => handleEdit(log)}
+                        onDelete={() => handleDeleteRequest(log)}
+                      />
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  {log.isPaid && (
+                    <tr>
+                      <td
+                        colSpan="7"
+                        className="py-2 px-4 border-b text-green-500 font-bold"
+                      >
+                        Payment Done!
+                      </td>
+                    </tr>
+                  )}
+                  {log.payLater && (
+                    <tr>
+                      <td colSpan="7" className="py-2 px-4 border-b bg-gray-50">
+                        {/* Existing Pay Later Details */}
+                        <strong className="block text-lg font-semibold mb-2">
+                          Pay Later Details:
+                        </strong>
+                        {log.payLaterDetails ? (
+                          <div className="mt-2">
+                            {/* Headers Row */}
+                            <div className="flex gap-8 font-bold">
+                              <p className="flex-1">FROM</p>
+                              <p className="flex-1">TO</p>
+                              <p className="flex-1">Bus Name</p>
+                              <p className="flex-1">Travel Date</p>
+                              <p className="flex-1">COMMISSION</p>
+                              <p className="flex-1">COLLECTION</p>
+                              <p className="flex-1">DUE</p>
+                              <p className="flex-1">REMARKS</p>
+                            </div>
+  
+                            {/* Values Row */}
+                            <div className="flex gap-8">
+                              <p className="flex-1">
+                                {log.payLaterDetails.from}
+                              </p>
+                              <p className="flex-1">{log.payLaterDetails.to}</p>
+                              <p className="flex-1">
+                                {getBusName(log.payLaterDetails.busId)}
+                              </p>
+                              <p className="flex-1">
+                                {new Date(
+                                  log.payLaterDetails.travelDate
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })}
+                              </p>
+                              <p className="flex-1 text-center">{log.commission.amount}</p>
+                              <p className="flex-1 text-center">{log.collection.amount}</p>
+                              <p className="flex-1 ">{log.dueAmount}</p>
+                              <p className="flex-1">{log.remarks}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-red-500">No details available</p>
+                        )}
+  
+  <div className="mt-4">
+  <button
+    className={`${
+      log.isPaid
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-blue-500 hover:bg-blue-700 text-white"
+    } font-bold py-2 px-4 rounded`}
+    onClick={() => setSelectedLogForPartialPayment(log)}
+    disabled={log.isPaid}
+  >
+    Partial Payment
+  </button>
+  <button
+    className={`${
+      log.isPaid
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-green-500 hover:bg-green-700 text-white"
+    } font-bold py-2 px-4 rounded ml-2`}
+    onClick={() => {
+      setSelectedLogForFullPayment(log);
+      setShowFullPaymentModal(true);
+    }}
+    disabled={log.isPaid}
+  >
+    Mark as Paid
+  </button>
+  {log.dueAmount === 0 && (
+    <span className="ml-4 text-green-500 font-semibold">Payment Done!</span>
+  )}
+</div>
+
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+          {error && <p className="text-red-500">{error}</p>}
+        </div>
+      )}
     </div>
   );
+  
 };
 
 export default ViewAllLogs;

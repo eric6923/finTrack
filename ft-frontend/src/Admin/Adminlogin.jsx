@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
 import Pending from './Pending'; // Import Pending component
 
 const Adminlogin = () => {
@@ -10,6 +11,8 @@ const Adminlogin = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [token, setToken] = useState(''); // State to store the token
+
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,6 +35,8 @@ const Adminlogin = () => {
         setToken(response.data.token); // Set token in state
         localStorage.setItem('token', response.data.token); // Save token to local storage
         console.log("Token after login:", response.data.token); // Log token for debugging
+
+        navigate('/admin-sidebar'); // Navigate to /admin-sidebar
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
@@ -109,7 +114,7 @@ const Adminlogin = () => {
           </main>
         </div>
       </section>
-      
+
       {token && <Pending token={token} />}
     </div>
   );

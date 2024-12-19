@@ -1,5 +1,3 @@
-// This is your Prisma schema file
-
 generator client {
   provider    = "prisma-client-js"
   postInstall = "ts-node prisma/seed.ts"
@@ -12,11 +10,11 @@ datasource db {
 
 model Admin {
   id        Int      @id @default(autoincrement())
-  name      String
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  name      String
 }
 
 model User {
@@ -27,58 +25,55 @@ model User {
   password            String
   phone               String
   address             Json?
-  gstin               String? // Optional
-  aadhar              String               @unique
-  pan                 String               @unique
+  gstin               String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
-  transactions        Transaction[]        @relation("UserTransactions")
-  categories          Category[]
-  ownerPassword       OwnerPassword?
-  buses               Bus[]
-  agents              Agent[]
-  operators           Operator[]
-  boxBalance          Decimal              @default(0.0)
+  aadhar              String               @unique
+  pan                 String               @unique
   accountBalance      Decimal              @default(0.0)
+  boxBalance          Decimal              @default(0.0)
   due                 Decimal              @default(0.0)
+  agents              Agent[]
+  buses               Bus[]
+  categories          Category[]
   companyShareDetails CompanyShareDetails?
+  operators           Operator[]
+  ownerPassword       OwnerPassword?
+  transactions        Transaction[]        @relation("UserTransactions")
 }
 
 model CompanyShareDetails {
   id                   Int           @id @default(autoincrement())
-  userId               Int           @unique // Reference to the User
+  userId               Int           @unique
   businessName         String
-  businessCategory     String // Enum can be used here, if you have predefined categories
-  businessType         String // Enum for sole proprietorship, partnership, etc.
-  numberOfShareHolders Int // Number of Shareholders
-  shareholders         Shareholder[] // List of shareholders (created in a separate model)
+  businessCategory     String
+  businessType         String
+  numberOfShareHolders Int
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shareholders         Shareholder[]
 }
 
 model Shareholder {
-  id                    Int      @id @default(autoincrement())
-  companyShareDetailsId Int // Reference to the company details
+  id                    Int                 @id @default(autoincrement())
+  companyShareDetailsId Int
   name                  String
-  sharePercentage       Float // Percentage of shares owned
-  shareProfit           Decimal  @default(0.0) 
-  finance                Decimal @default(0.0)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  companyShareDetails CompanyShareDetails @relation(fields: [companyShareDetailsId], references: [id], onDelete: Cascade)
+  sharePercentage       Float
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  shareProfit           Decimal             @default(0.0)
+  finance               Decimal             @default(0.0)
+  companyShareDetails   CompanyShareDetails @relation(fields: [companyShareDetailsId], references: [id], onDelete: Cascade)
 }
 
 model OwnerPassword {
   id        Int      @id @default(autoincrement())
   userId    Int      @unique
-  password  String // Hashed password for security
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // Relating to User
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PendingUser {
@@ -89,7 +84,7 @@ model PendingUser {
   password            String
   phone               String
   address             Json?
-  gstin               String? // Optional
+  gstin               String?
   aadhar              String               @unique
   pan                 String               @unique
   createdAt           DateTime             @default(now())
@@ -105,7 +100,7 @@ model AllRequest {
   password  String
   phone     String
   address   Json?
-  gstin     String? // Optional
+  gstin     String?
   aadhar    String   @unique
   pan       String   @unique
   createdAt DateTime @default(now())
@@ -115,86 +110,67 @@ model AllRequest {
 model Transaction {
   id              Int              @id @default(autoincrement())
   userId          Int
-  user            User             @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
-  desc            String?
   logType         LogType
-  amount          Decimal // Changed from String to Decimal
   modeOfPayment   PaymentMethod
-  transactionNo   String? // Nullable, only required for UPI
+  transactionNo   String?
   categoryId      Int
-  category        Category         @relation(fields: [categoryId], references: [id])
   remarks         String?
-  payLater        Boolean          @default(false) // Enables PayLater section if true
-  payLaterDetails PayLaterDetails?
-  commission      Commission?
-  collection      Collection?
+  payLater        Boolean          @default(false)
   dueAmount       Decimal?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  desc            String?
+  amount          Decimal
   paymentType     PaymentType?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum PaymentType {
-  FULL
-  PARTIAL
+  collection      Collection?
+  commission      Commission?
+  payLaterDetails PayLaterDetails?
+  category        Category         @relation(fields: [categoryId], references: [id])
+  user            User             @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PayLaterDetails {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  busId         Int // Foreign Key to Bus
   from          String
   to            String
-  travelDate    DateTime
   createdAt     DateTime    @default(now())
+  travelDate    DateTime
   updatedAt     DateTime    @updatedAt
-
-  bus Bus @relation(fields: [busId], references: [id])
+  busId         Int
+  bus           Bus         @relation(fields: [busId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 }
 
 model Commission {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  agentId       Int // Foreign Key to Agent
   amount        Decimal
-
-  agent Agent @relation(fields: [agentId], references: [id])
+  agentId       Int
+  agent         Agent       @relation(fields: [agentId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 }
 
 model Collection {
   id            Int         @id @default(autoincrement())
   transactionId Int         @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  operatorId    Int // Foreign Key to Operator
   amount        Decimal
-
-  operator Operator @relation(fields: [operatorId], references: [id])
-}
-
-enum LogType {
-  CREDIT
-  DEBIT
-}
-
-enum PaymentMethod {
-  CASH
-  UPI
+  operatorId    Int
+  operator      Operator    @relation(fields: [operatorId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 }
 
 model PaymentVerification {
   id               Int           @id @default(autoincrement())
   pendingUserId    Int           @unique
-  pendingUser      PendingUser   @relation(fields: [pendingUserId], references: [id], onDelete: Cascade)
   amount           Decimal
   paymentMethod    PaymentMethod
   upiTransactionId String?
   isVerified       Boolean       @default(false)
-  verifiedBy       Int? // Admin who verified
+  verifiedBy       Int?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  pendingUser      PendingUser   @relation(fields: [pendingUserId], references: [id], onDelete: Cascade)
 }
 
 model Category {
@@ -209,9 +185,9 @@ model Bus {
   id              Int               @id @default(autoincrement())
   name            String            @unique
   userId          Int
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   payLaterDetails PayLaterDetails[]
 }
 
@@ -219,9 +195,9 @@ model Agent {
   id          Int          @id @default(autoincrement())
   name        String       @unique
   userId      Int
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   commissions Commission[]
 }
 
@@ -229,8 +205,23 @@ model Operator {
   id          Int          @id @default(autoincrement())
   name        String       @unique
   userId      Int
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   collections Collection[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PaymentType {
+  FULL
+  PARTIAL
+}
+
+enum LogType {
+  CREDIT
+  DEBIT
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
 }

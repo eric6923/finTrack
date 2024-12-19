@@ -1,63 +1,70 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
 
 const UserBalance = () => {
-  const [balanceData, setBalanceData] = useState({
-    boxBalance: null,
-    accountBalance: null,
-    totalBalance: null,
-    due: null,
-  });
-  const [error, setError] = useState("");
+  const [balances, setBalances] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchUserBalance = async () => {
-    const token = localStorage.getItem("token");
+  useEffect(() => {
+    // Get the token from localStorage
+    const token = localStorage.getItem('token');
+    
     if (!token) {
-      setError("Token not found. Please login again.");
+      setError('Token not found');
+      setLoading(false);
       return;
     }
 
-    try {
-      const response = await axios.get("http://localhost:5000/api/user/balances", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    // Fetch balance data from the API
+    const fetchBalances = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/user/balances', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include token in the Authorization header
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch balances');
+        }
+        const data = await response.json();
+        setBalances(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setBalanceData({
-        boxBalance: response.data.boxBalance,
-        accountBalance: response.data.accountBalance,
-        totalBalance: response.data.totalBalance,
-        due: response.data.due,
-      });
-      setError("");
-    } catch (err) {
-      setError("Failed to fetch user balance data. Please try again later.");
-    }
-  };
-
-  useEffect(() => {
-    fetchUserBalance();
+    fetchBalances();
   }, []);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   if (error) {
-    return <div className="error">{error}</div>;
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <div className="user-balance">
-      <h1>User Balance</h1>
-      {balanceData.boxBalance !== null &&
-      balanceData.accountBalance !== null &&
-      balanceData.totalBalance !== null &&
-      balanceData.due !== null ? (
-        <div>
-          <p><strong>Box Balance:</strong> {balanceData.boxBalance}</p>
-          <p><strong>Account Balance:</strong> {balanceData.accountBalance}</p>
-          <p><strong>Total Balance:</strong> {balanceData.totalBalance}</p>
-          <p><strong>Due:</strong> {balanceData.due}</p>
-        </div>
-      ) : (
-        <p>Loading...</p>
-      )}
+    <div className="balance-container">
+      <div className="balance-box">
+        <h3>Box Balance</h3>
+        <p>{balances.boxBalance}</p>
+      </div>
+      <div className="balance-box">
+        <h3>Account Balance</h3>
+        <p>{balances.accountBalance}</p>
+      </div>
+      <div className="balance-box">
+        <h3>Total Balance</h3>
+        <p>{balances.totalBalance}</p>
+      </div>
+      <div className="balance-box">
+        <h3>Due</h3>
+        <p>{balances.due}</p>
+      </div>
     </div>
   );
 };

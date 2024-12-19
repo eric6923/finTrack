@@ -206,9 +206,9 @@ const UserSignup = () => {
                       isSubmitting ? "Submitting..." : "Request Access"
                     }
                   </button>
-                  <p className="mt-4 text-sm text-gray-500 sm:mt-0">
+                  <p className="text-sm text-gray-700">
                     Already have an account?{" "}
-                    <a href="/login" className="text-gray-700 underline">
+                    <a href="/login" className="font-medium text-blue-600 cursor-pointer hover:underline">
                       Log in
                     </a>
                   </p>
