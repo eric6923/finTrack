@@ -7,6 +7,7 @@ import EditTransaction from "../3DotFeatures/EditTransaction";
 import DeleteTransaction from "../3DotFeatures/DeleteTransaction";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import PartialPayment from "../PayLater/PartialPayment"; // Import PartialPayment component
+import FullPayment from "../PayLater/FullPayment";
 
 const ViewAllLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -29,31 +30,31 @@ const ViewAllLogs = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("No token found in local storage");
-  
+
         const responseLogs = await axios.get(
           "http://localhost:5000/api/user/transactions/",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-  
+
         // Merge logs with payment status from localStorage
         const logsWithPaymentStatus = responseLogs.data.map((log) => {
           const isPaid =
             localStorage.getItem(`paymentStatus-${log.id}`) === "paid";
           return { ...log, isPaid };
         });
-  
+
         // Set the logs with the payment status
         setLogs(logsWithPaymentStatus);
-  
+
         const responseBus = await axios.get(
           "http://localhost:5000/api/user/bus",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-  
+
         if (responseBus.status === 200 && responseBus.data.length === 0) {
           setError("Please create Bus, Agent, and Operator first.");
         } else {
@@ -69,10 +70,9 @@ const ViewAllLogs = () => {
         console.error("Error fetching data:", error);
       }
     };
-  
+
     fetchLogs();
   }, []);
-  
 
   const getBusName = (busId) => {
     const bus = busData.find((b) => b.id === busId);
@@ -140,33 +140,45 @@ const ViewAllLogs = () => {
     setSelectedLogForPartialPayment(null); // Close partial payment form
   };
 
-  // Handle full payment and mark as paid
-  const handleFullPayment = async (logId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `http://localhost:5000/api/user/paylater/${logId}`,
-        { paymentType: "FULL" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      setLogs((prevLogs) =>
-        prevLogs.map((log) =>
-          log.id === logId
-            ? { ...log, dueAmount: 0, logType: "Paid", isPaid: true }
-            : log
-        )
-      );
-  
-      localStorage.setItem(`paymentStatus-${logId}`, "paid");
-      setShowFullPaymentModal(false);
-      setSuccessMessage(response.data.message || "Payment marked as paid successfully!");
-    } catch (error) {
-      console.error("Error making full payment:", error);
-      alert("Error making full payment");
-    }
+  const handleFullPaymentSuccess = (updatedDueAmount, logId) => {
+    setLogs((prevLogs) =>
+      prevLogs.map((log) =>
+        log.id === logId
+          ? { ...log, dueAmount: 0, logType: "Paid", isPaid: true }
+          : log
+      )
+    );
+    setSelectedLogForFullPayment(null); // Close partial payment form
   };
-  
+
+  // Handle full payment and mark as paid
+  // const handleFullPayment = async (logId) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await axios.post(
+  //       `http://localhost:5000/api/user/paylater/${logId}`,
+  //       { paymentType: "FULL" },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     setLogs((prevLogs) =>
+  //       prevLogs.map((log) =>
+  //         log.id === logId
+  //           ? { ...log, dueAmount: 0, logType: "Paid", isPaid: true }
+  //           : log
+  //       )
+  //     );
+
+  //     localStorage.setItem(`paymentStatus-${logId}`, "paid");
+  //     setShowFullPaymentModal(false);
+  //     setSuccessMessage(
+  //       response.data.message || "Payment marked as paid successfully!"
+  //     );
+  //   } catch (error) {
+  //     console.error("Error making full payment:", error);
+  //     alert("Error making full payment");
+  //   }
+  // };
 
   return (
     <div className="container mx-auto px-4">
@@ -190,7 +202,7 @@ const ViewAllLogs = () => {
           onClose={() => setSelectedLogForDelete(null)}
         />
       )}
-  
+
       {/* Inline Partial Payment Form */}
       {selectedLogForPartialPayment && (
         <PartialPayment
@@ -199,38 +211,22 @@ const ViewAllLogs = () => {
           onClose={() => setSelectedLogForPartialPayment(null)}
         />
       )}
-  
+
       {/* Full Payment Modal */}
       {showFullPaymentModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h4 className="text-lg font-semibold mb-4">Confirm Full Payment</h4>
-            <p className="mb-4">
-              Are you sure you want to proceed with the full payment and mark
-              this transaction as paid?
-            </p>
-            <div className="flex justify-around">
-              <button
-                onClick={() => handleFullPayment(selectedLogForFullPayment.id)}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
-                Yes, Mark as Paid
-              </button>
-              <button
-                onClick={() => setShowFullPaymentModal(false)} // Close the modal if canceled
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <FullPayment
+          log={selectedLogForFullPayment}
+          onUpdateDueAmount={handleFullPaymentSuccess}
+          onClose={() => setSelectedLogForPartialPayment(null)}
+        />
       )}
-  
+
       {selectedLog ? (
         <ViewTransaction log={selectedLog} onClose={closeView} />
       ) : (
-        <div className="overflow-x-auto max-h-[500px] overflow-y-auto"> {/* Added scroll here */}
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          {" "}
+          {/* Added scroll here */}
           <table className="min-w-full bg-white border border-gray-200">
             <thead>
               <tr>
@@ -248,10 +244,18 @@ const ViewAllLogs = () => {
                 <React.Fragment key={log.id}>
                   <tr className="hover:bg-gray-100">
                     <td className="py-2 px-4 border-b ">{log.desc}</td>
-                    <td className="py-2 px-4 border-b text-center">{log.logType}</td>
-                    <td className="py-2 px-4 border-b text-center">{log.amount}</td>
-                    <td className="py-2 px-4 border-b text-center">{log.modeOfPayment}</td>
-                    <td className="py-2 px-4 border-b text-center">{log.remarks}</td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {log.logType}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {log.amount}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {log.modeOfPayment}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {log.remarks}
+                    </td>
                     <td className="py-2 px-4 border-b text-center">
                       {log.category?.name || "N/A"}
                     </td>
@@ -293,7 +297,7 @@ const ViewAllLogs = () => {
                               <p className="flex-1">DUE</p>
                               <p className="flex-1">REMARKS</p>
                             </div>
-  
+
                             {/* Values Row */}
                             <div className="flex gap-8">
                               <p className="flex-1">
@@ -312,8 +316,12 @@ const ViewAllLogs = () => {
                                   day: "numeric",
                                 })}
                               </p>
-                              <p className="flex-1 text-center">{log.commission.amount}</p>
-                              <p className="flex-1 text-center">{log.collection.amount}</p>
+                              <p className="flex-1 text-center">
+                                {log.commission.amount}
+                              </p>
+                              <p className="flex-1 text-center">
+                                {log.collection.amount}
+                              </p>
                               <p className="flex-1 ">{log.dueAmount}</p>
                               <p className="flex-1">{log.remarks}</p>
                             </div>
@@ -321,38 +329,39 @@ const ViewAllLogs = () => {
                         ) : (
                           <p className="text-red-500">No details available</p>
                         )}
-  
-  <div className="mt-4">
-  <button
-    className={`${
-      log.isPaid
-        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-        : "bg-blue-500 hover:bg-blue-700 text-white"
-    } font-bold py-2 px-4 rounded`}
-    onClick={() => setSelectedLogForPartialPayment(log)}
-    disabled={log.isPaid}
-  >
-    Partial Payment
-  </button>
-  <button
-    className={`${
-      log.isPaid
-        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-        : "bg-green-500 hover:bg-green-700 text-white"
-    } font-bold py-2 px-4 rounded ml-2`}
-    onClick={() => {
-      setSelectedLogForFullPayment(log);
-      setShowFullPaymentModal(true);
-    }}
-    disabled={log.isPaid}
-  >
-    Mark as Paid
-  </button>
-  {log.dueAmount === 0 && (
-    <span className="ml-4 text-green-500 font-semibold">Payment Done!</span>
-  )}
-</div>
 
+                        <div className="mt-4">
+                          <button
+                            className={`${
+                              log.isPaid
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-700 text-white"
+                            } font-bold py-2 px-4 rounded`}
+                            onClick={() => setSelectedLogForPartialPayment(log)}
+                            disabled={log.isPaid}
+                          >
+                            Partial Payment
+                          </button>
+                          <button
+                            className={`${
+                              log.isPaid
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-700 text-white"
+                            } font-bold py-2 px-4 rounded ml-2`}
+                            onClick={() => {
+                              setSelectedLogForFullPayment(log);
+                              setShowFullPaymentModal(true);
+                            }}
+                            disabled={log.isPaid}
+                          >
+                            Mark as Paid
+                          </button>
+                          {log.dueAmount === 0 && (
+                            <span className="ml-4 text-green-500 font-semibold">
+                              Payment Done!
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -365,7 +374,6 @@ const ViewAllLogs = () => {
       )}
     </div>
   );
-  
 };
 
 export default ViewAllLogs;
