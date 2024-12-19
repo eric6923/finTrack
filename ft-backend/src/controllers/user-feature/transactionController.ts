@@ -624,29 +624,92 @@ export const deleteTransaction = async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
     const userId = Number(req.user?.id); // Get userId from token
 
+    // Find the transaction to be deleted
     const transaction = await prisma.transaction.findUnique({
       where: { id: parseInt(id, 10) },
     });
 
     if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+      return res.status(404).json({ message: "Transaction not found" });
     }
 
     // Check if the user is authorized to delete the transaction
     if (transaction.userId !== userId) {
-      return res.status(403).json({ message: 'You are not authorized to delete this transaction.' });
+      return res.status(403).json({
+        message: "You are not authorized to delete this transaction.",
+      });
     }
 
+    // Fetch user balances
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        boxBalance: true,
+        accountBalance: true,
+        due: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Parse balances
+    let updatedBoxBalance = new Decimal(user.boxBalance);
+    let updatedAccountBalance = new Decimal(user.accountBalance);
+    let updatedDueBalance = new Decimal(user.due);
+
+    // Reverse transaction effect
+    const transactionAmount = new Decimal(transaction.amount);
+
+    if (transaction.modeOfPayment === "CASH") {
+      if (transaction.logType === "CREDIT") {
+        updatedBoxBalance = updatedBoxBalance.sub(transactionAmount); // Subtract credited amount
+      } else if (transaction.logType === "DEBIT") {
+        updatedBoxBalance = updatedBoxBalance.add(transactionAmount); // Add debited amount back
+      }
+    } else if (transaction.modeOfPayment === "UPI") {
+      if (transaction.logType === "CREDIT") {
+        updatedAccountBalance = updatedAccountBalance.sub(transactionAmount); // Subtract credited amount
+      } else if (transaction.logType === "DEBIT") {
+        updatedAccountBalance = updatedAccountBalance.add(transactionAmount); // Add debited amount back
+      }
+    }
+
+    // Reverse due if PayLater was true
+    if (transaction.payLater && transaction.logType === "CREDIT") {
+      updatedDueBalance = updatedDueBalance.sub(transaction.dueAmount || new Decimal(0));
+    }
+
+    // Update user balances in the database
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        boxBalance: updatedBoxBalance,
+        accountBalance: updatedAccountBalance,
+        due: updatedDueBalance,
+      },
+    });
+
+    // Delete the transaction
     await prisma.transaction.delete({
       where: { id: parseInt(id, 10) },
     });
 
-    res.status(200).json({ message: 'Transaction successfully deleted.' });
+    res.status(200).json({
+      message: "Transaction successfully deleted.",
+      balances: {
+        boxBalance: updatedBoxBalance.toString(),
+        accountBalance: updatedAccountBalance.toString(),
+        due: updatedDueBalance.toString(),
+      },
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error deleting transaction', error });
+    console.error("Error deleting transaction:", error);
+    res.status(500).json({ message: "Error deleting transaction", error });
   }
 };
+
 
 // Helper function to calculate credit and debit totals for a specific date range
 const getTotalsForPeriod = async (userId: number, startDate: Date, endDate: Date, res: Response) => {
