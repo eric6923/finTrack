@@ -1,55 +1,42 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const FullPayment = () => {
   const { transactionId } = useParams();
   const navigate = useNavigate();
-  const [amount, setAmount] = useState("");
-  const [modeOfPayment, setModeOfPayment] = useState("CASH"); // Default to CASH
-  const [transactionNumber, setTransactionNumber] = useState("");
-  const [message, setMessage] = useState("");
+  const [amount, setAmount] = useState('');
+  const [message, setMessage] = useState('');
   const [isPaid, setIsPaid] = useState(false); // Track if the payment is completed
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
 
   // Check localStorage on initial render
   useEffect(() => {
-    const paymentStatus = localStorage.getItem(
-      `paymentStatus-${transactionId}`
-    );
-    console.log("Payment Status from localStorage:", paymentStatus); // Debugging log
-    if (paymentStatus === "paid") {
+    const paymentStatus = localStorage.getItem(`paymentStatus-${transactionId}`);
+    console.log('Payment Status from localStorage:', paymentStatus); // Debugging log
+    if (paymentStatus === 'paid') {
       setIsPaid(true);
     }
   }, [transactionId]);
 
   const handleFullPayment = async () => {
     try {
-      const requestBody = {
-        paymentType: "FULL",
-        modeOfPayment,
-      };
-
-      if (modeOfPayment === "UPI") {
-        if (!transactionNumber) {
-          setMessage("Transaction number is required for UPI payments.");
-          return;
-        }
-        requestBody.transactionNumber = transactionNumber;
-      }
-
       const response = await axios.post(
         `http://localhost:5000/api/user/paylater/${transactionId}`,
-        requestBody
+        {
+          paymentType: 'FULL',
+          amount: parseFloat(amount),
+        }
       );
-
       setMessage(response.data.message); // Display success message
       setIsPaid(true); // Mark the payment as completed
       setShowModal(false); // Close the modal after successful payment
-      localStorage.setItem(`paymentStatus-${transactionId}`, "paid"); // Save payment status
+      // Save the payment status to localStorage
+      localStorage.setItem(`paymentStatus-${transactionId}`, 'paid');
+      console.log('Payment status saved to localStorage'); // Debugging log
     } catch (error) {
-      console.error("Error making full payment:", error);
-      setMessage("Failed to make full payment.");
+      console.error('Error making full payment:', error);
+      setMessage('Failed to make full payment.');
     }
   };
 
@@ -57,10 +44,7 @@ const FullPayment = () => {
     <div className="container mx-auto px-4">
       <h2 className="text-2xl font-bold mb-4">Full Payment</h2>
       <div className="mb-4">
-        <label
-          className="block text-gray-700 text-sm font-bold mb-2"
-          htmlFor="amount"
-        >
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
           Amount
         </label>
         <input
@@ -68,53 +52,16 @@ const FullPayment = () => {
           id="amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="shadow  border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           disabled={isPaid} // Disable input if payment is completed
         />
       </div>
-      <div className="mb-4">
-        <label
-          className="block text-gray-700 text-sm font-bold mb-2"
-          htmlFor="modeOfPayment"
-        >
-          Mode of Payment
-        </label>
-        <select
-          id="modeOfPayment"
-          value={modeOfPayment}
-          onChange={(e) => setModeOfPayment(e.target.value)}
-          // className="shadow  border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          disabled={isPaid} // Disable if payment is completed
-        >
-          <option value="CASH">CASH</option>
-          <option value="UPI">UPI</option>
-        </select>
-      </div>
-
-      {modeOfPayment === "UPI" && (
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="transactionNumber"
-          >
-            Transaction Number
-          </label>
-          <input
-            type="text"
-            id="transactionNumber"
-            value={transactionNumber}
-            onChange={(e) => setTransactionNumber(e.target.value)}
-            className="shadow  border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            disabled={isPaid} // Disable if payment is completed
-          />
-        </div>
-      )}
 
       <div className="flex items-center">
         <button
           onClick={() => setShowModal(true)} // Show modal when clicked
           className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
-            isPaid ? "opacity-50 cursor-not-allowed" : ""
+            isPaid ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           disabled={isPaid} // Disable button if payment is completed
         >
@@ -130,10 +77,7 @@ const FullPayment = () => {
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">
             <h4 className="text-lg font-semibold mb-4">Confirm Full Payment</h4>
-            <p className="mb-4">
-              Are you sure you want to proceed with the full payment and mark
-              the transaction as paid?
-            </p>
+            <p className="mb-4">Are you sure you want to proceed with the full payment and mark the transaction as paid?</p>
             <div className="flex justify-around">
               <button
                 onClick={handleFullPayment}

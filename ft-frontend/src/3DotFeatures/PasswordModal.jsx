@@ -26,6 +26,11 @@ const PasswordModal = ({ onClose, onVerify }) => {
     }
   };
 
+  const handleCancel = () => {
+    onVerify(false, null); // Notify parent component that the modal was canceled
+    onClose(); // Close the modal
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       {/* Modal content */}
@@ -41,7 +46,7 @@ const PasswordModal = ({ onClose, onVerify }) => {
         {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
         <div className="flex justify-end gap-3">
           <button
-            onClick={onClose}
+            onClick={handleCancel} // Call the updated handleCancel
             className="px-4 py-2 bg-gray-300 rounded-lg text-gray-800 hover:bg-gray-400"
           >
             Cancel
