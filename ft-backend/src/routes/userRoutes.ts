@@ -12,6 +12,7 @@ import {
   getUserBalance
 } from "../controllers/user-feature/transactionController";
 import { payLater } from "../controllers/user-feature/paylaterController";
+import { forgotPassword,resetPassword } from "../controllers/Auth/forgotPassword";
 
 import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
 
@@ -195,10 +196,23 @@ router.get('/profit',verifyUser, async (req: Request, res: Response) => {
   }
 });
 
+//forgot password
 
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    await forgotPassword(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error sending mail" });
+  }
+});
 
-
-
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    await resetPassword(req, res); // Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error resetting password" });
+  }
+});
 
 //protected routes
 

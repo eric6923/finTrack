@@ -33,6 +33,8 @@ model User {
   accountBalance      Decimal              @default(0.0)
   boxBalance          Decimal              @default(0.0)
   due                 Decimal              @default(0.0)
+  resetToken          String?              // Token for password reset
+  resetTokenExpiry    DateTime?            // Token expiry timestamp
   agents              Agent[]
   buses               Bus[]
   categories          Category[]
@@ -41,6 +43,7 @@ model User {
   ownerPassword       OwnerPassword?
   transactions        Transaction[]        @relation("UserTransactions")
 }
+
 
 model CompanyShareDetails {
   id                   Int           @id @default(autoincrement())
