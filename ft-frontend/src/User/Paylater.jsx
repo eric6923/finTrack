@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import FullPayment from "../PayLater/FullPayment";
 import axios from "axios";
 import DropdownMenu from "./DropdownMenu";
 import ViewTransaction from "../3DotFeatures/ViewTransaction";
@@ -7,11 +8,13 @@ import EditTransaction from "../3DotFeatures/EditTransaction";
 import DeleteTransaction from "../3DotFeatures/DeleteTransaction";
 import { useNavigate } from "react-router-dom";
 import PartialPayment from "../PayLater/PartialPayment";
-import BackToHome from "../PayLater/BackToHome";
 
 const PayLater = () => {
   const [logs, setLogs] = useState([]);
   const [agentData, setAgentData] = useState([]);
+  const [selectedBus, setSelectedBus] = useState(null);
+  const [filteredLogs, setFilteredLogs] = useState([]);
+
   const [busData, setBusData] = useState([]);
   const [error, setError] = useState(null);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -46,7 +49,12 @@ const PayLater = () => {
         );
 
         const payLaterLogs = responseLogs.data.filter((log) => log.payLater);
-        setLogs(payLaterLogs);
+
+        const sortedLogs = payLaterLogs.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        setLogs(sortedLogs);
 
         const responseBus = await axios.get(
           "http://localhost:5000/api/user/bus",
@@ -129,6 +137,7 @@ const PayLater = () => {
       )
     );
     setSelectedLogForPartialPayment(null);
+    window.location.reload();
   };
 
   const handleFullPayment = async (logId) => {
@@ -175,6 +184,30 @@ const PayLater = () => {
     return agentName || "Unknown Agent"; // Fallback for undefined agentName
   };
 
+  const handleFilterLogs = async () => {
+    if (!selectedBus) {
+      alert("Please select a bus to filter logs.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/user/filter-transaction?busName=${selectedBus}`,
+        { headers: getAuthHeader() }
+      );
+
+      setFilteredLogs(response.data.length > 0 ? response.data : []);
+      if (!response.data.length) alert("No logs found for the selected bus.");
+    } catch (error) {
+      setFilteredLogs([]);
+      setError("Error filtering logs. Please try again.");
+      console.error(
+        "Error filtering logs:",
+        error?.response?.data || error.message
+      );
+    }
+  };
+
   useEffect(() => {
     const fetchAgents = async () => {
       try {
@@ -198,21 +231,6 @@ const PayLater = () => {
 
   return (
     <div className="container mx-auto overflow-x-hidden">
-      {/* <div className="flex justify-start mb-4">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 mr-4 rounded hover:bg-blue-600"
-          onClick={() => setSelectedLogForPartialPayment(true)}
-        >
-          Partial Payment
-        </button>
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          onClick={() => setShowFullPaymentModal(true)}
-        >
-          Full Payment
-        </button>
-      </div> */}
-
       <h1 className="text-2xl font-bold mb-4">PayLater Logs</h1>
 
       {isPasswordModalOpen && (
@@ -242,30 +260,25 @@ const PayLater = () => {
           onClose={() => setSelectedLogForPartialPayment(null)}
         />
       )}
-      {showFullPaymentModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h4 className="text-lg font-semibold mb-4">Confirm Full Payment</h4>
-            <p className="mb-4">
-              Are you sure you want to proceed with the full payment and mark
-              this transaction as paid?
-            </p>
-            <div className="flex justify-around">
-              <button
-                onClick={() => handleFullPayment(selectedLogForFullPayment.id)}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
-                Yes, Mark as Paid
-              </button>
-              <button
-                onClick={() => setShowFullPaymentModal(false)}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+
+      {selectedLogForFullPayment && (
+        <FullPayment
+          log={selectedLogForFullPayment}
+          onUpdateDueAmount={(remainingDue, logId) => {
+            setLogs((prevLogs) =>
+              prevLogs.map((log) =>
+                log.id === logId
+                  ? {
+                      ...log,
+                      dueAmount: remainingDue,
+                      isPaid: remainingDue === 0,
+                    }
+                  : log
+              )
+            );
+          }}
+          onClose={() => setSelectedLogForFullPayment(null)}
+        />
       )}
 
       {isLoading ? (
@@ -274,139 +287,171 @@ const PayLater = () => {
         <ViewTransaction log={selectedLog} onClose={closeView} />
       ) : (
         <div className="overflow-x-auto">
-            <div className="overflow-y-auto max-h-screen">
-          <table className="min-w-[1280px] bg-white border border-gray-200">
-            <thead>
-              <tr>
-                {/* <th className="py-2 px-4 border-b">Description</th> */}
-                <th className="py-2 px-4 border-b">FROM</th>
-                <th className="py-2 px-4 border-b">TO</th>
-                <th className="py-2 px-4 border-b">Amount</th>
-                {/* <th className="py-2 px-4 border-b">Log Type</th> */}
+          <div className="overflow-y-auto max-h-screen">
+            <div className="flex justify-end mb-4 mr-4">
+              <div className="flex items-center">
+                <label htmlFor="bus-select" className="mr-2">
+                  Select Bus:
+                </label>
+                <select
+                  id="bus-select"
+                  value={selectedBus || ""}
+                  onChange={(e) => setSelectedBus(e.target.value)}
+                  className="mr-4"
+                >
+                  <option value="" disabled>
+                    Select a bus
+                  </option>
+                  {busData.map((bus) => (
+                    <option key={bus.id} value={bus.name}>
+                      {bus.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleFilterLogs}
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  Filter
+                </button>
+              </div>
+            </div>
 
-                <th className="py-2 px-4 border-b">Mode</th>
-                <th className="py-2 px-4 border-b">Category</th>
-                <th className="py-2 px-4 border-b">Travel Date</th>
-                <th className="py-2 px-4 border-b">Bus Name</th>
-                <th className="py-2 px-4 border-b">Remarks</th>
-                <th className="py-2 px-4 border-b">Agent</th>
-                <th className="py-2 px-4 border-b">COMMISSION</th>
-                <th className="py-2 px-4 border-b">COLLECTION</th>
-                <th className="py-2 px-4 border-b">DUE</th>
-                <th className="py-2 px-4 border-b">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <React.Fragment key={log.id}>
-                  <tr className="hover:bg-gray-100">
-                    {/* <td className="py-2 px-4 border-b">{log.desc}</td> */}
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.payLaterDetails?.from}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.payLaterDetails?.to}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.amount}
-                    </td>
-                    {/* <td className="py-2 px-4 border-b text-center">{log.logType}</td> */}
+            <table className="min-w-[1280px] bg-white border border-gray-200">
+              <thead>
+                <tr>
+                  {/* <th className="py-2 px-4 border-b">Description</th> */}
+                  <th className="py-2 px-4 border-b">FROM</th>
+                  <th className="py-2 px-4 border-b">TO</th>
+                  <th className="py-2 px-4 border-b">Amount</th>
+                  {/* <th className="py-2 px-4 border-b">Log Type</th> */}
 
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.modeOfPayment}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.category?.name || "Unknown Category"}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.payLaterDetails?.travelDate &&
-                        new Date(
-                          log.payLaterDetails.travelDate
-                        ).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {getBusName(log.payLaterDetails?.busId)}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.remarks}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {getAgentName(log.commission?.agentId)}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.commission?.amount}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.collection?.amount}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.dueAmount}
-                    </td>
-                    <td className="py-2 px-4 border-b">
-                      <DropdownMenu
-                        onView={() => handleView(log)}
-                        onEdit={() => setSelectedLogForEdit(log)}
-                        onDelete={() => setSelectedLogForDelete(log)}
-                        onPartialPayment={() =>
-                          setSelectedLogForPartialPayment(log)
-                        }
-                        onFullPayment={() => {
-                          setSelectedLogForFullPayment(log);
-                          setShowFullPaymentModal(true);
-                        }}
-                        isPaid={log.isPaid}
-                      />
-                    </td>
-                  </tr>
-                  {/* Render buttons below each log */}
-                  <tr>
-                    <td colSpan="14" className="py-2 px-4 text-left bg-gray-50">
-                      <button
-                        className={`px-4 py-2 mr-2 rounded ${
-                          log.isPaid
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
-                        onClick={() => setSelectedLogForPartialPayment(log)}
-                        disabled={log.isPaid}
-                      >
-                        Partial Payment
-                      </button>
-                      <button
-                        className={`px-4 py-2 rounded ${
-                          log.isPaid
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-green-500 text-white hover:bg-green-600"
-                        }`}
-                        onClick={() => {
-                          setSelectedLogForFullPayment(log);
-                          setShowFullPaymentModal(true);
-                        }}
-                        disabled={log.isPaid}
-                      >
-                        Full Payment
-                      </button>
-                    </td>
-                  </tr>
-                  ;
-                  {log.payLater && (
+                  <th className="py-2 px-4 border-b">Mode</th>
+                  <th className="py-2 px-4 border-b">Category</th>
+                  <th className="py-2 px-4 border-b">Travel Date</th>
+                  <th className="py-2 px-4 border-b">Bus Name</th>
+                  <th className="py-2 px-4 border-b">Remarks</th>
+                  <th className="py-2 px-4 border-b">Agent</th>
+                  <th className="py-2 px-4 border-b">COMMISSION</th>
+                  <th className="py-2 px-4 border-b">COLLECTION</th>
+                  <th className="py-2 px-4 border-b">DUE</th>
+                  <th className="py-2 px-4 border-b">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(filteredLogs.length > 0 ? filteredLogs : logs).map((log) => (
+                  <React.Fragment key={log.id}>
+                    <tr className="hover:bg-gray-100">
+                      {/* <td className="py-2 px-4 border-b">{log.desc}</td> */}
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.payLaterDetails?.from}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.payLaterDetails?.to}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.amount}
+                      </td>
+                      {/* <td className="py-2 px-4 border-b text-center">{log.logType}</td> */}
+
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.modeOfPayment}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.category?.name || "Unknown Category"}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.payLaterDetails?.travelDate &&
+                          new Date(
+                            log.payLaterDetails.travelDate
+                          ).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {getBusName(log.payLaterDetails?.busId)}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.remarks}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {getAgentName(log.commission?.agentId)}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.commission?.amount}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.collection?.amount}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {log.dueAmount}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <DropdownMenu
+                          onView={() => handleView(log)}
+                          onEdit={() => setSelectedLogForEdit(log)}
+                          onDelete={() => setSelectedLogForDelete(log)}
+                          onPartialPayment={() =>
+                            setSelectedLogForPartialPayment(log)
+                          }
+                          onFullPayment={() => {
+                            setSelectedLogForFullPayment(log);
+                            setShowFullPaymentModal(true);
+                          }}
+                          isPaid={log.isPaid}
+                        />
+                      </td>
+                    </tr>
+                    {/* Render buttons below each log */}
                     <tr>
                       <td
                         colSpan="14"
-                        className="p-2 bg-yellow-100 border border-yellow-400 text-center"
+                        className="py-2 px-4 text-left bg-gray-50"
                       >
-                        Due Amount: {log.dueAmount}
+                        <button
+                          className={`px-4 py-2 mr-2 rounded ${
+                            Number(log.dueAmount) === 0
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-blue-500 text-white hover:bg-blue-600"
+                          }`}
+                          onClick={() => setSelectedLogForPartialPayment(log)}
+                          disabled={Number(log.dueAmount) === 0}
+                        >
+                          Partial Payment
+                        </button>
+                        <button
+                          className={`px-4 py-2 rounded ${
+                            Number(log.dueAmount) === 0
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-green-500 text-white hover:bg-green-600"
+                          }`}
+                          onClick={() => {
+                            setSelectedLogForFullPayment(log);
+                            setShowFullPaymentModal(true);
+                          }}
+                          disabled={Number(log.dueAmount) === 0}
+                        >
+                          Full Payment
+                        </button>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+                    ;
+                    {log.payLater && (
+                      <tr>
+                        <td
+                          colSpan="14"
+                          className="p-2 bg-yellow-100 border border-yellow-400 text-center"
+                        >
+                          Due Amount: {log.dueAmount}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

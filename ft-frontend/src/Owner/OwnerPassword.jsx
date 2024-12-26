@@ -49,8 +49,23 @@ const OwnerPassword = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white shadow-lg rounded-lg">
+    <div className="flex min-h-screen">
+      <div
+        className="w-1/4 min-h-screen bg-cover bg-no-repeat bg-gray-100 flex items-center justify-center"
+        style={{ backgroundImage: "url('/src/assets/wel-frame.png')" }}
+      ></div>
+      <div className="ml-1/4 w-3/4 bg-white p-10 overflow-auto">
+        {/* Logo and Title */}
+        <div className="flex items-center justify-center mb-8">
+          <img
+            src="/src/assets/fintrack-logo.png"
+            alt="FinTrack Logo"
+            className="w-16 h-16"
+          />
+          <h2 className="text-4xl font-bold ml-4 text-black-600">FinTrack</h2>
+        </div>
+
+      <div className="w-full max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg mt-36">
         <h2 className="text-2xl font-semibold text-center mb-6">Set Owner Password</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -72,7 +87,7 @@ const OwnerPassword = () => {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition duration-300"
+            className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
           >
             Set Password
           </button>
@@ -88,6 +103,7 @@ const OwnerPassword = () => {
           </p>
         )}
       </div>
+    </div>
     </div>
   );
 };

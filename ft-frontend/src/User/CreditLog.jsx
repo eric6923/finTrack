@@ -164,6 +164,7 @@ const Credit = () => {
       if (response.ok) {
         setDueAmount(data.dueAmount);
         alert("Credit log created successfully!");
+        window.location.reload();
         setIsModalOpen(false);
       } else {
         alert("Failed to create credit log: " + data.message);
@@ -235,6 +236,37 @@ const Credit = () => {
                       />
                     </label>
 
+                    <label className="flex flex-col">
+                      Travel Date:
+                      <input
+                        type="datetime-local"
+                        name="travelDate"
+                        value={formData.travelDate}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </label>
+                    <label className="flex flex-col">
+                      Bus Name:
+                      <select
+                        name="busId"
+                        value={formData.busId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        {Array.isArray(busOptions) &&
+                          busOptions.map((bus) => (
+                            <option key={bus.id} value={bus.id}>
+                              {bus.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    
+
                     {/* Row 2 */}
                     <label className="flex flex-col">
                       Amount:
@@ -302,24 +334,7 @@ const Credit = () => {
                         </button>
                       </div>
                     </label>
-                    <label className="flex flex-col">
-                      Bus Name:
-                      <select
-                        name="busId"
-                        value={formData.busId}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Select</option>
-                        {Array.isArray(busOptions) &&
-                          busOptions.map((bus) => (
-                            <option key={bus.id} value={bus.id}>
-                              {bus.name}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
+                    
 
                     <label className="flex flex-col">
                       Collection Amount:
@@ -332,17 +347,7 @@ const Credit = () => {
                       />
                     </label>
                     {/* Row 4 */}
-                    <label className="flex flex-col">
-                      Travel Date:
-                      <input
-                        type="datetime-local"
-                        name="travelDate"
-                        value={formData.travelDate}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </label>
+                    
 
                     {/* Row 5 */}
                     <label className="flex flex-col">
@@ -351,7 +356,7 @@ const Credit = () => {
                         name="agentId"
                         value={formData.agentId}
                         onChange={handleChange}
-                        required
+                        
                         className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select</option>

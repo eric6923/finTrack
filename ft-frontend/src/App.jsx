@@ -39,6 +39,8 @@ import StartingAccount from "./Owner/StartingAccount";
 import SecretPassword from "./Owner/SecretPassword";
 import BackToHome from "./PayLater/BackToHome";
 import ViewShare from "./Owner/ViewShare";
+import SendResetLink from "./ForgotPassword/SendResetLink";
+import RestPassword from "./ForgotPassword/RestPassword";
 
 const App = () => {
   return (
@@ -69,7 +71,9 @@ const App = () => {
         <Route path="/admin" element={<Admin />} />
         <Route path="/all-users" element={<Allusers />} />
         <Route path="/admin-sidebar" element={<Adminsidebar />} />
-        <Route path="/controlpannel" element={<OwnerDashboard />} />
+        {/* <Route path="/controlpannel" element={<OwnerDashboard />} /> */}
+        <Route path="/sendlink" element={<SendResetLink/>}/>
+        <Route path="/resetpassword" element={<RestPassword/>}/>
 
         {/* Routes with Sidebar */}
         <Route
@@ -93,6 +97,14 @@ const App = () => {
           element={
             <Sidebar>
               <Custom />
+            </Sidebar>
+          }
+        />
+        <Route
+          path="/controlpannel"
+          element={
+            <Sidebar>
+              <OwnerDashboard />
             </Sidebar>
           }
         />

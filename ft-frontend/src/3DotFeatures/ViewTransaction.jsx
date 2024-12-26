@@ -48,68 +48,117 @@ const ViewTransaction = ({ log, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-11/12 max-w-3xl overflow-y-auto">
-        <h2 className="text-xl font-semibold text-center mb-6">Transaction Details</h2>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-            <p><strong>Description:</strong> {log.desc}</p>
-            <p><strong>Log Type:</strong> {log.logType}</p>
-            <p><strong>Amount:</strong> {log.amount}</p>
-            <p><strong>Mode of Payment:</strong> {log.modeOfPayment}</p>
-            <p><strong>Transaction No:</strong> {log.transactionNo || 'N/A'}</p>
-            <p><strong>Remarks:</strong> {log.remarks}</p>
-            <p><strong>Category:</strong> {log.category?.name || 'N/A'}</p>
-            <p><strong>Pay Later:</strong> {log.payLater ? 'Yes' : 'No'}</p>
-          </div>
+  <div className="bg-white p-8 rounded-lg shadow-lg w-11/12 max-w-3xl flex flex-col h-full">
+    <h2 className="text-xl font-semibold text-center mb-6">Transaction Details</h2>
+
+    <div className="flex-grow overflow-y-auto">
+      <table className="min-w-full bg-white border border-gray-200">
+        {/* <thead>
+          <tr>
+            <th className="py-2 px-4 border-b">Field</th>
+            <th className="py-2 px-4 border-b">Details</th>
+          </tr>
+        </thead> */}
+        <tbody>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Description:</strong></td>
+            <td className="py-2 px-4 border-b">{log.desc}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Log Type:</strong></td>
+            <td className="py-2 px-4 border-b">{log.logType}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Amount:</strong></td>
+            <td className="py-2 px-4 border-b">{log.amount}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Mode of Payment:</strong></td>
+            <td className="py-2 px-4 border-b">{log.modeOfPayment}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Transaction No:</strong></td>
+            <td className="py-2 px-4 border-b">{log.transactionNo || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Remarks:</strong></td>
+            <td className="py-2 px-4 border-b">{log.remarks}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Category:</strong></td>
+            <td className="py-2 px-4 border-b">{log.category?.name || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Pay Later:</strong></td>
+            <td className="py-2 px-4 border-b">{log.payLater ? 'Yes' : 'No'}</td>
+          </tr>
 
           {log.payLater && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-lg mb-2">Pay Later Details:</h3>
-              <div className="space-y-2">
-                <p><strong>From:</strong> {log.payLaterDetails?.from || 'N/A'}</p>
-                <p><strong>To:</strong> {log.payLaterDetails?.to || 'N/A'}</p>
-                <p><strong>Travel Date:</strong> {log.payLaterDetails?.travelDate ? new Date(log.payLaterDetails.travelDate).toLocaleString() : 'N/A'}</p>
-                <p><strong>Bus Name:</strong> {busName}</p>
-              </div>
-            </div>
+            <tr>
+              <td colSpan="2" className="py-2 px-4 border-b">
+                <div className="overflow-y-auto max-h-48">
+                  <h3 className="font-semibold text-lg mb-2">Pay Later Details:</h3>
+                  <div className="space-y-2">
+                    <p><strong>From:</strong> {log.payLaterDetails?.from || 'N/A'}</p>
+                    <p><strong>To:</strong> {log.payLaterDetails?.to || 'N/A'}</p>
+                    <p><strong>Travel Date:</strong> {log.payLaterDetails?.travelDate ? new Date(log.payLaterDetails.travelDate).toLocaleString() : 'N/A'}</p>
+                    <p><strong>Bus Name:</strong> {busName}</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
           )}
 
           {log.commission && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-lg mb-2">Commission Details:</h3>
-              <div className="space-y-2">
-                <p><strong>Agent Name:</strong> {agentName}</p>
-                <p><strong>Amount:</strong> {log.commission.amount}</p>
-              </div>
-            </div>
+            <>
+              <tr>
+                <td className="py-2 px-4 border-b"><strong>Agent Name:</strong></td>
+                <td className="py-2 px-4 border-b">{agentName}</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-4 border-b"><strong>Commission Amount:</strong></td>
+                <td className="py-2 px-4 border-b">{log.commission.amount}</td>
+              </tr>
+            </>
           )}
 
           {log.collection && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-lg mb-2">Collection Details:</h3>
-              <div className="space-y-2">
-                <p><strong>TYPE:</strong> {operatorName}</p>
-                <p><strong>Amount:</strong> {log.collection.amount}</p>
-              </div>
-            </div>
+            <>
+              <tr>
+                <td className="py-2 px-4 border-b"><strong>Operator:</strong></td>
+                <td className="py-2 px-4 border-b">{operatorName}</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-4 border-b"><strong>Collection Amount:</strong></td>
+                <td className="py-2 px-4 border-b">{log.collection.amount}</td>
+              </tr>
+            </>
           )}
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-6">
-            <p><strong>Created At:</strong> {new Date(log.createdAt).toLocaleString()}</p>
-            <p><strong>Updated At:</strong> {new Date(log.updatedAt).toLocaleString()}</p>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={onClose}
-            className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition duration-200"
-          >
-            Close
-          </button>
-        </div>
-      </div>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Created At:</strong></td>
+            <td className="py-2 px-4 border-b">{new Date(log.createdAt).toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-4 border-b"><strong>Updated At:</strong></td>
+            <td className="py-2 px-4 border-b">{new Date(log.updatedAt).toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
+    <div className="flex justify-end mt-6">
+      <button
+        onClick={onClose}
+        className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition duration-200"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+
   );
 };
 

@@ -105,7 +105,7 @@ export default function Custom() {
           operatorsResponse.data.map((operator) => operator.name)
         ); // Log operator names// Set operators list
       } catch (err) {
-        setError("Error fetching data. Please try again.");
+        // setError("Error fetching data. Please try again.");
       }
     };
 
@@ -151,17 +151,19 @@ export default function Custom() {
 
       let filteredLogs = response.data;
 
-      // Apply Pay Later filter: include only logs with payLater === true
-      if (filters.payLater) {
-        filteredLogs = filteredLogs.filter((log) => log.payLater === true);
-      }
-
-      // Apply Others filter: include only logs with logType === 'CREDIT' and payLater !== true
-      if (filters.others) {
+      if (filters.payLater && filters.others) {
         filteredLogs = filteredLogs.filter(
           (log) =>
-            log.logType === "CREDIT" && // Only include credit logs
-            (!log.payLater || log.payLater === false) // Exclude payLater true
+            log.logType === "CREDIT" && // Include credit logs
+            log.payLater === true // Include logs with payLater true
+        );
+      } else if (filters.payLater) {
+        filteredLogs = filteredLogs.filter((log) => log.payLater === true);
+      } else if (filters.others) {
+        filteredLogs = filteredLogs.filter(
+          (log) =>
+            log.logType === "CREDIT" && // Include credit logs
+            (!log.payLater || log.payLater === false) // Exclude logs with payLater true
         );
       }
 
@@ -176,7 +178,7 @@ export default function Custom() {
 
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-2xl font-bold mb-4">Report</h1>
+      <h1 className="text-2xl font-bold mb-4">Reports</h1>
       <div className="flex gap-4 items-center mb-4">
         <input
           type="date"
@@ -195,59 +197,8 @@ export default function Custom() {
 
       {/* Filter Section */}
       {/* Updated Filter Section with Styles and Ordering */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div>
-          <label className="block mb-1 font-medium">Agent Name:</label>
-          <select
-            name="agentName"
-            value={filters.agentName}
-            onChange={handleFilterChange}
-            className="border border-gray-300 p-2 rounded-md"
-          >
-            <option value="">All Agents</option>
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.name}>
-                {agent.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Type:</label>
-          <select
-            name="operatorName"
-            value={filters.operatorName}
-            onChange={handleFilterChange}
-            className="border border-gray-300 p-2 rounded-md"
-          >
-            <option value="">All Types</option>
-            {operators.map((operator) => (
-              <option key={operator.id} value={operator.name}>
-                {operator.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Category:</label>
-          <select
-            name="category"
-            value={filters.category}
-            onChange={handleFilterChange}
-            className="border border-gray-300 p-2 rounded-md"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
+      <div className="flex flex-wrap gap-4 mb-6">
+      <div>
           <label className="block mb-1 font-medium">Log Type:</label>
           <select
             name="logType"
@@ -272,6 +223,59 @@ export default function Custom() {
             <option value="">All Modes</option>
             <option value="CASH">CASH</option>
             <option value="UPI">UPI</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">Category:</label>
+          <select
+            name="category"
+            value={filters.category}
+            onChange={handleFilterChange}
+            className="border border-gray-300 p-2 rounded-md"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">Type:</label>
+          <select
+            name="operatorName"
+            value={filters.operatorName}
+            onChange={handleFilterChange}
+            className="border border-gray-300 p-2 rounded-md"
+          >
+            <option value="">All Types</option>
+            {operators.map((operator) => (
+              <option key={operator.id} value={operator.name}>
+                {operator.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div>
+          <label className="block mb-1 font-medium">Agent Name:</label>
+          <select
+            name="agentName"
+            value={filters.agentName}
+            onChange={handleFilterChange}
+            className="border border-gray-300 p-2 rounded-md"
+          >
+            <option value="">All Agents</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.name}>
+                {agent.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -344,7 +348,7 @@ export default function Custom() {
                   <th className="py-2 px-4 border-b">COMMISSION</th>
                   <th className="py-2 px-4 border-b">COLLECTION</th>
                   <th className="py-2 px-4 border-b">DUE</th>
-                  <th className="py-2 px-4 border-b">REMARKS</th>
+                  
                 </>
               )}
             </tr>
@@ -421,9 +425,7 @@ export default function Custom() {
                         <td className="py-2 px-4 border-b text-center">
                           {log.dueAmount || "N/A"}
                         </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.remarks || "N/A"}
-                        </td>
+                        
                       </>
                     )}
                   </tr>

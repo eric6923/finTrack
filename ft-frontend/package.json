@@ -7,8 +7,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mui/icons-material": "^6.2.1",
+    "@mui/material": "^6.2.1",
+    "@mui/x-date-pickers": "^7.23.3",
     "@nextui-org/react": "^2.6.5",
     "axios": "^1.7.9",
+    "dayjs": "^1.11.13",
     "framer-motion": "^11.13.3",
     "jwt-decode": "^4.0.0",
     "pdfreader": "^3.0.5",

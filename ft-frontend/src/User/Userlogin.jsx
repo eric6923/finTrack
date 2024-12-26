@@ -143,6 +143,14 @@ const UserLogin = () => {
                       onChange={handleChange}
                       className="p-4 h-2 mt-1 w-full rounded-md border-2 border-gray-300 bg-white text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    <div className="mt-2 text-sm">
+                      <span
+                        onClick={() => navigate("/sendlink")}
+                        className="font-medium text-blue-600 cursor-pointer hover:underline ml-40"
+                      >
+                        Forgot password?
+                      </span>
+                    </div>
                   </div>
                 </div>
 

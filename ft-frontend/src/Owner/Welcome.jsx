@@ -146,8 +146,11 @@ const Welcome = () => {
             </label>
             <input
               type="number"
-              value={numberOfShareholders}
-              onChange={(e) => setNumberOfShareholders(Number(e.target.value))}
+              value={numberOfShareholders.toString().replace(/^0+(?!$)/, "")}
+              onChange={(e) => {
+                const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
+                setNumberOfShareholders(value === "" ? 0 : parseInt(value, 10)); // Handle empty input gracefully
+              }}
               min="0"
               required
               className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -182,14 +185,17 @@ const Welcome = () => {
                 </label>
                 <input
                   type="number"
-                  value={shareholder.sharePercentage}
-                  onChange={(e) =>
+                  value={shareholder.sharePercentage
+                    .toString()
+                    .replace(/^0+(?!$)/, "")}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
                     handleShareholderChange(
                       index,
                       "sharePercentage",
-                      Number(e.target.value)
-                    )
-                  }
+                      value === "" ? 0 : Number(value) // Handle empty input gracefully
+                    );
+                  }}
                   required
                   min="0"
                   max="100"
