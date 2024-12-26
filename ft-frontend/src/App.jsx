@@ -16,7 +16,6 @@ import Credit from "./User/Credit";
 import Paylater from "./User/Paylater";
 import Transactions from "./User/Transactions";
 import Reports from "./User/Reports";
-
 import Admin from "./Admin/Admin";
 import Adminsidebar from "./Admin/Adminsidebar";
 import Adminlogin from "./Admin/Adminlogin";
@@ -24,7 +23,6 @@ import Allusers from "./Admin/Allusers";
 import Pending from "./Admin/Pending";
 import { AuthProvider } from "./Admin/AuthContext";
 import ControlPanel from "./Admin/ControlPanel";
-
 import Custom from "./User/Custom";
 import OwnerPassword from "./Owner/OwnerPassword";
 import OwnerDashboard from "./Owner/OwnerDashboard";
