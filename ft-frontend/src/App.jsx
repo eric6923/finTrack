@@ -43,6 +43,7 @@ import RestPassword from "./ForgotPassword/RestPassword";
 const App = () => {
   return (
     <Router>
+      <div>this is text</div>
       <Routes>
         {/* Routes without Sidebar */}
         <Route path="/welcome" element={<Welcome />} />
@@ -70,8 +71,8 @@ const App = () => {
         <Route path="/all-users" element={<Allusers />} />
         <Route path="/admin-sidebar" element={<Adminsidebar />} />
         {/* <Route path="/controlpannel" element={<OwnerDashboard />} /> */}
-        <Route path="/sendlink" element={<SendResetLink/>}/>
-        <Route path="/resetpassword" element={<RestPassword/>}/>
+        <Route path="/sendlink" element={<SendResetLink />} />
+        <Route path="/resetpassword" element={<RestPassword />} />
 
         {/* Routes with Sidebar */}
         <Route
