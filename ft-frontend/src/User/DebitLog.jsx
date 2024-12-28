@@ -70,6 +70,7 @@ const CreateDebitLog = () => {
 
       setError(null);
       setSuccess('Debit log created successfully!');
+      window.location.reload();
       setFormData({
         desc: '',
         amount: '',

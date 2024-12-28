@@ -30,6 +30,7 @@ const FullPayment = ({ log, onUpdateDueAmount, onClose }) => {
 
       const remainingDue = response.data.remainingDue;
       onUpdateDueAmount(remainingDue, log.id); // Update the parent with the new due amount
+      window.location.reload();
       onClose(); // Close the modal
     } catch (error) {
       setError("Error making full payment. Please try again.");
@@ -83,10 +84,12 @@ const FullPayment = ({ log, onUpdateDueAmount, onClose }) => {
           </button>
           <button
             onClick={handleFullPayment}
+            disabled={isSubmitting || log.dueAmount === 0} // Disable button if dueAmount is 0
             className={`px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              isSubmitting || log.dueAmount === 0
+                ? "opacity-50 cursor-not-allowed"
+                : ""
             }`}
-            disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "Submit Payment"}
           </button>
@@ -97,5 +100,3 @@ const FullPayment = ({ log, onUpdateDueAmount, onClose }) => {
 };
 
 export default FullPayment;
-
-

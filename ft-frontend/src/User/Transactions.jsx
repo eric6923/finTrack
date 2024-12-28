@@ -16,7 +16,7 @@ const Transactions = () => {
 
       {/* Buttons positioned below the Header, aligned to the right */}
       <div className="relative">
-        <div className="absolute top-0 right-0 flex items-center gap-4 pr-6 py-2">
+        <div className="absolute top-0 right-0 flex items-center pr-16 ">
           {/* Buttons */}
           <CreditLog />
           <DebitLog />

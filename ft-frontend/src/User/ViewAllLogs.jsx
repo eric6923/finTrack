@@ -45,8 +45,13 @@ const ViewAllLogs = () => {
           return { ...log, isPaid };
         });
 
+        const sortedLogs = logsWithPaymentStatus.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
         // Set the logs with the payment status
-        setLogs(logsWithPaymentStatus);
+        setLogs(sortedLogs);
+        console.log(responseLogs.data);
 
         const responseBus = await axios.get(
           "http://localhost:5000/api/user/bus",
@@ -151,35 +156,6 @@ const ViewAllLogs = () => {
     setSelectedLogForFullPayment(null); // Close partial payment form
   };
 
-  // Handle full payment and mark as paid
-  // const handleFullPayment = async (logId) => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const response = await axios.post(
-  //       `http://localhost:5000/api/user/paylater/${logId}`,
-  //       { paymentType: "FULL" },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-
-  //     setLogs((prevLogs) =>
-  //       prevLogs.map((log) =>
-  //         log.id === logId
-  //           ? { ...log, dueAmount: 0, logType: "Paid", isPaid: true }
-  //           : log
-  //       )
-  //     );
-
-  //     localStorage.setItem(`paymentStatus-${logId}`, "paid");
-  //     setShowFullPaymentModal(false);
-  //     setSuccessMessage(
-  //       response.data.message || "Payment marked as paid successfully!"
-  //     );
-  //   } catch (error) {
-  //     console.error("Error making full payment:", error);
-  //     alert("Error making full payment");
-  //   }
-  // };
-
   return (
     <div className="container mx-auto px-4">
       {isPasswordModalOpen && (
@@ -217,49 +193,58 @@ const ViewAllLogs = () => {
         <FullPayment
           log={selectedLogForFullPayment}
           onUpdateDueAmount={handleFullPaymentSuccess}
-          onClose={() => setSelectedLogForPartialPayment(null)}
+          onClose={() => setShowFullPaymentModal(false)} // Correctly reset the modal state
         />
       )}
 
       {selectedLog ? (
         <ViewTransaction log={selectedLog} onClose={closeView} />
       ) : (
+        // Updated table structure for clear log differentiation
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-          {" "}
-          {/* Added scroll here */}
-          <table className="min-w-full bg-white border border-gray-200">
+          {error && <p className="text-red-500">{error}</p>}
+          <table className="min-w-full bg-white border-collapse border border-gray-300">
             <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Description</th>
-                <th className="py-2 px-4 border-b">Log Type</th>
-                <th className="py-2 px-4 border-b">Amount</th>
-                <th className="py-2 px-4 border-b">Payment Mode</th>
-                <th className="py-2 px-4 border-b">Remarks</th>
-                <th className="py-2 px-4 border-b">Category</th>
-                <th className="py-2 px-4 border-b">Actions</th>
+              <tr className="bg-gray-200">
+                <th className="py-3 px-4 border border-gray-300">
+                  Description
+                </th>
+                <th className="py-3 px-4 border border-gray-300">Log Type</th>
+                <th className="py-3 px-4 border border-gray-300">Amount</th>
+                <th className="py-3 px-4 border border-gray-300">
+                  Payment Mode
+                </th>
+                <th className="py-3 px-4 border border-gray-300">Category</th>
+                <th className="py-3 px-4 border border-gray-300">Remarks</th>
+
+                <th className="py-3 px-4 border border-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
                 <React.Fragment key={log.id}>
-                  <tr className="hover:bg-gray-100">
-                    <td className="py-2 px-4 border-b ">{log.desc}</td>
-                    <td className="py-2 px-4 border-b text-center">
+                  {/* Non-PayLater Log */}
+                  <tr className="hover:bg-gray-50 border-t border-gray-300">
+                    <td className="py-3 px-4 border border-gray-300">
+                      {log.desc}
+                    </td>
+                    <td className="py-3 px-4 border border-gray-300 text-center">
                       {log.logType}
                     </td>
-                    <td className="py-2 px-4 border-b text-center">
+                    <td className="py-3 px-4 border border-gray-300 text-center">
                       {log.amount}
                     </td>
-                    <td className="py-2 px-4 border-b text-center">
+                    <td className="py-3 px-4 border border-gray-300 text-center">
                       {log.modeOfPayment}
                     </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {log.remarks}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
+                    <td className="py-3 px-4 border border-gray-300 text-center">
                       {log.category?.name || "N/A"}
                     </td>
-                    <td className="py-2 px-4 border-b text-center">
+                    <td className="py-3 px-4 border border-gray-300 text-center">
+                      {log.remarks}
+                    </td>
+
+                    <td className="py-3 px-4 border border-gray-300 text-center">
                       <DropdownMenu
                         onView={() => handleView(log)}
                         onEdit={() => handleEdit(log)}
@@ -267,84 +252,93 @@ const ViewAllLogs = () => {
                       />
                     </td>
                   </tr>
+
+                  {/* Payment Status */}
                   {log.isPaid && (
                     <tr>
                       <td
                         colSpan="7"
-                        className="py-2 px-4 border-b text-green-500 font-bold"
+                        className="py-3 px-4 border border-gray-300 bg-green-50 text-green-600 font-semibold text-center"
                       >
                         Payment Done!
                       </td>
                     </tr>
                   )}
+
+                  {/* PayLater Log */}
                   {log.payLater && (
                     <tr>
                       <td colSpan="7" className="py-2 px-4 border-b bg-gray-50">
-                        {/* Existing Pay Later Details */}
-                        <strong className="block text-lg font-semibold mb-2">
-                          Pay Later Details:
-                        </strong>
-                        {log.payLaterDetails ? (
-                          <div className="mt-2">
-                            {/* Headers Row */}
-                            <div className="flex gap-8 font-bold">
-                              <p className="flex-1">FROM</p>
-                              <p className="flex-1">TO</p>
-                              <p className="flex-1">Bus Name</p>
-                              <p className="flex-1">Travel Date</p>
-                              <p className="flex-1">COMMISSION</p>
-                              <p className="flex-1">COLLECTION</p>
-                              <p className="flex-1">DUE</p>
-                              <p className="flex-1">REMARKS</p>
-                            </div>
+                        {/* Single Box for "Pay Later Details" */}
+                        <div className="bg-blue-100 text-blue-900 font-semibold py-2 px-4 rounded-t">
+                          Pay Later Details
+                        </div>
 
-                            {/* Values Row */}
-                            <div className="flex gap-8">
-                              <p className="flex-1">
-                                {log.payLaterDetails.from}
-                              </p>
-                              <p className="flex-1">{log.payLaterDetails.to}</p>
-                              <p className="flex-1">
-                                {getBusName(log.payLaterDetails.busId)}
-                              </p>
-                              <p className="flex-1">
-                                {new Date(
-                                  log.payLaterDetails.travelDate
-                                ).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </p>
-                              <p className="flex-1 text-center">
-                                {log.commission.amount}
-                              </p>
-                              <p className="flex-1 text-center">
-                                {log.collection.amount}
-                              </p>
-                              <p className="flex-1 ">{log.dueAmount}</p>
-                              <p className="flex-1">{log.remarks}</p>
-                            </div>
+                        {/* Headers Row */}
+                        <div className="flex gap-8 mt-2 font-bold border-b border-gray-300 pb-2">
+                          <p className="flex-1">FROM</p>
+                          <p className="flex-1">TO</p>
+                          <p className="flex-1">Bus Name</p>
+                          <p className="flex-1">Travel Date</p>
+                          <p className="flex-1">COMMISSION</p>
+                          <p className="flex-1 ml-2">COLLECTION</p>
+                          <p className="flex-1">DUE</p>
+                          <p className="flex-1">REMARKS</p>
+                        </div>
+
+                        {/* Values Row */}
+                        {log.payLaterDetails ? (
+                          <div className="flex gap-8 mt-2">
+                            <p className="flex-1">{log.payLaterDetails.from}</p>
+                            <p className="flex-1">{log.payLaterDetails.to}</p>
+                            <p className="flex-1">
+                              {getBusName(log.payLaterDetails.busId)}
+                            </p>
+                            <p className="flex-1">
+                              {new Date(
+                                log.payLaterDetails.travelDate
+                              ).toLocaleString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                                hour12: true, // This will display the time in 12-hour format (AM/PM)
+                              })}
+                            </p>
+
+                            <p className="flex-1 text-center mr-4">
+                              {log.commission.amount}
+                            </p>
+                            <p className="flex-1 text-center mr-4">
+                              {log.collection.amount}
+                            </p>
+                            <p className="flex-1">{log.dueAmount}</p>
+                            <p className="flex-1">{log.remarks}</p>
                           </div>
                         ) : (
-                          <p className="text-red-500">No details available</p>
+                          <p className="text-red-500 mt-2">
+                            No details available
+                          </p>
                         )}
 
+                        {/* Buttons Section */}
                         <div className="mt-4">
                           <button
                             className={`${
-                              log.isPaid
+                              log.dueAmount === "0"
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-blue-500 hover:bg-blue-700 text-white"
                             } font-bold py-2 px-4 rounded`}
                             onClick={() => setSelectedLogForPartialPayment(log)}
-                            disabled={log.isPaid}
+                            disabled={log.dueAmount === "0"}
                           >
                             Partial Payment
                           </button>
                           <button
                             className={`${
-                              log.isPaid
+                              log.dueAmount === "0"
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-green-500 hover:bg-green-700 text-white"
                             } font-bold py-2 px-4 rounded ml-2`}
@@ -352,7 +346,7 @@ const ViewAllLogs = () => {
                               setSelectedLogForFullPayment(log);
                               setShowFullPaymentModal(true);
                             }}
-                            disabled={log.isPaid}
+                            disabled={log.dueAmount === "0"}
                           >
                             Mark as Paid
                           </button>
@@ -365,11 +359,13 @@ const ViewAllLogs = () => {
                       </td>
                     </tr>
                   )}
+                  <tr>
+                    <td colSpan="7" className="py-3"></td>
+                  </tr>
                 </React.Fragment>
               ))}
             </tbody>
           </table>
-          {error && <p className="text-red-500">{error}</p>}
         </div>
       )}
     </div>

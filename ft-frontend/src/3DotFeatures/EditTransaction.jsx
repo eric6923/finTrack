@@ -175,6 +175,7 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
       console.log("Updated transaction:", response.data);
       onUpdate(response.data.updatedTransaction); // Notify parent with updated transaction data
       onClose(); // Close the modal
+      window.location.reload();
     } catch (error) {
       console.error("Error updating transaction:", error);
       setErrorMessage("Failed to update transaction. Please try again.");
@@ -228,7 +229,7 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
               className="w-full border rounded p-2"
             >
               <option value="CASH">Cash</option>
-              <option value="CARD">Card</option>
+              {/* <option value="CARD">Card</option> */}
               <option value="UPI">UPI</option>
             </select>
           </div>
