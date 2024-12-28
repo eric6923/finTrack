@@ -13,10 +13,9 @@ interface CustomRequest extends Request {
 // Create a transaction
 export const createTransaction = async (req: CustomRequest, res: Response) => {
   try {
-    const userId = Number(req.user?.id); // Get userId from token
-    const logType = req.query.logType as string; // Get logType from query params
+    const userId = Number(req.user?.id);
+    const logType = req.query.logType as string;
 
-    // Ensure logType is valid (either CREDIT or DEBIT)
     if (logType !== "CREDIT" && logType !== "DEBIT") {
       return res.status(400).json({ message: 'Invalid logType. Must be either "CREDIT" or "DEBIT".' });
     }
@@ -34,31 +33,22 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       collection,
     } = req.body;
 
-    // Ensure 'amount' is provided and is a valid number
     if (!amount || isNaN(parseFloat(amount))) {
       return res.status(400).json({ message: "Invalid amount provided." });
     }
 
-    const parsedAmount = new Decimal(amount);  // Convert to Decimal
+    const parsedAmount = new Decimal(amount);
 
-    // Ensure payLater can only be true for logType === 'CREDIT'
     if (payLater && logType !== "CREDIT") {
-      return res
-        .status(400)
-        .json({ message: "PayLater can only be true for CREDIT transactions." });
+      return res.status(400).json({ message: "PayLater can only be true for CREDIT transactions." });
     }
 
-    // Check if description is required based on the logType and payLater
     if ((!desc || desc.trim() === "") && !(logType === "CREDIT" && payLater)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Description is required unless logType is CREDIT and PayLater is true.",
-        });
+      return res.status(400).json({
+        message: "Description is required unless logType is CREDIT and PayLater is true.",
+      });
     }
 
-    // Balance adjustment logic
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { boxBalance: true, accountBalance: true, due: true },
@@ -72,22 +62,19 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     let updatedAccountBalance = user.accountBalance || new Decimal(0);
     let updatedDueBalance = user.due || new Decimal(0);
 
-    // New logic for shareholder finance category deduction
     if (logType === 'DEBIT') {
-      // Check if the category is a shareholder finance category
       const category = await prisma.category.findUnique({
         where: { id: categoryId },
       });
     
       if (category && category.name.endsWith(' FINANCE')) {
-        // Extract shareholder name from category
         const shareholderName = category.name.replace(' FINANCE', '').trim();
     
         const shareholder = await prisma.shareholder.findFirst({
           where: {
             name: shareholderName,
             companyShareDetails: {
-              userId: userId, // Ensure shareholder belongs to the user's company
+              userId: userId,
             },
           },
         });
@@ -98,27 +85,16 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
           });
         }
     
-        // Validate if the debit amount exceeds the shareholder's shareProfit
-        // if (debitAmount.greaterThan(shareholder.shareProfit)) {
-        //   return res.status(400).json({
-        //     message: 'Debit amount exceeds available share profit.',
-        //     availableShareProfit: shareholder.shareProfit.toString(),
-        //   });
-        // }
-    
-        // Deduct the transaction amount from the shareholder's shareProfit
         const debitAmount = new Decimal(amount);
         await prisma.shareholder.update({
           where: { id: shareholder.id },
           data: {
-            finance: shareholder.finance.add(debitAmount), // Add the debit amount to finance
+            finance: shareholder.finance.add(debitAmount),
           },
         });
       }
     }
-    
 
-    // Existing mode of payment balance adjustment logic
     if (modeOfPayment === "CASH") {
       if (logType === "CREDIT") {
         updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
@@ -139,7 +115,6 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       }
     }
 
-    // Update user balances in the database
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -148,23 +123,19 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       },
     });
 
-    // Existing PayLater logic (unchanged)
     if (logType === "CREDIT" && payLater) {
       if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
         return res.status(400).json({
-          message:
-            "Bus details (from, to, travelDate) are required when PayLater is true.",
+          message: "Bus details (from, to, travelDate) are required when PayLater is true.",
         });
       }
     
       if (!collection || !collection.operatorId || !collection.amount) {
         return res.status(400).json({
-          message:
-            "Collection details (operatorId, amount) are required when PayLater is true.",
+          message: "Collection details (operatorId, amount) are required when PayLater is true.",
         });
       }
     
-      // Check if the referenced Bus and Operator exist
       const bus = await prisma.bus.findUnique({
         where: { id: payLaterDetails.busId },
       });
@@ -189,12 +160,10 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         }
       }
     
-      // Automatically calculate dueAmount (includes collection amount, excludes commission if absent)
       req.body.dueAmount = new Decimal(collection.amount).add(
         commission?.amount ? new Decimal(commission.amount) : new Decimal(0)
       );
     
-      // Create the transaction with PayLater details
       const transaction = await prisma.transaction.create({
         data: {
           userId,
@@ -219,6 +188,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
             create: {
               operatorId: collection.operatorId,
               amount: new Decimal(collection.amount),
+              remainingDue: new Decimal(collection.amount), // Set initial remainingDue equal to amount
             },
           },
           ...(commission?.agentId && commission?.amount && {
@@ -226,6 +196,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
               create: {
                 agentId: commission.agentId,
                 amount: new Decimal(commission.amount),
+                remainingDue: new Decimal(commission.amount), // Set initial remainingDue equal to amount
               },
             },
           }),
@@ -238,7 +209,6 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         },
       });
     
-      // Update user's 'Due' balance by adding the dueAmount
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -255,9 +225,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         },
       });
     }
-    
 
-    // Create transaction without PayLater details
     const transaction = await prisma.transaction.create({
       data: {
         userId,

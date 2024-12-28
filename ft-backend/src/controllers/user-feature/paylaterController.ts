@@ -58,15 +58,38 @@ export const payLater = async (req: CustomRequest, res: Response) => {
       if (operatorAmount == null || agentAmount == null) {
         return res.status(400).json({ message: "Operator and agent amounts are required for partial payment." });
       }
-
-      totalPayment = new Decimal(operatorAmount).add(new Decimal(agentAmount));
-      if (totalPayment.greaterThan(transaction.dueAmount || 0)) {
-        return res.status(400).json({ message: "Partial payment exceeds the due amount." });
+    
+      // Ensure operatorAmount and agentAmount don't exceed their respective dues
+      const operatorDue = new Decimal(transaction.collection?.remainingDue || 0);
+      const agentDue = new Decimal(transaction.commission?.remainingDue || 0);
+    
+      // Check if the amounts are greater than their respective dues
+      if (operatorAmount > operatorDue) {
+        return res.status(400).json({
+          message: `Operator payment amount exceeds the remaining due of ${operatorDue.toString()}.`,
+        });
       }
-
+    
+      if (agentAmount > agentDue) {
+        return res.status(400).json({
+          message: `Agent payment amount exceeds the remaining due of ${agentDue.toString()}.`,
+        });
+      }
+    
+      // Cap the payments to the due amounts for each
+      const validOperatorAmount = new Decimal(operatorAmount).greaterThan(operatorDue) ? operatorDue : new Decimal(operatorAmount);
+      const validAgentAmount = new Decimal(agentAmount).greaterThan(agentDue) ? agentDue : new Decimal(agentAmount);
+    
+      totalPayment = validOperatorAmount.add(validAgentAmount);
+    
+      // Check if the total payment exceeds the total due
+      if (totalPayment.greaterThan(transaction.dueAmount || 0)) {
+        return res.status(400).json({ message: "Total payment exceeds the due amount." });
+      }
+    
       // Update dueAmount in the transaction
       const updatedDueAmount = new Decimal(transaction.dueAmount || 0).sub(totalPayment);
-
+    
       await prisma.transaction.update({
         where: { id: Number(transactionId) },
         data: {
@@ -74,20 +97,41 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           paymentType: "PARTIAL",
         },
       });
-
+    
+      // Update the remaining due for both commission and collection
+      if (transaction.commission) {
+        const updatedCommissionRemainingDue = new Decimal(transaction.commission.remainingDue).sub(validAgentAmount);
+        await prisma.commission.update({
+          where: { id: transaction.commission.id },
+          data: {
+            remainingDue: updatedCommissionRemainingDue,
+          },
+        });
+      }
+    
+      if (transaction.collection) {
+        const updatedCollectionRemainingDue = new Decimal(transaction.collection.remainingDue).sub(validOperatorAmount);
+        await prisma.collection.update({
+          where: { id: transaction.collection.id },
+          data: {
+            remainingDue: updatedCollectionRemainingDue,
+          },
+        });
+      }
+    
       // Deduct from the appropriate balance based on mode of payment
       let updatedBoxBalance = user.boxBalance;
       let updatedAccountBalance = user.accountBalance;
-
+    
       if (modeOfPayment === "CASH") {
         updatedBoxBalance = new Decimal(user.boxBalance).sub(totalPayment);
       } else if (modeOfPayment === "UPI") {
         updatedAccountBalance = new Decimal(user.accountBalance).sub(totalPayment);
       }
-
+    
       // Update the User's due balance and the selected balance
       const updatedUserDue = new Decimal(user.due).sub(totalPayment);
-
+    
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -96,7 +140,7 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           accountBalance: updatedAccountBalance,
         },
       });
-
+    
       // Create a debit log for the payment
       await prisma.transaction.create({
         data: {
@@ -110,12 +154,13 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           remarks: `Partial payment of operator/agent`,
         },
       });
-
+    
       return res.status(200).json({
         message: "Partial payment recorded successfully.",
         remainingDue: updatedDueAmount,
       });
     }
+    
 
     // Handle Full Payment
     if (paymentType === "FULL") {
