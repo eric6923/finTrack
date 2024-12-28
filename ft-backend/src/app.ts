@@ -7,24 +7,31 @@ import ownerRoutes from "./routes/ownerRoutes"
 
 const app = express();
 
-app.use(
-    cors({
-      origin: 'http://localhost:5173', // Your frontend's development URL
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
-      credentials: true, // Include credentials like cookies if needed
-    })
-  );app.use(bodyParser.json());
+// CORS configuration
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://your-production-frontend-url.com'], // Add your production URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
-// Admin-specific routes
+// Middleware
+app.use(bodyParser.json());
+
+// Routes
 app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes,ownerRoutes);  // Separate these into two lines
 
-// user-specific routes
-app.use("/api/user", userRoutes,ownerRoutes);
 
+// Test route
 app.get('/api/test', (req, res) => {
-    res.set('Access-Control-Allow-Origin', '*'); // Test response
     res.json({ message: 'CORS is working!' });
-  });
+});
 
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!' });
+});
 
 export default app;

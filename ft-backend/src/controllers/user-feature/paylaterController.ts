@@ -97,6 +97,20 @@ export const payLater = async (req: CustomRequest, res: Response) => {
         },
       });
 
+      // Create a debit log for the payment
+      await prisma.transaction.create({
+        data: {
+          userId,
+          logType: "DEBIT",
+          desc: `PayLater ${paymentType} payment`,
+          amount: totalPayment,
+          modeOfPayment,
+          transactionNo: transactionNumber,
+          categoryId: transaction.categoryId, // Use the categoryId from the original transaction
+          remarks: `Partial payment of operator/agent`,
+        },
+      });
+
       return res.status(200).json({
         message: "Partial payment recorded successfully.",
         remainingDue: updatedDueAmount,
@@ -135,6 +149,20 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           due: updatedUserDue,
           boxBalance: updatedBoxBalance,
           accountBalance: updatedAccountBalance,
+        },
+      });
+
+      // Create a debit log for the full payment
+      await prisma.transaction.create({
+        data: {
+          userId,
+          logType: "DEBIT",
+          desc: "PayLater FULL payment",
+          amount: totalPayment,
+          modeOfPayment,
+          transactionNo: transactionNumber,
+          categoryId: transaction.categoryId, // Use the categoryId from the original transaction
+          remarks: "Full payment of outstanding due",
         },
       });
 

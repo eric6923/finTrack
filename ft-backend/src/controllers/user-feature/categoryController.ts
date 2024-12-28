@@ -23,15 +23,16 @@ export const createCategory = async (req: CustomRequest, res: Response) => {
     // Convert the category name to uppercase
     name = name.toUpperCase();
 
-    // Check if the category already exists by name
+    // Check if the category already exists for this user by name and createdBy
     const existingCategory = await prisma.category.findFirst({
       where: {
         name: name,
+        createdBy: userId,  // Ensure the category is unique to the user
       },
     });
 
     if (existingCategory) {
-      return res.status(400).json({ message: "Category already exists" });
+      return res.status(400).json({ message: "Category already exists for this user" });
     }
 
     // Create the category with the userId as the createdBy field
@@ -48,6 +49,7 @@ export const createCategory = async (req: CustomRequest, res: Response) => {
     res.status(500).json({ message: "Error creating category" });
   }
 };
+
 
 // Get categories by user
 export const getCategoriesByUser = async (req: CustomRequest, res: Response) => {

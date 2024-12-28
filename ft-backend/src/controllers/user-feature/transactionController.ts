@@ -151,58 +151,49 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
     // Existing PayLater logic (unchanged)
     if (logType === "CREDIT" && payLater) {
       if (!payLaterDetails?.from || !payLaterDetails?.to || !payLaterDetails?.travelDate) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Bus details (from, to, travelDate) are required when PayLater is true.",
-          });
+        return res.status(400).json({
+          message:
+            "Bus details (from, to, travelDate) are required when PayLater is true.",
+        });
       }
-
+    
       if (!collection || !collection.operatorId || !collection.amount) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Collection details (operatorId, amount) are required when PayLater is true.",
-          });
+        return res.status(400).json({
+          message:
+            "Collection details (operatorId, amount) are required when PayLater is true.",
+        });
       }
-
-      if (!commission || !commission.agentId || !commission.amount) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Commission details (agentId, amount) are required when PayLater is true.",
-          });
-      }
-
-      // Check if the referenced Bus, Operator, and Agent exist
+    
+      // Check if the referenced Bus and Operator exist
       const bus = await prisma.bus.findUnique({
         where: { id: payLaterDetails.busId },
       });
       if (!bus) {
         return res.status(404).json({ message: "Bus not found." });
       }
-
+    
       const operator = await prisma.operator.findUnique({
         where: { id: collection.operatorId },
       });
       if (!operator) {
         return res.status(404).json({ message: "Operator not found." });
       }
-
-      const agent = await prisma.agent.findUnique({
-        where: { id: commission.agentId },
-      });
-      if (!agent) {
-        return res.status(404).json({ message: "Agent not found." });
+    
+      let agent = null;
+      if (commission && commission.agentId) {
+        agent = await prisma.agent.findUnique({
+          where: { id: commission.agentId },
+        });
+        if (!agent) {
+          return res.status(404).json({ message: "Agent not found." });
+        }
       }
-
-      // Automatically calculate dueAmount
-      req.body.dueAmount =
-        new Decimal(commission.amount).add(new Decimal(collection.amount));
-
+    
+      // Automatically calculate dueAmount (includes collection amount, excludes commission if absent)
+      req.body.dueAmount = new Decimal(collection.amount).add(
+        commission?.amount ? new Decimal(commission.amount) : new Decimal(0)
+      );
+    
       // Create the transaction with PayLater details
       const transaction = await prisma.transaction.create({
         data: {
@@ -224,18 +215,20 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
               travelDate: new Date(payLaterDetails.travelDate),
             },
           },
-          commission: {
-            create: {
-              agentId: agent.id,
-              amount: new Decimal(commission.amount),
-            },
-          },
           collection: {
             create: {
-              operatorId: operator.id,
+              operatorId: collection.operatorId,
               amount: new Decimal(collection.amount),
             },
           },
+          ...(commission?.agentId && commission?.amount && {
+            commission: {
+              create: {
+                agentId: commission.agentId,
+                amount: new Decimal(commission.amount),
+              },
+            },
+          }),
         },
         include: {
           category: true,
@@ -244,7 +237,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
           collection: true,
         },
       });
-
+    
       // Update user's 'Due' balance by adding the dueAmount
       await prisma.user.update({
         where: { id: userId },
@@ -252,7 +245,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
           due: updatedDueBalance.add(req.body.dueAmount),
         },
       });
-
+    
       return res.status(201).json({
         transaction,
         balances: {
@@ -262,6 +255,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
         },
       });
     }
+    
 
     // Create transaction without PayLater details
     const transaction = await prisma.transaction.create({

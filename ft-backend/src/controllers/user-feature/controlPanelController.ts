@@ -49,208 +49,211 @@ export const verifyControlPanelPassword = async (req: CustomRequest, res: Respon
 };
 
 export const createBus = async (req: CustomRequest, res: Response) => {
-    const { name } = req.body;
-    const userId = Number(req.user?.id);
-    const normalizedName = name.trim().toUpperCase();
-  
-    if (!normalizedName) {
-      return res.status(400).json({ message: 'Bus name is required' });
+  const { name } = req.body;
+  const userId = Number(req.user?.id);
+  const normalizedName = name.trim().toUpperCase();
+
+  if (!normalizedName) {
+    return res.status(400).json({ message: 'Bus name is required' });
+  }
+
+  if (!userId) {
+    return res.status(401).json({ message: 'User authentication failed' });
+  }
+
+  try {
+    // First, verify that the user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  
-    if (!userId) {
-      return res.status(401).json({ message: 'User authentication failed' });
+
+    // Check if a bus with this name already exists for this user
+    const existingBus = await prisma.bus.findFirst({
+      where: {
+        name: normalizedName,
+        userId, // Ensure that the bus name is unique to this user
+      },
+    });
+
+    if (existingBus) {
+      return res.status(400).json({ message: 'A bus with this name already exists for this user' });
     }
-  
-    try {
-      // First, verify that the user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { id: userId },
-      });
-  
-      if (!existingUser) {
-        return res.status(404).json({ message: 'User not found' });
+
+    // Create the bus
+    const bus = await prisma.bus.create({
+      data: {
+        name: normalizedName,
+        userId,
+      },
+    });
+
+    return res.status(201).json(bus);
+  } catch (error) {
+    console.error('Bus creation error:', error);
+    
+    // More specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
+        return res.status(500).json({ 
+          message: 'Foreign key constraint failed. Ensure the user exists.',
+          error: error.message 
+        });
       }
-  
-      // Check if a bus with this name already exists for this user
-      const existingBus = await prisma.bus.findFirst({
-        where: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      if (existingBus) {
-        return res.status(400).json({ message: 'A bus with this name already exists for this user' });
-      }
-  
-      // Create the bus
-      const bus = await prisma.bus.create({
-        data: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      return res.status(201).json(bus);
-    } catch (error) {
-      console.error('Bus creation error:', error);
-      
-      // More specific error handling
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2003') {
-          return res.status(500).json({ 
-            message: 'Foreign key constraint failed. Ensure the user exists.',
-            error: error.message 
-          });
-        }
-      }
-  
-      return res.status(500).json({ 
-        message: 'Error creating bus', 
-        error: error instanceof Error ? error.message : error 
-      });
     }
-  };
+
+    return res.status(500).json({ 
+      message: 'Error creating bus', 
+      error: error instanceof Error ? error.message : error 
+    });
+  }
+};
+
   
 export const createAgent = async (req: CustomRequest, res: Response) => {
-    const { name } = req.body;
-    const userId = Number(req.user?.id);
-    const normalizedName = name.trim().toUpperCase();
-  
-    if (!normalizedName) {
-      return res.status(400).json({ message: 'Agent name is required' });
+  const { name } = req.body;
+  const userId = Number(req.user?.id);
+  const normalizedName = name.trim().toUpperCase();
+
+  if (!normalizedName) {
+    return res.status(400).json({ message: 'Agent name is required' });
+  }
+
+  if (!userId) {
+    return res.status(401).json({ message: 'User authentication failed' });
+  }
+
+  try {
+    // First, verify that the user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  
-    if (!userId) {
-      return res.status(401).json({ message: 'User authentication failed' });
+
+    // Check if an agent with this name already exists for this user
+    const existingAgent = await prisma.agent.findFirst({
+      where: {
+        name: normalizedName,
+        userId, // Ensure the agent name is unique for this user
+      },
+    });
+
+    if (existingAgent) {
+      return res.status(400).json({ message: 'An agent with this name already exists for this user' });
     }
-  
-    try {
-      // First, verify that the user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { id: userId },
-      });
-  
-      if (!existingUser) {
-        return res.status(404).json({ message: 'User not found' });
+
+    // Create the agent
+    const agent = await prisma.agent.create({
+      data: {
+        name: normalizedName,
+        userId,
+      },
+    });
+
+    return res.status(201).json(agent);
+  } catch (error) {
+    console.error('Agent creation error:', error);
+    
+    // More specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
+        return res.status(500).json({ 
+          message: 'Foreign key constraint failed. Ensure the user exists.',
+          error: error.message 
+        });
       }
-  
-      // Check if an agent with this name already exists for this user
-      const existingAgent = await prisma.agent.findFirst({
-        where: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      if (existingAgent) {
-        return res.status(400).json({ message: 'An agent with this name already exists for this user' });
+      if (error.code === 'P2002') {
+        return res.status(400).json({ 
+          message: 'An agent with this name already exists',
+          error: error.message 
+        });
       }
-  
-      // Create the agent
-      const agent = await prisma.agent.create({
-        data: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      return res.status(201).json(agent);
-    } catch (error) {
-      console.error('Agent creation error:', error);
-      
-      // More specific error handling
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2003') {
-          return res.status(500).json({ 
-            message: 'Foreign key constraint failed. Ensure the user exists.',
-            error: error.message 
-          });
-        }
-        if (error.code === 'P2002') {
-          return res.status(400).json({ 
-            message: 'An agent with this name already exists',
-            error: error.message 
-          });
-        }
-      }
-  
-      return res.status(500).json({ 
-        message: 'Error creating agent', 
-        error: error instanceof Error ? error.message : error 
-      });
     }
-  };
+
+    return res.status(500).json({ 
+      message: 'Error creating agent', 
+      error: error instanceof Error ? error.message : error 
+    });
+  }
+};
+
   
 export const createOperator = async (req: CustomRequest, res: Response) => {
-    const { name } = req.body;
-    const userId = Number(req.user?.id);
-    const normalizedName = name.trim().toUpperCase();
-  
-    if (!normalizedName) {
-      return res.status(400).json({ message: 'Operator name is required' });
+  const { name } = req.body;
+  const userId = Number(req.user?.id);
+  const normalizedName = name.trim().toUpperCase();
+
+  if (!normalizedName) {
+    return res.status(400).json({ message: 'Operator name is required' });
+  }
+
+  if (!userId) {
+    return res.status(401).json({ message: 'User authentication failed' });
+  }
+
+  try {
+    // First, verify that the user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  
-    if (!userId) {
-      return res.status(401).json({ message: 'User authentication failed' });
+
+    // Check if an operator with this name already exists for this user
+    const existingOperator = await prisma.operator.findFirst({
+      where: {
+        name: normalizedName,
+        userId, // Ensure the operator name is unique for this user
+      },
+    });
+
+    if (existingOperator) {
+      return res.status(400).json({ message: 'An operator with this name already exists for this user' });
     }
-  
-    try {
-      // First, verify that the user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { id: userId },
-      });
-  
-      if (!existingUser) {
-        return res.status(404).json({ message: 'User not found' });
+
+    // Create the operator
+    const operator = await prisma.operator.create({
+      data: {
+        name: normalizedName,
+        userId,
+      },
+    });
+
+    return res.status(201).json(operator);
+  } catch (error) {
+    console.error('Operator creation error:', error);
+    
+    // More specific error handling
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
+        return res.status(500).json({ 
+          message: 'Foreign key constraint failed. Ensure the user exists.',
+          error: error.message 
+        });
       }
-  
-      // Check if an operator with this name already exists for this user
-      const existingOperator = await prisma.operator.findFirst({
-        where: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      if (existingOperator) {
-        return res.status(400).json({ message: 'An operator with this name already exists for this user' });
+      if (error.code === 'P2002') {
+        return res.status(400).json({ 
+          message: 'An operator with this name already exists',
+          error: error.message 
+        });
       }
-  
-      // Create the operator
-      const operator = await prisma.operator.create({
-        data: {
-          name: normalizedName,
-          userId,
-        },
-      });
-  
-      return res.status(201).json(operator);
-    } catch (error) {
-      console.error('Operator creation error:', error);
-      
-      // More specific error handling
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2003') {
-          return res.status(500).json({ 
-            message: 'Foreign key constraint failed. Ensure the user exists.',
-            error: error.message 
-          });
-        }
-        if (error.code === 'P2002') {
-          return res.status(400).json({ 
-            message: 'An operator with this name already exists',
-            error: error.message 
-          });
-        }
-      }
-  
-      return res.status(500).json({ 
-        message: 'Error creating operator', 
-        error: error instanceof Error ? error.message : error 
-      });
     }
-  };
+
+    return res.status(500).json({ 
+      message: 'Error creating operator', 
+      error: error instanceof Error ? error.message : error 
+    });
+  }
+};
+
 
 export const getBuses = async (req: CustomRequest, res: Response) => {
     const userId = Number(req.user?.id);
@@ -335,7 +338,7 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
     }
   };
   
-export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
+  export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
     try {
       const userId = req.user?.id; // Extract user ID from token
       const { boxBalance, accountBalance } = req.body;
@@ -357,7 +360,8 @@ export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
           .status(400)
           .json({ message: "Both balances must be valid numbers." });
       }
-      const totalBalance = boxBalance + accountBalance
+  
+      const totalBalance = parseFloat(boxBalance) + parseFloat(accountBalance);
   
       // Update the user's balances in the database
       const updatedUser = await prisma.user.update({
@@ -374,11 +378,34 @@ export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
         },
       });
   
-      return res
-        .status(200)
-        .json({ message: "Opening balances set successfully.", user: updatedUser,totalBalance });
+      // Define the predefined categories
+      const predefinedCategories = ['TEA', 'BUSBOOKING', 'MONEYTRANSFER', 'RENT'];
+  
+      // Loop through the categories and create them if they don't exist
+      for (const categoryName of predefinedCategories) {
+        const existingCategory = await prisma.category.findFirst({
+          where: { name: categoryName },
+        });
+  
+        if (!existingCategory) {
+          // Create the category if it doesn't exist
+          await prisma.category.create({
+            data: {
+              name: categoryName,
+              createdBy: userId,
+            },
+          });
+        }
+      }
+  
+      return res.status(200).json({
+        message: "Opening balances set successfully, and categories created.",
+        user: updatedUser,
+        totalBalance,
+      });
     } catch (error) {
       console.error("Error setting opening balance:", error);
       return res.status(500).json({ message: "An error occurred.", error });
     }
   };
+  
