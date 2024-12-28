@@ -165,8 +165,8 @@ export const payLater = async (req: CustomRequest, res: Response) => {
     // Handle Full Payment
     if (paymentType === "FULL") {
       totalPayment = new Decimal(transaction.dueAmount || 0);
-
-      // Update the transaction
+    
+      // Update the transaction's due amount to 0
       await prisma.transaction.update({
         where: { id: Number(transactionId) },
         data: {
@@ -174,20 +174,39 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           paymentType: "FULL",
         },
       });
-
+    
+      // Update remaining due for both commission and collection to 0
+      if (transaction.commission) {
+        await prisma.commission.update({
+          where: { id: transaction.commission.id },
+          data: {
+            remainingDue: new Decimal(0),
+          },
+        });
+      }
+    
+      if (transaction.collection) {
+        await prisma.collection.update({
+          where: { id: transaction.collection.id },
+          data: {
+            remainingDue: new Decimal(0),
+          },
+        });
+      }
+    
       // Deduct from the appropriate balance based on mode of payment
       let updatedBoxBalance = user.boxBalance;
       let updatedAccountBalance = user.accountBalance;
-
+    
       if (modeOfPayment === "CASH") {
         updatedBoxBalance = new Decimal(user.boxBalance).sub(totalPayment);
       } else if (modeOfPayment === "UPI") {
         updatedAccountBalance = new Decimal(user.accountBalance).sub(totalPayment);
       }
-
+    
       // Update the User's due balance and the selected balance
       const updatedUserDue = new Decimal(user.due).sub(totalPayment);
-
+    
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -196,7 +215,7 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           accountBalance: updatedAccountBalance,
         },
       });
-
+    
       // Create a debit log for the full payment
       await prisma.transaction.create({
         data: {
@@ -210,8 +229,10 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           remarks: "Full payment of outstanding due",
         },
       });
-
-      return res.status(200).json({ message: "Full payment recorded successfully." });
+    
+      return res.status(200).json({
+        message: "Full payment recorded successfully.",
+      });
     }
   } catch (error) {
     console.error("Error processing payLater:", error);
