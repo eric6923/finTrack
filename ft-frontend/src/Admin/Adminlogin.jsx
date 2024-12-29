@@ -34,7 +34,7 @@ const Adminlogin = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.API_URL}/api/admin/login`,
+        `https://ftbackend.vercel.app/api/admin/login`,
         credentials,
         { headers }
       );
