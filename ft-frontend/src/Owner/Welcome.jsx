@@ -183,24 +183,28 @@ const Welcome = () => {
                 <label className="block text-gray-700 font-medium mb-1">
                   Share Percentage:
                 </label>
-                <input
-                  type="number"
-                  value={shareholder.sharePercentage
-                    .toString()
-                    .replace(/^0+(?!$)/, "")}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
-                    handleShareholderChange(
-                      index,
-                      "sharePercentage",
-                      value === "" ? 0 : Number(value) // Handle empty input gracefully
-                    );
-                  }}
-                  required
-                  min="0"
-                  max="100"
-                  className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                />
+                <div className="flex items-center">
+  <input
+    type="number"
+    value={shareholder.sharePercentage
+      .toString()
+      .replace(/^0+(?!$)/, "")}
+    onChange={(e) => {
+      const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
+      handleShareholderChange(
+        index,
+        "sharePercentage",
+        value === "" ? 0 : Number(value) // Handle empty input gracefully
+      );
+    }}
+    required
+    min="0"
+    max="100"
+    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+  />
+  <span className="ml-2 text-gray-600">%</span>
+</div>
+
               </div>
             </div>
           ))}

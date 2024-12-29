@@ -74,7 +74,7 @@ const ViewShare = () => {
           <p className="text-lg text-center text-black">Total Profit: {data.totalProfit}</p>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse border border-gray-300">
-              <thead className="bg-black text-white">
+              <thead className="bg-gray-600 text-white">
                 <tr>
                   <th className="p-2 border-b">Shareholder</th>
                   <th className="p-2 border-b">Percentage</th>
