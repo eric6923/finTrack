@@ -7,6 +7,7 @@ import { getAllPendingUsers,rejectPendingUser,submitPaymentVerification,verifyPa
 const router = express.Router();
 
 router.post("/login", async (req: Request, res: Response) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   await adminLogin(req, res);
 }); 
 
