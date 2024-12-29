@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
-import Pending from './Pending'; // Import Pending component
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import Pending from "./Pending"; // Import Pending component
 
 const Adminlogin = () => {
   const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [token, setToken] = useState(''); // State to store the token
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [token, setToken] = useState(""); // State to store the token
 
   const navigate = useNavigate(); // Initialize useNavigate
 
@@ -22,24 +22,35 @@ const Adminlogin = () => {
     }));
   };
 
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
-      const response = await axios.post('https://ft-backend-ochre.vercel.app/api/admin/login', credentials);
+      const response = await axios.post(
+        "https://ftbackend.vercel.app/api/admin/login",
+        credentials,
+        { headers }
+      );
 
       if (response.status === 200) {
-        setSuccess('Login successful!');
+        setSuccess("Login successful!");
         setToken(response.data.token); // Set token in state
-        localStorage.setItem('token', response.data.token); // Save token to local storage
+        localStorage.setItem("token", response.data.token); // Save token to local storage
         console.log("Token after login:", response.data.token); // Log token for debugging
 
-        navigate('/admin-sidebar'); // Navigate to /admin-sidebar
+        navigate("/admin-sidebar"); // Navigate to /admin-sidebar
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(
+        err.response?.data?.message || "Login failed. Please try again."
+      );
     }
   };
 
@@ -68,7 +79,10 @@ const Adminlogin = () => {
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-6 gap-6">
                   <div className="col-span-6">
-                    <label htmlFor="Email" className="text-base font-semibold text-gray-700">
+                    <label
+                      htmlFor="Email"
+                      className="text-base font-semibold text-gray-700"
+                    >
                       Email
                     </label>
                     <input
@@ -83,7 +97,10 @@ const Adminlogin = () => {
                   </div>
 
                   <div className="col-span-6">
-                    <label htmlFor="Password" className="text-base font-semibold text-gray-700">
+                    <label
+                      htmlFor="Password"
+                      className="text-base font-semibold text-gray-700"
+                    >
                       Password
                     </label>
                     <input
