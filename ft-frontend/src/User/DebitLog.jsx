@@ -1,34 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Add this at the top
 
 const CreateDebitLog = () => {
   const [formData, setFormData] = useState({
-    desc: '',
-    amount: '',
-    modeOfPayment: 'CASH',
-    transactionNo: '',
-    categoryId: '',
-    remarks: '',
+    desc: "",
+    amount: "",
+    modeOfPayment: "CASH",
+    transactionNo: "",
+    categoryId: "",
+    remarks: "",
   });
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState('');
+  const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [payLater, setPayLater] = useState(false); // Add this state initialization
+  const navigate = useNavigate(); // Add this inside the component
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
   useEffect(() => {
     // Fetch categories from the backend when the component mounts
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/user/category', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        const response = await axios.get(
+          "http://localhost:5000/api/user/category",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setCategories(response.data);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
 
@@ -46,9 +52,9 @@ const CreateDebitLog = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found in local storage');
+        throw new Error("No token found in local storage");
       }
 
       const dataToSend = {
@@ -58,58 +64,58 @@ const CreateDebitLog = () => {
       };
 
       await axios.post(
-        'http://localhost:5000/api/user/transaction/create?logType=DEBIT',
+        "http://localhost:5000/api/user/transaction/create?logType=DEBIT",
         dataToSend,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       setError(null);
-      setSuccess('Debit log created successfully!');
+      setSuccess("Debit log created successfully!");
       window.location.reload();
       setFormData({
-        desc: '',
-        amount: '',
-        modeOfPayment: 'CASH',
-        transactionNo: '',
-        categoryId: '',
-        remarks: '',
+        desc: "",
+        amount: "",
+        modeOfPayment: "CASH",
+        transactionNo: "",
+        categoryId: "",
+        remarks: "",
       });
       setIsDialogOpen(false);
     } catch (error) {
-      setError('Error creating debit log. Please try again.');
-      console.error('Error creating debit log:', error);
+      setError("Error creating debit log. Please try again.");
+      console.error("Error creating debit log:", error);
     }
   };
 
   const handleCreateCategory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found in local storage');
+        throw new Error("No token found in local storage");
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/user/category/create',
+        "http://localhost:5000/api/user/category/create",
         { name: newCategory },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       setCategories([...categories, response.data]);
-      setNewCategory('');
+      setNewCategory("");
       setIsCategoryDialogOpen(false);
     } catch (error) {
-      setError('Error creating category. Please try again.');
-      console.error('Error creating category:', error);
+      setError("Error creating category. Please try again.");
+      console.error("Error creating category:", error);
     }
   };
 
@@ -126,8 +132,27 @@ const CreateDebitLog = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-md w-1/2">
             <h1 className="text-2xl font-bold mb-4">Create Debit Log</h1>
+
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
+                <div className="flex space-x-4 mb-4">
+                  <button
+                    onClick={() => setPayLater()} // You can change the onClick logic if needed
+                    className="px-4 py-2 rounded bg-blue-500 text-white"
+                  >
+                    Others
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/paylater")}
+                    className={`px-4 py-2 rounded ${
+                      payLater ? "bg-blue-500 text-white" : "bg-gray-300"
+                    }`}
+                  >
+                    Pay Later
+                  </button>
+                </div>
+
                 <label className="block text-gray-700">Description</label>
                 <input
                   type="text"
@@ -161,7 +186,7 @@ const CreateDebitLog = () => {
                   <option value="UPI">UPI</option>
                 </select>
               </div>
-              {formData.modeOfPayment === 'UPI' && (
+              {formData.modeOfPayment === "UPI" && (
                 <div className="mb-4">
                   <label className="block text-gray-700">Transaction ID</label>
                   <input
@@ -214,7 +239,17 @@ const CreateDebitLog = () => {
                 <button
                   type="button"
                   className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700 mr-2"
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setFormData({
+                      desc: "",
+                      amount: "",
+                      modeOfPayment: "CASH",
+                      transactionNo: "",
+                      categoryId: "",
+                      remarks: "",
+                    });
+                  }}
                 >
                   Cancel
                 </button>

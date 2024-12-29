@@ -18,8 +18,8 @@ const PartialPayment = ({ log, onUpdateDueAmount, onClose,dueAmount }) => {
 
     const paymentData = {
       paymentType: "PARTIAL",
-      operatorAmount,
-      agentAmount,
+      operatorAmount: Number(operatorAmount), // Convert to number
+  agentAmount: Number(agentAmount),  
       modeOfPayment,
       ...(modeOfPayment === "UPI" && { transactionNumber }),
     };
@@ -34,14 +34,20 @@ const PartialPayment = ({ log, onUpdateDueAmount, onClose,dueAmount }) => {
       );
 
       const remainingDue = response.data.remainingDue;
+      console.log("Log object:", log);
+console.log("Commission value:", log?.commission);
+
       onUpdateDueAmount(remainingDue, log.id); // Update the parent with the new due amount
+      window.location.reload();
       onClose(); // Close the modal
     } catch (error) {
-      setError("Error making partial payment. Please try again.");
+      const errorMessage = error.response?.data?.message || error.message || "Error making partial payment. Please try again.";
+      setError(errorMessage); // Set the error message from the response, if available
       console.error("Partial payment error:", error.response || error.message);
     } finally {
       setIsSubmitting(false);
     }
+
   };
 
   return (
@@ -56,7 +62,7 @@ const PartialPayment = ({ log, onUpdateDueAmount, onClose,dueAmount }) => {
           <input
             type="number"
             value={operatorAmount}
-            onChange={(e) => setOperatorAmount(Number(e.target.value))}
+            onChange={(e) => setOperatorAmount(e.target.value.replace(/^0+/, '') || '0')} // Prevent leading zeros
             className="w-full border rounded px-3 py-2 mt-1"
             placeholder="Enter Operator Amount"
           />
@@ -68,9 +74,10 @@ const PartialPayment = ({ log, onUpdateDueAmount, onClose,dueAmount }) => {
           <input
             type="number"
             value={agentAmount}
-            onChange={(e) => setAgentAmount(Number(e.target.value))}
+            onChange={(e) => setAgentAmount(e.target.value.replace(/^0+/, '') || '0')} // Prevent leading zeros
             className="w-full border rounded px-3 py-2 mt-1"
             placeholder="Enter Agent Amount"
+            // disabled={log?.commission === null}
           />
         </div>
         <div className="mb-4">

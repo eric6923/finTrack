@@ -380,10 +380,10 @@ const PayLater = () => {
                         {getAgentName(log.commission?.agentId)}
                       </td>
                       <td className="py-2 px-4 border-b text-center">
-                        {log.commission?.amount}
+                        {log.commission?.remainingDue}
                       </td>
                       <td className="py-2 px-4 border-b text-center">
-                        {log.collection?.amount}
+                        {log.collection?.remainingDue}
                       </td>
                       <td className="py-2 px-4 border-b text-center">
                         {log.dueAmount}
