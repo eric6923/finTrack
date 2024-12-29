@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import Pending from "./Pending"; // Import Pending component
+import AdminImg from "../User/fintrack.webp"
 
 const Adminlogin = () => {
   const [credentials, setCredentials] = useState({
@@ -62,7 +63,7 @@ const Adminlogin = () => {
           <section className="relative flex h-32 items-end bg-gray-900 lg:col-span-5 lg:h-full xl:col-span-6">
             <img
               alt="Fintrack"
-              src="./src/User/fintrack.webp"
+              src={AdminImg}
               className="absolute inset-0 h-full w-full object-cover opacity-80"
             />
             <div className="hidden lg:relative lg:block lg:p-12">

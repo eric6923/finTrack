@@ -20,7 +20,7 @@ export default function Custom({ logType }) {
   const [busData, setBusData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [agents, setAgents] = useState([]);
-  const [operators, setOperators] = useState([]); 
+  const [operators, setOperators] = useState([]);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     modeOfPayment: "",
@@ -29,88 +29,103 @@ export default function Custom({ logType }) {
     category: "",
     logType: "",
     agentName: "",
-    operatorName: "", 
+    operatorName: "",
   });
-  
+
   const downloadPDF = () => {
     const doc = new jsPDF({
       orientation: "landscape",
     });
-    
+
     // Format date function
     const formatDate = (dateString) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }).split('/').join('-');
+      return date
+        .toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .split("/")
+        .join("-");
     };
-  
+
     // Format number function
     const formatNumber = (amount) => {
       return parseFloat(amount || 0).toFixed(2);
     };
-    
+
     // Add title and date range
     doc.setFontSize(18);
     doc.text(`Reports`, 14, 20);
     doc.setFontSize(12);
-    doc.text(`Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`, 14, 30);
-    
+    doc.text(
+      `Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`,
+      14,
+      30
+    );
+
     // Add totals section
     doc.setFontSize(14);
     doc.text("Summary", 14, 40);
     doc.setFontSize(12);
     doc.text(`Total Credit: ${formatNumber(totals.totalCredit)}`, 14, 50);
     doc.text(`Total Debit: ${formatNumber(totals.totalDebit)}`, 14, 60);
-    doc.text(`Balance: ${formatNumber(parseFloat(totals.totalCredit || 0) - parseFloat(totals.totalDebit || 0))}`, 14, 70);
-  
+    doc.text(
+      `Balance: ${formatNumber(
+        parseFloat(totals.totalCredit || 0) - parseFloat(totals.totalDebit || 0)
+      )}`,
+      14,
+      70
+    );
+
     // Add category summary
     let yPosition = 90;
     doc.setFontSize(14);
     doc.text("Category Summary", 14, yPosition);
     yPosition += 10;
-  
+
     // Create category summary table
     const categoryTableHeaders = [["Category", "Credit", "Debit", "Balance"]];
-    const categoryTableBody = Object.entries(categorySummary).map(([categoryName, { credit, debit }]) => [
-      categoryName,
-      formatNumber(credit),
-      formatNumber(debit),
-      formatNumber(credit - debit)
-    ]);
-  
+    const categoryTableBody = Object.entries(categorySummary).map(
+      ([categoryName, { credit, debit }]) => [
+        categoryName,
+        formatNumber(credit),
+        formatNumber(debit),
+        formatNumber(credit - debit),
+      ]
+    );
+
     doc.autoTable({
       head: categoryTableHeaders,
       body: categoryTableBody,
       startY: yPosition,
       margin: { left: 14 },
-      tableWidth: 'auto',
+      tableWidth: "auto",
     });
-  
+
     // Get the ending Y position of the category summary table
     const finalY = doc.lastAutoTable.finalY + 20;
-  
+
     // Add main transaction table
     const tableHeader = Array.from(
       document.querySelectorAll("table thead tr th")
     ).map((th) => th.innerText);
-    
+
     const tableRows = Array.from(document.querySelectorAll("table tbody tr"))
       .filter((row) => row.querySelectorAll("td").length > 0)
       .map((row) =>
         Array.from(row.querySelectorAll("td")).map((td) => td.innerText)
       );
-  
+
     doc.autoTable({
       head: [tableHeader],
       body: tableRows,
       startY: finalY,
       margin: { left: 14 },
-      tableWidth: 'auto',
+      tableWidth: "auto",
     });
-  
+
     doc.save(`Reports-${formatDate(startDate)}-to-${formatDate(endDate)}.pdf`);
   };
   useEffect(() => {
@@ -153,7 +168,7 @@ export default function Custom({ logType }) {
         console.log(
           "Categories:",
           categoriesResponse.data.map((category) => category.name)
-        ); 
+        );
         const agentsResponse = await axios.get(
           "http://localhost:5000/api/user/agent",
           {
@@ -284,30 +299,33 @@ export default function Custom({ logType }) {
           }
         );
         setTotals(totalsResponse.data);
-      } catch (err) {
-      }
+      } catch (err) {}
     };
     fetchData();
   }, [startDate, endDate]);
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-2xl font-bold mb-4">Reports</h1>
-      <div className="flex gap-4 mb-4 mt-4">
-        <div className="bg-green-100 p-4 px-10 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-green-800">Total Credit</h3>
-          <p className="text-2xl font-bold text-green-600">
+      <h1 className="text-2xl font-bold mb-6">Reports</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-green-100 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">
+            Total Credit
+          </h3>
+          <p className="text-3xl font-bold text-green-600">
             ₹{totals.totalCredit || 0}
           </p>
         </div>
-        <div className="bg-red-100 p-4 px-10 rounded-lg shadow ml-12">
-          <h3 className="text-lg font-semibold text-red-800">Total Debit</h3>
-          <p className="text-2xl font-bold text-red-600">
+        <div className="bg-red-100 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-red-800 mb-2">
+            Total Debit
+          </h3>
+          <p className="text-3xl font-bold text-red-600">
             ₹{totals.totalDebit || 0}
           </p>
         </div>
-        <div className="bg-blue-100 p-4 px-10 rounded-lg shadow ml-12">
-          <h3 className="text-lg font-semibold text-blue-800">Balance</h3>
-          <p className="text-2xl font-bold text-blue-600">
+        <div className="bg-blue-100 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">Balance</h3>
+          <p className="text-3xl font-bold text-blue-600">
             ₹
             {(
               parseFloat(totals.totalCredit || 0) -
@@ -316,7 +334,9 @@ export default function Custom({ logType }) {
           </p>
         </div>
       </div>
-      <div className="flex gap-4 items-center mb-4">
+      <div className="bg-white p-6 rounded-lg shadow mb-8">
+    <div className="flex flex-col md:flex-row md:items-center gap-4">
+      <div className="flex items-center gap-2">
         <input
           type="date"
           value={startDate}
@@ -330,27 +350,31 @@ export default function Custom({ logType }) {
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 p-2 rounded-md"
         />
+      </div>
+      
+      <div className="flex flex-col md:flex-row gap-4 md:ml-auto">
         <button
           onClick={openFilterDialog}
-          className="bg-blue-500 text-white w-full lg:w-auto px-6 py-3 rounded-lg shadow-md hover:bg-blue-600 hover:shadow-lg transition duration-200"
+          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
         >
           Filter Logs
         </button>
-        <div className="flex items-center justify-start ">
-          <button
-            onClick={downloadPDF}
-            className="bg-green-500 text-white w-full lg:w-auto px-6 py-3 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition duration-200"
-          >
-            Download
-          </button>
-        </div>
+        <button
+          onClick={downloadPDF}
+          className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center"
+        >
+          Download
+        </button>
         <button
           onClick={() => setDialogOpen(true)}
-          className="bg-blue-500 text-white w-full lg:w-auto px-6 py-3 rounded-lg shadow-md hover:bg-blue-600 hover:shadow-lg transition duration-200"
+          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
         >
           Category Expense
         </button>
       </div>
+      </div>
+      </div>
+
       <div>
         <div className="mt-8">
           {isFilterDialogOpen && (
@@ -654,6 +678,29 @@ export default function Custom({ logType }) {
                     )
                   )}
                 </tbody>
+                <tfoot className="bg-gray-50 font-semibold">
+                  <tr>
+                    <td className="py-2 text-left ">Total</td>
+                    <td className="py-2 text-left">
+                      {Object.values(categorySummary)
+                        .reduce((sum, { credit }) => sum + credit, 0)
+                        .toFixed(2)}
+                    </td>
+                    <td className="py-2 text-left">
+                      {Object.values(categorySummary)
+                        .reduce((sum, { debit }) => sum + debit, 0)
+                        .toFixed(2)}
+                    </td>
+                    <td className="py-2 text-left">
+                      {Object.values(categorySummary)
+                        .reduce(
+                          (sum, { credit, debit }) => sum + (credit - debit),
+                          0
+                        )
+                        .toFixed(2)}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
 
               <div className="mt-6 text-right">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Logo from '../assets/fintrack-logo.png'
+import Side from '../assets/wel-frame.png'
 
 const Welcome = () => {
   const [businessName, setBusinessName] = useState("");
@@ -79,7 +81,7 @@ const Welcome = () => {
       {/* Sidebar with Background Image */}
       <div
         className="w-1/4 min-h-screen bg-cover bg-no-repeat bg-gray-100 flex items-center justify-center"
-        style={{ backgroundImage: "url('/src/assets/wel-frame.png')" }}
+        style={{ backgroundImage: `url(${Side})` }}
       ></div>
 
       {/* Content Area */}
@@ -87,7 +89,7 @@ const Welcome = () => {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <img
-            src="/src/assets/fintrack-logo.png"
+            src={Logo}
             alt="FinTrack Logo"
             className="w-16 h-16"
           />
