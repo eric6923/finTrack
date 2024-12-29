@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import CreateBus from '../User/CreateBus';
-import CreateAgent from '../User/CreateAgent';
-import CreateOperator from '../User/CreateOperator';
-import BackToHome from '../PayLater/BackToHome';
-import ViewShare from './ViewShare';
+import React, { useState } from "react";
+import axios from "axios";
+import CreateBus from "../User/CreateBus";
+import CreateAgent from "../User/CreateAgent";
+import CreateOperator from "../User/CreateOperator";
+import BackToHome from "../PayLater/BackToHome";
+import ViewShare from "./ViewShare";
 
 const OwnerDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const verifyPassword = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('No token found. Please login.');
+        setError("No token found. Please login.");
         return;
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/user/verify-password',
+        "https://ftbackend.vercel.app/api/user/verify-password",
         { password },
         {
           headers: {
@@ -29,14 +29,14 @@ const OwnerDashboard = () => {
         }
       );
 
-      if (response.data.message === 'Password verified successfully.') {
+      if (response.data.message === "Password verified successfully.") {
         setIsAuthenticated(true);
-        setError('');
+        setError("");
       } else {
-        setError('Invalid password.');
+        setError("Invalid password.");
       }
     } catch (err) {
-      setError('Error verifying password.');
+      setError("Error verifying password.");
     }
   };
 
@@ -49,7 +49,9 @@ const OwnerDashboard = () => {
     return (
       <div className="p-8 bg-gray-100 min-h-screen ">
         {/* <BackToHome /> */}
-        <h1 className="text-3xl font-bold mb-6 text-center text-black">Owner Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-black">
+          Owner Dashboard
+        </h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="col-span-1">
             <CreateBus />
@@ -70,7 +72,6 @@ const OwnerDashboard = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
         <h1 className="text-2xl font-bold mb-4 text-center">Owner Login</h1>
         <form onSubmit={handleSubmit} className="space-y-4">

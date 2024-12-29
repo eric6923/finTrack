@@ -14,9 +14,12 @@ const ViewCandDLog = () => {
       }
 
       try {
-        const response = await axios.get("http://localhost:5000/api/user/total", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "https://ftbackend.vercel.app/api/user/total",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         setData({
           totalCredit: response.data.totalCredit,
@@ -39,8 +42,12 @@ const ViewCandDLog = () => {
       <h1>Credit and Debit Log</h1>
       {data.totalCredit !== null && data.totalDebit !== null ? (
         <div>
-          <p><strong>Total Credit:</strong> {data.totalCredit}</p>
-          <p><strong>Total Debit:</strong> {data.totalDebit}</p>
+          <p>
+            <strong>Total Credit:</strong> {data.totalCredit}
+          </p>
+          <p>
+            <strong>Total Debit:</strong> {data.totalDebit}
+          </p>
         </div>
       ) : (
         <p>Loading...</p>

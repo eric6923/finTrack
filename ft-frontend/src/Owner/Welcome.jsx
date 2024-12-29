@@ -45,14 +45,17 @@ const Welcome = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/shares", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(businessData),
-      });
+      const response = await fetch(
+        "https://ftbackend.vercel.app/api/user/shares",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(businessData),
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -184,27 +187,26 @@ const Welcome = () => {
                   Share Percentage:
                 </label>
                 <div className="flex items-center">
-  <input
-    type="number"
-    value={shareholder.sharePercentage
-      .toString()
-      .replace(/^0+(?!$)/, "")}
-    onChange={(e) => {
-      const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
-      handleShareholderChange(
-        index,
-        "sharePercentage",
-        value === "" ? 0 : Number(value) // Handle empty input gracefully
-      );
-    }}
-    required
-    min="0"
-    max="100"
-    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-  />
-  <span className="ml-2 text-gray-600">%</span>
-</div>
-
+                  <input
+                    type="number"
+                    value={shareholder.sharePercentage
+                      .toString()
+                      .replace(/^0+(?!$)/, "")}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
+                      handleShareholderChange(
+                        index,
+                        "sharePercentage",
+                        value === "" ? 0 : Number(value) // Handle empty input gracefully
+                      );
+                    }}
+                    required
+                    min="0"
+                    max="100"
+                    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  />
+                  <span className="ml-2 text-gray-600">%</span>
+                </div>
               </div>
             </div>
           ))}

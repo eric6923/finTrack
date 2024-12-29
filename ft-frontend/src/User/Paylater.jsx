@@ -44,7 +44,7 @@ const PayLater = () => {
         if (!token) throw new Error("No token found in local storage");
 
         const responseLogs = await axios.get(
-          "http://localhost:5000/api/user/transactions/",
+          "https://ftbackend.vercel.app/api/user/transactions/",
           { headers: getAuthHeader() }
         );
 
@@ -57,7 +57,7 @@ const PayLater = () => {
         setLogs(sortedLogs);
 
         const responseBus = await axios.get(
-          "http://localhost:5000/api/user/bus",
+          "https://ftbackend.vercel.app/api/user/bus",
           { headers: getAuthHeader() }
         );
 
@@ -96,7 +96,7 @@ const PayLater = () => {
   const handleView = async (log) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/user/transaction/${log.id}`,
+        `https://ftbackend.vercel.app/api/user/transaction/${log.id}`,
         { headers: getAuthHeader() }
       );
       setSelectedLog(response.data);
@@ -143,7 +143,7 @@ const PayLater = () => {
   const handleFullPayment = async (logId) => {
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/user/paylater/${logId}`,
+        `https://ftbackend.vercel.app/api/user/paylater/${logId}`,
         { paymentType: "FULL" },
         { headers: getAuthHeader() }
       );
@@ -192,7 +192,7 @@ const PayLater = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/user/filter-transaction?busName=${selectedBus}`,
+        `https://ftbackend.vercel.app/api/user/filter-transaction?busName=${selectedBus}`,
         { headers: getAuthHeader() }
       );
 
@@ -212,7 +212,7 @@ const PayLater = () => {
     const fetchAgents = async () => {
       try {
         const responseAgent = await axios.get(
-          "http://localhost:5000/api/user/agent",
+          "https://ftbackend.vercel.app/api/user/agent",
           { headers: getAuthHeader() }
         );
         if (responseAgent.status === 200) {

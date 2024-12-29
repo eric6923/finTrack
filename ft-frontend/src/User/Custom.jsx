@@ -20,7 +20,7 @@ export default function Custom({ logType }) {
   const [busData, setBusData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [agents, setAgents] = useState([]);
-  const [operators, setOperators] = useState([]); 
+  const [operators, setOperators] = useState([]);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     modeOfPayment: "",
@@ -29,88 +29,103 @@ export default function Custom({ logType }) {
     category: "",
     logType: "",
     agentName: "",
-    operatorName: "", 
+    operatorName: "",
   });
-  
+
   const downloadPDF = () => {
     const doc = new jsPDF({
       orientation: "landscape",
     });
-    
+
     // Format date function
     const formatDate = (dateString) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }).split('/').join('-');
+      return date
+        .toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .split("/")
+        .join("-");
     };
-  
+
     // Format number function
     const formatNumber = (amount) => {
       return parseFloat(amount || 0).toFixed(2);
     };
-    
+
     // Add title and date range
     doc.setFontSize(18);
     doc.text(`Reports`, 14, 20);
     doc.setFontSize(12);
-    doc.text(`Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`, 14, 30);
-    
+    doc.text(
+      `Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`,
+      14,
+      30
+    );
+
     // Add totals section
     doc.setFontSize(14);
     doc.text("Summary", 14, 40);
     doc.setFontSize(12);
     doc.text(`Total Credit: ${formatNumber(totals.totalCredit)}`, 14, 50);
     doc.text(`Total Debit: ${formatNumber(totals.totalDebit)}`, 14, 60);
-    doc.text(`Balance: ${formatNumber(parseFloat(totals.totalCredit || 0) - parseFloat(totals.totalDebit || 0))}`, 14, 70);
-  
+    doc.text(
+      `Balance: ${formatNumber(
+        parseFloat(totals.totalCredit || 0) - parseFloat(totals.totalDebit || 0)
+      )}`,
+      14,
+      70
+    );
+
     // Add category summary
     let yPosition = 90;
     doc.setFontSize(14);
     doc.text("Category Summary", 14, yPosition);
     yPosition += 10;
-  
+
     // Create category summary table
     const categoryTableHeaders = [["Category", "Credit", "Debit", "Balance"]];
-    const categoryTableBody = Object.entries(categorySummary).map(([categoryName, { credit, debit }]) => [
-      categoryName,
-      formatNumber(credit),
-      formatNumber(debit),
-      formatNumber(credit - debit)
-    ]);
-  
+    const categoryTableBody = Object.entries(categorySummary).map(
+      ([categoryName, { credit, debit }]) => [
+        categoryName,
+        formatNumber(credit),
+        formatNumber(debit),
+        formatNumber(credit - debit),
+      ]
+    );
+
     doc.autoTable({
       head: categoryTableHeaders,
       body: categoryTableBody,
       startY: yPosition,
       margin: { left: 14 },
-      tableWidth: 'auto',
+      tableWidth: "auto",
     });
-  
+
     // Get the ending Y position of the category summary table
     const finalY = doc.lastAutoTable.finalY + 20;
-  
+
     // Add main transaction table
     const tableHeader = Array.from(
       document.querySelectorAll("table thead tr th")
     ).map((th) => th.innerText);
-    
+
     const tableRows = Array.from(document.querySelectorAll("table tbody tr"))
       .filter((row) => row.querySelectorAll("td").length > 0)
       .map((row) =>
         Array.from(row.querySelectorAll("td")).map((td) => td.innerText)
       );
-  
+
     doc.autoTable({
       head: [tableHeader],
       body: tableRows,
       startY: finalY,
       margin: { left: 14 },
-      tableWidth: 'auto',
+      tableWidth: "auto",
     });
-  
+
     doc.save(`Reports-${formatDate(startDate)}-to-${formatDate(endDate)}.pdf`);
   };
   useEffect(() => {
@@ -123,7 +138,7 @@ export default function Custom({ logType }) {
           return;
         }
         const logsResponse = await axios.get(
-          `http://localhost:5000/api/user/transaction?startDate=${startDate}&endDate=${endDate}`,
+          `https://ftbackend.vercel.app/api/user/transaction?startDate=${startDate}&endDate=${endDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -133,7 +148,7 @@ export default function Custom({ logType }) {
         setLogs(logsResponse.data);
         console.log(logsResponse.data);
         const busResponse = await axios.get(
-          "http://localhost:5000/api/user/bus",
+          "https://ftbackend.vercel.app/api/user/bus",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -142,7 +157,7 @@ export default function Custom({ logType }) {
         );
         setBusData(busResponse.data);
         const categoriesResponse = await axios.get(
-          "http://localhost:5000/api/user/category/",
+          "https://ftbackend.vercel.app/api/user/category/",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -153,9 +168,9 @@ export default function Custom({ logType }) {
         console.log(
           "Categories:",
           categoriesResponse.data.map((category) => category.name)
-        ); 
+        );
         const agentsResponse = await axios.get(
-          "http://localhost:5000/api/user/agent",
+          "https://ftbackend.vercel.app/api/user/agent",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -168,7 +183,7 @@ export default function Custom({ logType }) {
           agentsResponse.data.map((agent) => agent.name)
         ); // Log agent names
         const operatorsResponse = await axios.get(
-          "http://localhost:5000/api/user/operator",
+          "https://ftbackend.vercel.app/api/user/operator",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -210,7 +225,7 @@ export default function Custom({ logType }) {
         ...(filters.operatorName && { operatorName: filters.operatorName }),
       }).toString();
       const response = await axios.get(
-        `http://localhost:5000/api/user/filter-transaction?${queryParams}`,
+        `https://ftbackend.vercel.app/api/user/filter-transaction?${queryParams}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -276,7 +291,7 @@ export default function Custom({ logType }) {
           return;
         }
         const totalsResponse = await axios.get(
-          `http://localhost:5000/api/user/total?startDate=${startDate}&endDate=${endDate}`,
+          `https://ftbackend.vercel.app/api/user/total?startDate=${startDate}&endDate=${endDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -284,8 +299,7 @@ export default function Custom({ logType }) {
           }
         );
         setTotals(totalsResponse.data);
-      } catch (err) {
-      }
+      } catch (err) {}
     };
     fetchData();
   }, [startDate, endDate]);
