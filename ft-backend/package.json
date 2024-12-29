@@ -5,12 +5,13 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "build": "npx tsc",
-    "start": "npx tsc && node dist/server.js",
+    "build": "prisma generate && npx tsc",
+    "start": "npx tsc && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "lint": "eslint . --ext .ts",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
