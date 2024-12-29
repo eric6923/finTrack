@@ -44,6 +44,23 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <div className="h-screen flex flex-col items-center justify-center text-8xl font-bold bg-blue-500 text-white">
+                Fintrack
+                <br />
+                <a
+                  className="text-xl bg-blue-900 p-3 rounded-xl mt-5 px-4"
+                  href="/signup"
+                >
+                  Request our Product
+                </a>
+              </div>
+            </>
+          }
+        />
         {/* Routes without Sidebar */}
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/startingaccount" element={<StartingAccount />} />
