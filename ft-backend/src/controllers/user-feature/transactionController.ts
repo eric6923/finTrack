@@ -78,6 +78,7 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
             },
           },
         });
+        console.log(shareholder)
     
         if (!shareholder) {
           return res.status(400).json({
@@ -95,25 +96,21 @@ export const createTransaction = async (req: CustomRequest, res: Response) => {
       }
     }
 
-    // if (modeOfPayment === "CASH") {
-    //   if (logType === "CREDIT") {
-    //     updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
-    //   } else if (logType === "DEBIT") {
-    //     if (updatedBoxBalance.lessThan(parsedAmount)) {
-    //       return res.status(400).json({ message: "Insufficient box balance." });
-    //     }
-    //     updatedBoxBalance = updatedBoxBalance.sub(parsedAmount);
-    //   }
-    // } else if (modeOfPayment === "UPI") {
-    //   if (logType === "CREDIT") {
-    //     updatedAccountBalance = updatedAccountBalance.add(parsedAmount);
-    //   } else if (logType === "DEBIT") {
-    //     if (updatedAccountBalance.lessThan(parsedAmount)) {
-    //       return res.status(400).json({ message: "Insufficient account balance." });
-    //     }
-    //     updatedAccountBalance = updatedAccountBalance.sub(parsedAmount);
-    //   }
-    // }
+    if (modeOfPayment === "CASH") {
+      if (logType === "CREDIT") {
+        updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
+      } else if (logType === "DEBIT") {
+        
+        updatedBoxBalance = updatedBoxBalance.sub(parsedAmount);
+      }
+    } else if (modeOfPayment === "UPI") {
+      if (logType === "CREDIT") {
+        updatedAccountBalance = updatedAccountBalance.add(parsedAmount);
+      } else if (logType === "DEBIT") {
+        
+        updatedAccountBalance = updatedAccountBalance.sub(parsedAmount);
+      }
+    }
 
     await prisma.user.update({
       where: { id: userId },

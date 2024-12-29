@@ -76,6 +76,30 @@ router.get("/shares", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 
         res.status(500).json({ error: "Error fetching shares." });
     }
 }));
+router.delete("/bus/:id", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, controlPanelController_1.deleteBus)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error deleting BUS." });
+    }
+}));
+router.delete("/agent/:id", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, controlPanelController_1.deleteAgent)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error deleting agent." });
+    }
+}));
+router.delete("/operator/:id", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, controlPanelController_1.deleteOperator)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error deleting operator." });
+    }
+}));
 router.get("/check-onboard", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield (0, checkOnboard_1.checkOnboard)(req, res); // Ensure this is awaited

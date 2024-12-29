@@ -12,7 +12,7 @@ const ownerRoutes_1 = __importDefault(require("./routes/ownerRoutes"));
 const app = (0, express_1.default)();
 // CORS configuration
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:5173', 'https://your-production-frontend-url.com'], // Update this with your frontend URLs
+    origin: ['http://localhost:5173', 'https://fintrackfe.vercel.app/'], // Update this with your frontend URLs
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true, // Allows cookies and authorization headers
     allowedHeaders: [

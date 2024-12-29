@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCategoriesByUser = exports.createCategory = void 0;
+exports.deleteCategory = exports.getCategoriesByUser = exports.createCategory = void 0;
 const client_1 = __importDefault(require("../../../prisma/client"));
 // Create a new category
 const createCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -70,3 +70,36 @@ const getCategoriesByUser = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getCategoriesByUser = getCategoriesByUser;
+const deleteCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) ? Number(req.user.id) : null;
+    const categoryId = req.params.id ? Number(req.params.id) : null; // Get category ID from request params
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+    if (!categoryId) {
+        return res.status(400).json({ message: "Category ID is required" });
+    }
+    try {
+        // Check if the category exists and belongs to the user
+        const category = yield client_1.default.category.findFirst({
+            where: {
+                id: categoryId,
+                createdBy: userId,
+            },
+        });
+        if (!category) {
+            return res.status(404).json({ message: "Category not found or does not belong to the user" });
+        }
+        // Delete the category
+        yield client_1.default.category.delete({
+            where: { id: categoryId },
+        });
+        res.status(200).json({ message: "Category deleted successfully" });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error deleting category" });
+    }
+});
+exports.deleteCategory = deleteCategory;

@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { verifyControlPanelPassword,createBus,createAgent,createOperator ,setOpeningBalance} from "../controllers/user-feature/controlPanelController";
+import { verifyControlPanelPassword,createBus,createAgent,createOperator ,setOpeningBalance , deleteBus , deleteAgent , deleteOperator} from "../controllers/user-feature/controlPanelController";
 import { calculateShareDistribution } from "../controllers/sharesController";
 import { createCompanyShares } from "../controllers/sharesController";
 import { checkOnboard } from "../controllers/user-feature/checkOnboard"; 
@@ -64,6 +64,30 @@ router.get("/shares",verifyUser, async (req: Request, res: Response) => {
       await calculateShareDistribution(req, res); // Ensure this is awaited
     } catch (error) {
       res.status(500).json({ error: "Error fetching shares." });
+    }
+  });
+
+  router.delete("/bus/:id",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await deleteBus(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error deleting BUS." });
+    }
+  });
+
+  router.delete("/agent/:id",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await deleteAgent(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error deleting agent." });
+    }
+  });
+
+  router.delete("/operator/:id",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await deleteOperator(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error deleting operator." });
     }
   });
 

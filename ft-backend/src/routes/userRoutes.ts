@@ -14,7 +14,7 @@ import {
 import { payLater } from "../controllers/user-feature/paylaterController";
 import { forgotPassword,resetPassword } from "../controllers/Auth/forgotPassword";
 
-import { createCategory,getCategoriesByUser } from "../controllers/user-feature/categoryController";
+import { createCategory,getCategoriesByUser,deleteCategory } from "../controllers/user-feature/categoryController";
 
 import { setOwnerPassword } from "../controllers/user-feature/password/passwordController";
 import { calculateProfitByDateRange } from "../controllers/user-feature/profitController";
@@ -61,6 +61,10 @@ router.post('/category/create',verifyUser, async (req: Request , res:Response)=>
 
 router.get('/category',verifyUser, async (req: Request , res:Response)=>{
   await getCategoriesByUser(req,res);
+} );
+
+router.delete('/category/:id',verifyUser, async (req: Request , res:Response)=>{
+  await deleteCategory(req,res);
 } );
 
 // Get all categories created by a user

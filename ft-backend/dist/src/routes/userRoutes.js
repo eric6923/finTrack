@@ -58,6 +58,9 @@ router.post('/category/create', userMiddleware_1.verifyUser, (req, res) => __awa
 router.get('/category', userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, categoryController_1.getCategoriesByUser)(req, res);
 }));
+router.delete('/category/:id', userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, categoryController_1.deleteCategory)(req, res);
+}));
 // Get all categories created by a user
 // Get all transactions for a user
 router.get('/transactions', userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

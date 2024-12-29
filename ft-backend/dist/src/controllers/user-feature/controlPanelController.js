@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setOpeningBalance = exports.getOperators = exports.getAgents = exports.getBuses = exports.createOperator = exports.createAgent = exports.createBus = exports.verifyControlPanelPassword = void 0;
+exports.setOpeningBalance = exports.getOperators = exports.getAgents = exports.getBuses = exports.deleteOperator = exports.createOperator = exports.deleteAgent = exports.createAgent = exports.deleteBus = exports.createBus = exports.verifyControlPanelPassword = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const client_1 = __importDefault(require("../../../prisma/client"));
 const client_2 = require("@prisma/client");
@@ -105,6 +105,52 @@ const createBus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.createBus = createBus;
+// Delete a bus
+const deleteBus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id); // User ID from the authenticated user
+    const busId = req.params.id ? Number(req.params.id) : null; // Bus ID from the request parameters
+    if (!userId) {
+        return res.status(401).json({ message: 'User authentication failed' });
+    }
+    if (!busId) {
+        return res.status(400).json({ message: 'Bus ID is required' });
+    }
+    try {
+        // Check if the bus exists and belongs to the user
+        const existingBus = yield client_1.default.bus.findFirst({
+            where: {
+                id: busId,
+                userId, // Ensure the bus belongs to the authenticated user
+            },
+        });
+        if (!existingBus) {
+            return res.status(404).json({ message: 'Bus not found or does not belong to the user' });
+        }
+        // Delete the bus
+        yield client_1.default.bus.delete({
+            where: { id: busId },
+        });
+        return res.status(200).json({ message: 'Bus deleted successfully' });
+    }
+    catch (error) {
+        console.error('Bus deletion error:', error);
+        // More specific error handling
+        if (error instanceof client_2.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({
+                    message: 'The bus does not exist or has already been deleted.',
+                    error: error.message
+                });
+            }
+        }
+        return res.status(500).json({
+            message: 'Error deleting bus',
+            error: error instanceof Error ? error.message : error
+        });
+    }
+});
+exports.deleteBus = deleteBus;
 const createAgent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { name } = req.body;
@@ -167,6 +213,52 @@ const createAgent = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.createAgent = createAgent;
+// Delete an agent
+const deleteAgent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id); // Authenticated user's ID
+    const agentId = req.params.id ? Number(req.params.id) : null; // Agent ID from the request params
+    if (!userId) {
+        return res.status(401).json({ message: 'User authentication failed' });
+    }
+    if (!agentId) {
+        return res.status(400).json({ message: 'Agent ID is required' });
+    }
+    try {
+        // Check if the agent exists and belongs to the user
+        const existingAgent = yield client_1.default.agent.findFirst({
+            where: {
+                id: agentId,
+                userId, // Ensure the agent belongs to the authenticated user
+            },
+        });
+        if (!existingAgent) {
+            return res.status(404).json({ message: 'Agent not found or does not belong to the user' });
+        }
+        // Delete the agent
+        yield client_1.default.agent.delete({
+            where: { id: agentId },
+        });
+        return res.status(200).json({ message: 'Agent deleted successfully' });
+    }
+    catch (error) {
+        console.error('Agent deletion error:', error);
+        // More specific error handling
+        if (error instanceof client_2.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({
+                    message: 'The agent does not exist or has already been deleted.',
+                    error: error.message,
+                });
+            }
+        }
+        return res.status(500).json({
+            message: 'Error deleting agent',
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+});
+exports.deleteAgent = deleteAgent;
 const createOperator = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { name } = req.body;
@@ -229,6 +321,52 @@ const createOperator = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.createOperator = createOperator;
+// Delete an operator
+const deleteOperator = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id); // Authenticated user's ID
+    const operatorId = req.params.id ? Number(req.params.id) : null; // Operator ID from the request params
+    if (!userId) {
+        return res.status(401).json({ message: 'User authentication failed' });
+    }
+    if (!operatorId) {
+        return res.status(400).json({ message: 'Operator ID is required' });
+    }
+    try {
+        // Check if the operator exists and belongs to the user
+        const existingOperator = yield client_1.default.operator.findFirst({
+            where: {
+                id: operatorId,
+                userId, // Ensure the operator belongs to the authenticated user
+            },
+        });
+        if (!existingOperator) {
+            return res.status(404).json({ message: 'Operator not found or does not belong to the user' });
+        }
+        // Delete the operator
+        yield client_1.default.operator.delete({
+            where: { id: operatorId },
+        });
+        return res.status(200).json({ message: 'Operator deleted successfully' });
+    }
+    catch (error) {
+        console.error('Operator deletion error:', error);
+        // More specific error handling
+        if (error instanceof client_2.Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({
+                    message: 'The operator does not exist or has already been deleted.',
+                    error: error.message,
+                });
+            }
+        }
+        return res.status(500).json({
+            message: 'Error deleting operator',
+            error: error instanceof Error ? error.message : error,
+        });
+    }
+});
+exports.deleteOperator = deleteOperator;
 const getBuses = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);

@@ -62,6 +62,7 @@ const createTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
                         },
                     },
                 });
+                console.log(shareholder);
                 if (!shareholder) {
                     return res.status(400).json({
                         message: 'Shareholder not found for this finance category.',
@@ -81,9 +82,6 @@ const createTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 updatedBoxBalance = updatedBoxBalance.add(parsedAmount);
             }
             else if (logType === "DEBIT") {
-                if (updatedBoxBalance.lessThan(parsedAmount)) {
-                    return res.status(400).json({ message: "Insufficient box balance." });
-                }
                 updatedBoxBalance = updatedBoxBalance.sub(parsedAmount);
             }
         }
@@ -92,9 +90,6 @@ const createTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 updatedAccountBalance = updatedAccountBalance.add(parsedAmount);
             }
             else if (logType === "DEBIT") {
-                if (updatedAccountBalance.lessThan(parsedAmount)) {
-                    return res.status(400).json({ message: "Insufficient account balance." });
-                }
                 updatedAccountBalance = updatedAccountBalance.sub(parsedAmount);
             }
         }
