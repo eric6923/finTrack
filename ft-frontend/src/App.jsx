@@ -43,7 +43,7 @@ import RestPassword from "./ForgotPassword/RestPassword";
 const App = () => {
   return (
     <Router>
-      <div>this is text</div>
+      
       <Routes>
         {/* Routes without Sidebar */}
         <Route path="/welcome" element={<Welcome />} />

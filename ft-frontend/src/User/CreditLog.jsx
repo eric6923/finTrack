@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { DatePicker } from "@nextui-org/react";
+import { now, getLocalTimeZone, parseDateTime } from "@internationalized/date";
 
 const Credit = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [payLater, setPayLater] = useState(true); // Default to true
   const [dueAmount, setDueAmount] = useState(null);
+  const [travelDateValue, setTravelDateValue] = useState(
+    now(getLocalTimeZone())
+  );
   const [formData, setFormData] = useState({
     desc: "",
     amount: "",
@@ -24,6 +29,13 @@ const Credit = () => {
   const [busOptions, setBusOptions] = useState([]);
   const [agentOptions, setAgentOptions] = useState([]);
   const [operatorOptions, setOperatorOptions] = useState([]);
+
+  const formatDateForAPI = (date) => {
+    if (!date) return "";
+    // Convert the date to ISO string and format it to match datetime-local format
+    const isoString = date.toDate().toISOString();
+    return isoString.slice(0, 16); // Get YYYY-MM-DDTHH:mm format
+  };
 
   // Fetch dropdown options
   useEffect(() => {
@@ -64,8 +76,18 @@ const Credit = () => {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (e?.target) {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+  const handleDateChange = (date) => {
+    setTravelDateValue(date);
+    // Update the formData with the formatted date
+    setFormData((prev) => ({
+      ...prev,
+      travelDate: formatDateForAPI(date),
+    }));
   };
 
   const handleCreateCategory = async () => {
@@ -238,32 +260,19 @@ const Credit = () => {
 
                     <label className="flex flex-col">
                       Travel Date:
-                      <input
-                        type="datetime-local"
-                        name="travelDate"
-                        value={formData.travelDate}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      <DatePicker
+                        hideTimeZone
+                        showMonthAndYearPickers
+                        value={travelDateValue}
+                        onChange={handleDateChange}
+                        defaultValue={now(getLocalTimeZone())}
+                        variant="bordered"
+                        classNames={{
+                          base: "w-full",
+                          input:
+                            "mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+                        }}
                       />
-                    </label>
-                    <label className="flex flex-col">
-                      Bus Name:
-                      <select
-                        name="busId"
-                        value={formData.busId}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Select</option>
-                        {Array.isArray(busOptions) &&
-                          busOptions.map((bus) => (
-                            <option key={bus.id} value={bus.id}>
-                              {bus.name}
-                            </option>
-                          ))}
-                      </select>
                     </label>
                     
 
@@ -334,7 +343,25 @@ const Credit = () => {
                         </button>
                       </div>
                     </label>
-                    
+
+                    <label className="flex flex-col">
+                      Bus Name:
+                      <select
+                        name="busId"
+                        value={formData.busId}
+                        onChange={handleChange}
+                        required
+                        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select</option>
+                        {Array.isArray(busOptions) &&
+                          busOptions.map((bus) => (
+                            <option key={bus.id} value={bus.id}>
+                              {bus.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
 
                     <label className="flex flex-col">
                       Collection Amount:
@@ -347,7 +374,6 @@ const Credit = () => {
                       />
                     </label>
                     {/* Row 4 */}
-                    
 
                     {/* Row 5 */}
                     <label className="flex flex-col">
@@ -356,7 +382,6 @@ const Credit = () => {
                         name="agentId"
                         value={formData.agentId}
                         onChange={handleChange}
-                        
                         className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select</option>
@@ -506,7 +531,7 @@ const Credit = () => {
                 </>
               )}
 
-              <div className="flex justify-end space-x-4">
+              <div className=" sticky bottom-0 bg-white p-4 flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

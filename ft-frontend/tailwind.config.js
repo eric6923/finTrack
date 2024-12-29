@@ -1,6 +1,10 @@
+const {nextui} = require('@nextui-org/theme');
 module.exports = {
   mode: "jit",
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./node_modules/@nextui-org/theme/dist/components/(date-picker|button|ripple|spinner|calendar|date-input|form|popover).js"
+  ],
   theme: {
     extend: {
       colors: {
@@ -9,5 +13,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [nextui()],
 };

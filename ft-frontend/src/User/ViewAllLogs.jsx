@@ -309,10 +309,11 @@ const ViewAllLogs = () => {
                             </p>
 
                             <p className="flex-1 text-center mr-4">
-                              {log.commission.amount}
+                              {log.commission?.remainingDue || 0}
                             </p>
+                            
                             <p className="flex-1 text-center mr-4">
-                              {log.collection.amount}
+                              {log.collection?.remainingDue}
                             </p>
                             <p className="flex-1">{log.dueAmount}</p>
                             <p className="flex-1">{log.remarks}</p>

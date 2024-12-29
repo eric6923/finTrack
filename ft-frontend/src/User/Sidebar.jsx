@@ -19,8 +19,25 @@ const Sidebar = ({ children }) => {
     if (storedUserInfo) {
       setUserInfo(JSON.parse(storedUserInfo));
     }
+    const storedSidebarState = localStorage.getItem("sidebarOpen");
+  if (storedSidebarState !== null) {
+    setOpen(JSON.parse(storedSidebarState));  // Set the sidebar state from localStorage
+  } else {
+    setOpen(true);  // Default to open if no stored state
+  }
   }, []);
 
+  const handleSidebarToggle = () => {
+    const newState = !open;
+    setOpen(newState);
+    // Store the sidebar state in localStorage
+    if (newState) {
+      localStorage.setItem("sidebarOpen", JSON.stringify(true)); // Save open state
+    } else {
+      localStorage.setItem("sidebarOpen", JSON.stringify(false)); // Save closed state
+    }
+  };
+  
   return (
     <div className="flex h-screen overflow-hidden">
       <div
@@ -34,7 +51,7 @@ const Sidebar = ({ children }) => {
             src="./src/assets/control.png"
             className={`absolute cursor-pointer -right-3 top-6 w-5 border-black
               border-2 rounded-full ${!open && "rotate-180"} z-20`}
-            onClick={() => setOpen(!open)}
+            onClick={handleSidebarToggle}
           />
 
           {/* Logo Section */}

@@ -55,9 +55,10 @@ const fetchBuses = async () => {
   };
 
   return (
-    <div className=" space-y-6">
+    <div className="p-4 space-y-2">
       {/* <h1 className="text-3xl font-semibold text-center text-black">Bus Category</h1> */}
-  
+      <h1 className="text-xl font-semibold text-center text-black">Create Bus Company</h1>
+
       <div className="flex items-center justify-center space-x-4">
         <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
           <option value="">Select Bus</option>
@@ -69,7 +70,7 @@ const fetchBuses = async () => {
         </select>
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="p-2 bg-black text-white rounded-full hover:bg-gray-800 transition"
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           +
         </button>

@@ -28,7 +28,7 @@ const Adminlogin = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('https://ft-backend-ochre.vercel.app/api/admin/login', credentials);
+      const response = await axios.post('http://localhost:5000/api/admin/login', credentials);
 
       if (response.status === 200) {
         setSuccess('Login successful!');

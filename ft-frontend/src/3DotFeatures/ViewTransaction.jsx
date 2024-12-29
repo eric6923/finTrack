@@ -42,7 +42,7 @@ const ViewTransaction = ({ log, onClose }) => {
         console.error('Error fetching additional details:', error);
       }
     };
-
+    console.log(log)
     fetchDetails();
   }, [log]);
 
@@ -125,7 +125,7 @@ const ViewTransaction = ({ log, onClose }) => {
           {log.collection && (
             <>
               <tr>
-                <td className="py-2 px-4 border-b"><strong>Operator:</strong></td>
+                <td className="py-2 px-4 border-b"><strong>Type:</strong></td>
                 <td className="py-2 px-4 border-b">{operatorName}</td>
               </tr>
               <tr>

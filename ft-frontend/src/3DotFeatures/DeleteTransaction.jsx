@@ -19,6 +19,7 @@ const DeleteTransaction = ({ log, onClose, onDelete }) => {
         });
         if (response.status === 200) {
           onDelete(log);
+          window.location.reload();
         } else {
           console.error('Error deleting transaction:', response);
         }

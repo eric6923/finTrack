@@ -1,4 +1,3 @@
-// Import React and useEffect, useState for API calls
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -22,10 +21,8 @@ const Header = () => {
           return;
         }
 
-        // Get today's date dynamically
         const todayDate = new Date().toISOString().split("T")[0];
 
-        // Fetch credit and debit data
         const creditDebitResponse = await axios.get(
           `http://localhost:5000/api/user/total?Date=${todayDate}`,
           {
@@ -35,7 +32,6 @@ const Header = () => {
           }
         );
 
-        // Fetch balances data
         const balancesResponse = await axios.get(
           "http://localhost:5000/api/user/balances",
           {
@@ -44,9 +40,7 @@ const Header = () => {
             },
           }
         );
-        console.log("Balances Response:", balancesResponse.data);
 
-        // Fetch total profit data
         const profitResponse = await axios.get(
           `http://localhost:5000/api/user/profit?date=${todayDate}`,
           {
@@ -56,7 +50,6 @@ const Header = () => {
           }
         );
 
-        // Update state with API response data
         setData((prevState) => ({
           ...prevState,
           credit: creditDebitResponse.data.totalCredit,
@@ -65,7 +58,7 @@ const Header = () => {
           upiBalance: balancesResponse.data.accountBalance,
           due: balancesResponse.data.due,
           totalBalance: balancesResponse.data.totalBalance,
-          totalProfit: profitResponse.data.totalProfit, // Update total profit
+          totalProfit: profitResponse.data.totalProfit,
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -73,45 +66,91 @@ const Header = () => {
     };
 
     fetchData();
-  }, []); // Empty dependency array ensures the fetch happens only on initial render
+  }, []);
+
+  const getItemStyles = (index) => {
+    switch (index) {
+      case 0: // Credit
+        return {
+          outline: "2px solid rgba(15, 219, 127, 0.5)",
+          bg: "bg-green-100",
+          titleColor: "text-green-800",
+          valueColor: "text-green-600"
+        };
+      case 1: // Debit
+      case 6: // Due
+        return {
+          outline: "2px solid rgba(251, 27, 27, 0.5)",
+          bg: "bg-red-100",
+          titleColor: "text-red-800",
+          valueColor: "text-red-600"
+        };
+      case 2: // Box Balance
+        return {
+          outline: "2px solid rgba(17, 89, 245, 0.5)",
+          bg: "bg-blue-100",
+          titleColor: "text-blue-800",
+          valueColor: "text-blue-600"
+        };
+      case 3: // UPI Balance
+        return {
+          outline: "2px solid rgba(34, 228, 242, 0.5)",
+          bg: "bg-cyan-100",
+          titleColor: "text-cyan-800",
+          valueColor: "text-cyan-600"
+        };
+      case 4: // Total Balance
+        return {
+          outline: "2px solid rgba(246, 139, 219, 0.5)",
+          bg: "bg-pink-100",
+          titleColor: "text-pink-800",
+          valueColor: "text-pink-600"
+        };
+      case 5: // TP
+        return {
+          outline: "2px solid rgba(15, 219, 127, 0.5)",
+          bg: "bg-green-100",
+          titleColor: "text-green-800",
+          valueColor: "text-green-600"
+        };
+      default:
+        return {
+          bg: "bg-gray-100",
+          titleColor: "text-gray-800",
+          valueColor: "text-gray-600"
+        };
+    }
+  };
 
   const items = [
-    { label: "Credit", value: data.credit },
-    { label: "Debit", value: data.debit },
+    { label: "Today Credit", value: data.credit },
+    { label: "Today Debit", value: data.debit },
     { label: "Box Balance", value: data.boxBalance },
     { label: "UPI Balance", value: data.upiBalance },
     { label: "Total Balance", value: data.totalBalance },
-    { label: "TP", value: data.totalProfit }, // New TP box
+    { label: "TP", value: data.totalProfit },
     { label: "Due", value: data.due },
   ];
 
   return (
     <div className="flex flex-wrap justify-around items-center bg-gray-50 p-4 shadow-md">
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className={`w-40 h-24 bg-white shadow-lg rounded-lg flex flex-col justify-center items-center m-2 p-4 border border-gray-200`}
-          style={{
-            outline:
-              index === 0
-                ? "4px solid rgba(15, 219, 127, 0.5)"
-                : index === 1 || index === 6
-                ? "4px solid rgba(251, 27, 27, 0.5)"
-                : index === 2
-                ? "4px solid rgba(17, 89, 245, 0.5)"
-                : index === 3
-                ? "4px solid rgba(34, 228, 242, 0.5)"
-                : index === 4
-                ? "4px solid rgba(246, 139, 219, 0.5)"
-                : index === 5
-                ? "4px solid rgba(233, 168, 40, 0.5)"
-                : "",
-          }}
-        >
-          <h3 className="text-lg font-bold text-gray-700">{item.label}</h3>
-          <p className="text-sm text-gray-500">{item.value}</p>
-        </div>
-      ))}
+      {items.map((item, index) => {
+        const styles = getItemStyles(index);
+        return (
+          <div
+            key={index}
+            className={`w-40 h-24 ${styles.bg} shadow-lg rounded-lg flex flex-col justify-center items-center m-2 p-4`}
+            style={{ outline: styles.outline }}
+          >
+            <h3 className={`text-lg font-semibold ${styles.titleColor}`}>
+              {item.label}
+            </h3>
+            <p className={`text-2xl font-bold ${styles.valueColor}`}>
+              ₹{item.value || 0}
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 };
