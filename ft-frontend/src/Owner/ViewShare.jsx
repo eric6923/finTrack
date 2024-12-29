@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const ViewShare = () => {
-  const [date, setDate] = useState('2024-12');
+  const [date, setDate] = useState("2024-12");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,19 +13,22 @@ const ViewShare = () => {
       setError(null);
 
       // Get the token from local storage
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('No token found. Please log in.');
+        setError("No token found. Please log in.");
         setLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/user/shares?date=${date}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `https://ftbackend.vercel.app/api/user/shares?date=${date}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setData(response.data);
       } catch (err) {
         setError(err.message);
@@ -45,7 +48,9 @@ const ViewShare = () => {
 
   return (
     <div className="p-6 bg-white space-y-6">
-      <h1 className="text-2xl font-semibold text-center text-black mb-4">View Share Distribution</h1>
+      <h1 className="text-2xl font-semibold text-center text-black mb-4">
+        View Share Distribution
+      </h1>
       <div className="flex justify-center space-x-4">
         <label className="text-black font-medium">
           Select Month and Year:
@@ -57,7 +62,7 @@ const ViewShare = () => {
           />
         </label>
       </div>
-  
+
       {loading && (
         <div className="flex justify-center">
           <p className="text-black">Loading...</p>
@@ -70,8 +75,12 @@ const ViewShare = () => {
       )}
       {data && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-center text-black">Month: {data.month}</h2>
-          <p className="text-lg text-center text-black">Total Profit: {data.totalProfit}</p>
+          <h2 className="text-xl font-semibold text-center text-black">
+            Month: {data.month}
+          </h2>
+          <p className="text-lg text-center text-black">
+            Total Profit: {data.totalProfit}
+          </p>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse border border-gray-300">
               <thead className="bg-gray-600 text-white">
@@ -100,8 +109,6 @@ const ViewShare = () => {
       )}
     </div>
   );
-  
-  
 };
 
 export default ViewShare;

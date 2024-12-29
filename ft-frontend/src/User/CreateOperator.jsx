@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const CreateOperator = () => {
   const [operators, setOperators] = useState([]);
-  const [newOperatorName, setNewOperatorName] = useState('');
+  const [newOperatorName, setNewOperatorName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Function to fetch operators
   // Update the fetchOperators function to handle cases where the response is not an array
-const fetchOperators = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:5000/api/user/operator', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const operatorsData = Array.isArray(response.data) ? response.data : [];
-    setOperators(operatorsData);
-  } catch (error) {
-    console.error('Error fetching operators:', error);
-  }
-};
-
+  const fetchOperators = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "https://ftbackend.vercel.app/api/user/operator",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const operatorsData = Array.isArray(response.data) ? response.data : [];
+      setOperators(operatorsData);
+    } catch (error) {
+      console.error("Error fetching operators:", error);
+    }
+  };
 
   useEffect(() => {
     fetchOperators();
@@ -31,32 +33,37 @@ const fetchOperators = async () => {
   // Function to handle creating a new operator
   const handleCreateOperator = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const payload = { name: newOperatorName };
 
       const response = await axios.post(
-        'http://localhost:5000/api/user/operator',
+        "https://ftbackend.vercel.app/api/user/operator",
         payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       // Add the new operator to the existing list of operators
       setOperators([...operators, response.data]);
-      setNewOperatorName('');
+      setNewOperatorName("");
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error creating operator:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error creating operator:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
   return (
     <div className="p-4 space-y-2">
-      <h1 className="text-xl font-semibold text-center text-black">Create Type</h1>
+      <h1 className="text-xl font-semibold text-center text-black">
+        Create Type
+      </h1>
       <div className="flex items-center justify-center space-x-4">
         <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
           <option value="">Select Type</option>
@@ -73,12 +80,13 @@ const fetchOperators = async () => {
           +
         </button>
       </div>
-  
+
       {isDialogOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-          
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4">
-            <h3 className="text-xl font-semibold text-center text-black mb-4">Create New Type</h3>
+            <h3 className="text-xl font-semibold text-center text-black mb-4">
+              Create New Type
+            </h3>
             <input
               type="text"
               value={newOperatorName}
@@ -104,9 +112,6 @@ const fetchOperators = async () => {
       )}
     </div>
   );
-  
-  
-  
 };
 
 export default CreateOperator;

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Side from '../assets/wel-frame.png'
 import Logo from '../assets/fintrack-logo.png'
 const OwnerPassword = () => {
-  const [ownerPassword, setOwnerPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
 
   const handlePasswordChange = (e) => {
@@ -14,16 +14,16 @@ const OwnerPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
 
     if (!token) {
-      setMessage('No token found. Please log in first.');
+      setMessage("No token found. Please log in first.");
       return;
     }
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/user/set-owner-password',
+        "https://ftbackend.vercel.app/api/user/set-owner-password",
         { ownerPassword },
         {
           headers: {
@@ -37,15 +37,15 @@ const OwnerPassword = () => {
         setMessage(response.data.message);
 
         // Navigate to /sidebar if password set successfully
-        if (response.data.message.includes('successfully')) {
-          navigate('/transactions');
+        if (response.data.message.includes("successfully")) {
+          navigate("/transactions");
         }
       } else {
-        setMessage('Unexpected server response. Please try again.');
+        setMessage("Unexpected server response. Please try again.");
       }
     } catch (error) {
-      console.error('Error setting owner password:', error);
-      setMessage('Failed to set owner password.');
+      console.error("Error setting owner password:", error);
+      setMessage("Failed to set owner password.");
     }
   };
 
@@ -66,48 +66,49 @@ const OwnerPassword = () => {
           <h2 className="text-4xl font-bold ml-4 text-black-600">FinTrack</h2>
         </div>
 
-      <div className="w-full max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg mt-36">
-        <h2 className="text-2xl font-semibold text-center mb-6">Set Owner Password</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="ownerPassword"
-              className="block text-gray-700 font-medium mb-2"
+        <div className="w-full max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg mt-36">
+          <h2 className="text-2xl font-semibold text-center mb-6">
+            Set Owner Password
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label
+                htmlFor="ownerPassword"
+                className="block text-gray-700 font-medium mb-2"
+              >
+                Owner Password:
+              </label>
+              <input
+                type="password"
+                id="ownerPassword"
+                value={ownerPassword}
+                onChange={handlePasswordChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter Owner Password"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
             >
-              Owner Password:
-            </label>
-            <input
-              type="password"
-              id="ownerPassword"
-              value={ownerPassword}
-              onChange={handlePasswordChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter Owner Password"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
-          >
-            Set Password
-          </button>
-        </form>
+              Set Password
+            </button>
+          </form>
 
-        {message && (
-          <p
-            className={`mt-4 text-center text-sm ${
-              message.includes('Failed') ? 'text-red-500' : 'text-green-500'
-            }`}
-          >
-            {message}
-          </p>
-        )}
+          {message && (
+            <p
+              className={`mt-4 text-center text-sm ${
+                message.includes("Failed") ? "text-red-500" : "text-green-500"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
     </div>
   );
 };
 
 export default OwnerPassword;
- 

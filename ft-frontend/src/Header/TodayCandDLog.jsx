@@ -17,7 +17,7 @@ const TodayCandDLog = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/user/total?Date=${date}`,
+        `https://ftbackend.vercel.app/api/user/total?Date=${date}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -29,7 +29,9 @@ const TodayCandDLog = () => {
       });
       setError("");
     } catch (err) {
-      setError("Failed to fetch data for the selected date. Please try again later.");
+      setError(
+        "Failed to fetch data for the selected date. Please try again later."
+      );
     }
   };
 
@@ -44,7 +46,9 @@ const TodayCandDLog = () => {
   return (
     <div className="date-log">
       <h1>Credit and Debit Log</h1>
-      <label htmlFor="date-picker"><strong>Select Date:</strong></label>
+      <label htmlFor="date-picker">
+        <strong>Select Date:</strong>
+      </label>
       <input
         type="date"
         id="date-picker"
@@ -56,8 +60,12 @@ const TodayCandDLog = () => {
 
       {data.totalCredit !== null && data.totalDebit !== null ? (
         <div>
-          <p><strong>Total Credit:</strong> {data.totalCredit}</p>
-          <p><strong>Total Debit:</strong> {data.totalDebit}</p>
+          <p>
+            <strong>Total Credit:</strong> {data.totalCredit}
+          </p>
+          <p>
+            <strong>Total Debit:</strong> {data.totalDebit}
+          </p>
         </div>
       ) : (
         !error && <p>Loading...</p>

@@ -70,7 +70,7 @@ const UserSignup = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/regrequest", {
+      const response = await fetch("https://ftbackend.vercel.app/api/user/regrequest", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

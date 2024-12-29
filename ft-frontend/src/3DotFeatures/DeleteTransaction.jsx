@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import PasswordModal from '../3DotFeatures/PasswordModal';
+import React, { useState } from "react";
+import axios from "axios";
+import PasswordModal from "../3DotFeatures/PasswordModal";
 
 const DeleteTransaction = ({ log, onClose, onDelete }) => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(true);
@@ -9,22 +9,25 @@ const DeleteTransaction = ({ log, onClose, onDelete }) => {
     setIsPasswordModalOpen(false);
     if (isValid) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.delete(`http://localhost:5000/api/user/transaction/${log.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          data: { password }
-        });
+        const token = localStorage.getItem("token");
+        const response = await axios.delete(
+          `https://ftbackend.vercel.app/api/user/transaction/${log.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            data: { password },
+          }
+        );
         if (response.status === 200) {
           onDelete(log);
           window.location.reload();
         } else {
-          console.error('Error deleting transaction:', response);
+          console.error("Error deleting transaction:", response);
         }
       } catch (error) {
-        console.error('Error deleting transaction:', error);
+        console.error("Error deleting transaction:", error);
       }
     } else {
       alert("Invalid password! Deletion not allowed.");
@@ -37,7 +40,9 @@ const DeleteTransaction = ({ log, onClose, onDelete }) => {
       {isPasswordModalOpen && (
         <PasswordModal
           onClose={() => setIsPasswordModalOpen(false)}
-          onVerify={(isValid, password) => handlePasswordVerified(isValid, password)}
+          onVerify={(isValid, password) =>
+            handlePasswordVerified(isValid, password)
+          }
         />
       )}
     </>

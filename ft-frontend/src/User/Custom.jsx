@@ -138,7 +138,7 @@ export default function Custom({ logType }) {
           return;
         }
         const logsResponse = await axios.get(
-          `http://localhost:5000/api/user/transaction?startDate=${startDate}&endDate=${endDate}`,
+          `https://ftbackend.vercel.app/api/user/transaction?startDate=${startDate}&endDate=${endDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -148,7 +148,7 @@ export default function Custom({ logType }) {
         setLogs(logsResponse.data);
         console.log(logsResponse.data);
         const busResponse = await axios.get(
-          "http://localhost:5000/api/user/bus",
+          "https://ftbackend.vercel.app/api/user/bus",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function Custom({ logType }) {
         );
         setBusData(busResponse.data);
         const categoriesResponse = await axios.get(
-          "http://localhost:5000/api/user/category/",
+          "https://ftbackend.vercel.app/api/user/category/",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -170,7 +170,7 @@ export default function Custom({ logType }) {
           categoriesResponse.data.map((category) => category.name)
         );
         const agentsResponse = await axios.get(
-          "http://localhost:5000/api/user/agent",
+          "https://ftbackend.vercel.app/api/user/agent",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -183,7 +183,7 @@ export default function Custom({ logType }) {
           agentsResponse.data.map((agent) => agent.name)
         ); // Log agent names
         const operatorsResponse = await axios.get(
-          "http://localhost:5000/api/user/operator",
+          "https://ftbackend.vercel.app/api/user/operator",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -225,7 +225,7 @@ export default function Custom({ logType }) {
         ...(filters.operatorName && { operatorName: filters.operatorName }),
       }).toString();
       const response = await axios.get(
-        `http://localhost:5000/api/user/filter-transaction?${queryParams}`,
+        `https://ftbackend.vercel.app/api/user/filter-transaction?${queryParams}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -291,7 +291,7 @@ export default function Custom({ logType }) {
           return;
         }
         const totalsResponse = await axios.get(
-          `http://localhost:5000/api/user/total?startDate=${startDate}&endDate=${endDate}`,
+          `https://ftbackend.vercel.app/api/user/total?startDate=${startDate}&endDate=${endDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -49,16 +49,16 @@ const Credit = () => {
 
       try {
         const [categoryRes, busRes, agentRes, operatorRes] = await Promise.all([
-          fetch("http://localhost:5000/api/user/category/", {
+          fetch("https://ftbackend.vercel.app/api/user/category/", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/bus", {
+          fetch("https://ftbackend.vercel.app/api/user/bus", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/agent", {
+          fetch("https://ftbackend.vercel.app/api/user/agent", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/operator", {
+          fetch("https://ftbackend.vercel.app/api/user/operator", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
         ]);
@@ -96,7 +96,7 @@ const Credit = () => {
       const token = localStorage.getItem("token");
       try {
         const response = await fetch(
-          "http://localhost:5000/api/user/category/create",
+          "https://ftbackend.vercel.app/api/user/category/create",
           {
             method: "POST",
             headers: {
@@ -171,7 +171,7 @@ const Credit = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/user/transaction/create?logType=CREDIT",
+        "https://ftbackend.vercel.app/api/user/transaction/create?logType=CREDIT",
         {
           method: "POST",
           headers: {
@@ -274,7 +274,6 @@ const Credit = () => {
                         }}
                       />
                     </label>
-                    
 
                     {/* Row 2 */}
                     <label className="flex flex-col">

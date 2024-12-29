@@ -18,7 +18,7 @@ const MonthlyCandDLog = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/user/total?Date=${selectedMonth}`,
+          `https://ftbackend.vercel.app/api/user/total?Date=${selectedMonth}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -44,7 +44,9 @@ const MonthlyCandDLog = () => {
   return (
     <div className="monthly-log">
       <h1>Monthly Credit and Debit Log</h1>
-      <label htmlFor="month-picker"><strong>Select Month:</strong></label>
+      <label htmlFor="month-picker">
+        <strong>Select Month:</strong>
+      </label>
       <input
         type="month"
         id="month-picker"
@@ -56,8 +58,12 @@ const MonthlyCandDLog = () => {
 
       {data.totalCredit !== null && data.totalDebit !== null ? (
         <div>
-          <p><strong>Total Credit:</strong> {data.totalCredit}</p>
-          <p><strong>Total Debit:</strong> {data.totalDebit}</p>
+          <p>
+            <strong>Total Credit:</strong> {data.totalCredit}
+          </p>
+          <p>
+            <strong>Total Debit:</strong> {data.totalDebit}
+          </p>
         </div>
       ) : (
         !error && <p>Loading...</p>

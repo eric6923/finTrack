@@ -25,7 +25,7 @@ const CreateDebitLog = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/user/category",
+          "https://ftbackend.vercel.app/api/user/category",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -64,7 +64,7 @@ const CreateDebitLog = () => {
       };
 
       await axios.post(
-        "http://localhost:5000/api/user/transaction/create?logType=DEBIT",
+        "https://ftbackend.vercel.app/api/user/transaction/create?logType=DEBIT",
         dataToSend,
         {
           headers: {
@@ -100,7 +100,7 @@ const CreateDebitLog = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/user/category/create",
+        "https://ftbackend.vercel.app/api/user/category/create",
         { name: newCategory },
         {
           headers: {

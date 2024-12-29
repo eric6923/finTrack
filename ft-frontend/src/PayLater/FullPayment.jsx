@@ -23,7 +23,7 @@ const FullPayment = ({ log, onUpdateDueAmount, onClose }) => {
       setIsSubmitting(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/user/paylater/${log.id}`,
+        `https://ftbackend.vercel.app/api/user/paylater/${log.id}`,
         paymentData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

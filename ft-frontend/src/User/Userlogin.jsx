@@ -26,7 +26,7 @@ const UserLogin = () => {
     try {
       // Login API call
       const loginResponse = await fetch(
-        "http://localhost:5000/api/user/login",
+        "https://ftbackend.vercel.app/api/user/login",
         {
           method: "POST",
           headers: {
@@ -57,7 +57,7 @@ const UserLogin = () => {
 
       // Check Onboard API call
       const checkOnboardResponse = await fetch(
-        "http://localhost:5000/api/user/check-onboard",
+        "https://ftbackend.vercel.app/api/user/check-onboard",
         {
           method: "GET",
           headers: {

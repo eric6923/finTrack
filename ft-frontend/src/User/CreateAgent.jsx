@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const CreateAgent = () => {
   const [agents, setAgents] = useState([]);
-  const [newAgentName, setNewAgentName] = useState('');
+  const [newAgentName, setNewAgentName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Function to fetch agents
   // Update the fetchAgents function to handle cases where the response is not an array
-const fetchAgents = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:5000/api/user/agent', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const agentsData = Array.isArray(response.data) ? response.data : [];
-    setAgents(agentsData);
-  } catch (error) {
-    console.error('Error fetching agents:', error);
-  }
-};
-
+  const fetchAgents = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "https://ftbackend.vercel.app/api/user/agent",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const agentsData = Array.isArray(response.data) ? response.data : [];
+      setAgents(agentsData);
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+    }
+  };
 
   useEffect(() => {
     fetchAgents();
@@ -31,32 +33,37 @@ const fetchAgents = async () => {
   // Function to handle creating a new agent
   const handleCreateAgent = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const payload = { name: newAgentName };
 
       const response = await axios.post(
-        'http://localhost:5000/api/user/agent',
+        "https://ftbackend.vercel.app/api/user/agent",
         payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       // Add the new agent to the existing list of agents
       setAgents([...agents, response.data]);
-      setNewAgentName('');
+      setNewAgentName("");
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error creating agent:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error creating agent:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
   return (
     <div className="p-4 space-y-2">
-      <h1 className="text-xl font-semibold text-center text-black">Create Bus Agent</h1>
+      <h1 className="text-xl font-semibold text-center text-black">
+        Create Bus Agent
+      </h1>
 
       <div className="flex items-center justify-center space-x-4">
         <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
@@ -74,11 +81,13 @@ const fetchAgents = async () => {
           +
         </button>
       </div>
-  
+
       {isDialogOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4">
-            <h3 className="text-xl font-semibold text-center text-black mb-4">Create New Agent</h3>
+            <h3 className="text-xl font-semibold text-center text-black mb-4">
+              Create New Agent
+            </h3>
             <input
               type="text"
               value={newAgentName}
@@ -104,7 +113,6 @@ const fetchAgents = async () => {
       )}
     </div>
   );
-  
 };
 
 export default CreateAgent;

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 
 const PasswordModal = ({ onClose, onVerify }) => {
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
   const handleVerifyPassword = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/user/verify-password`,
+        `https://ftbackend.vercel.app/api/user/verify-password`,
         { password },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -35,7 +35,9 @@ const PasswordModal = ({ onClose, onVerify }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       {/* Modal content */}
       <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
-        <h3 className="text-xl font-semibold mb-4 text-gray-800">Enter Owner Password</h3>
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">
+          Enter Owner Password
+        </h3>
         <input
           type="password"
           value={password}

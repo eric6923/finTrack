@@ -1,86 +1,89 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Side from '../assets/wel-frame.png'
 import Logo from '../assets/fintrack-logo.png'
 const StartingAccount = () => {
   const navigate = useNavigate(); // Hook to navigate
   const [startWithZero, setStartWithZero] = useState(false);
   const [startWithOpeningBalance, setStartWithOpeningBalance] = useState(false);
-  const [boxBalance, setBoxBalance] = useState('');
-  const [accountBalance, setAccountBalance] = useState('');
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [boxBalance, setBoxBalance] = useState("");
+  const [accountBalance, setAccountBalance] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleCheckboxChange = (option) => {
-    if (option === 'zero') {
+    if (option === "zero") {
       setStartWithZero(!startWithZero);
       setStartWithOpeningBalance(false);
-      setBoxBalance('');
-      setAccountBalance('');
-      setError('');
-    } else if (option === 'openingBalance') {
+      setBoxBalance("");
+      setAccountBalance("");
+      setError("");
+    } else if (option === "openingBalance") {
       setStartWithOpeningBalance(!startWithOpeningBalance);
       setStartWithZero(false);
-      setError('');
+      setError("");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (startWithOpeningBalance && (!boxBalance || !accountBalance)) {
-      setError('Both Box Balance and Account Balance must be provided.');
+      setError("Both Box Balance and Account Balance must be provided.");
       return;
     }
-  
+
     if (startWithZero) {
-      console.log('Finance Management starts with ZERO balance.');
-      setError('');
-      alert('Preferences saved successfully!');
-      navigate('/ownerpassword'); // Navigate to the next page
+      console.log("Finance Management starts with ZERO balance.");
+      setError("");
+      alert("Preferences saved successfully!");
+      navigate("/ownerpassword"); // Navigate to the next page
       return; // Stop further execution
     }
-  
+
     if (startWithOpeningBalance) {
       try {
         // Retrieve the token from localStorage using the correct key
-        const token = localStorage.getItem('token'); // Use 'token' as the key, not 'authToken'
-  
-        console.log('Token:', token); // Debugging token retrieval
-  
+        const token = localStorage.getItem("token"); // Use 'token' as the key, not 'authToken'
+
+        console.log("Token:", token); // Debugging token retrieval
+
         if (!token) {
-          setError('You need to be logged in to perform this action.');
+          setError("You need to be logged in to perform this action.");
           return;
         }
-  
-        const response = await fetch('http://localhost:5000/api/user/balance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, // Attach token to the Authorization header
-          },
-          body: JSON.stringify({
-            boxBalance: boxBalance,
-            accountBalance: accountBalance,
-          }),
-        });
-  
+
+        const response = await fetch(
+          "https://ftbackend.vercel.app/api/user/balance",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Attach token to the Authorization header
+            },
+            body: JSON.stringify({
+              boxBalance: boxBalance,
+              accountBalance: accountBalance,
+            }),
+          }
+        );
+
         const data = await response.json();
-        console.log('API Response:', data); // Debugging response
-  
+        console.log("API Response:", data); // Debugging response
+
         if (response.ok) {
           setMessage(data.message);
-          navigate('/ownerpassword');
+          navigate("/ownerpassword");
         } else {
-          setError(data.message || 'Something went wrong!');
+          setError(data.message || "Something went wrong!");
         }
       } catch (error) {
-        setError('Error connecting to the API.');
-        console.error('API Error:', error);
+        setError("Error connecting to the API.");
+        console.error("API Error:", error);
       }
     }
   };
-  
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar with Background Image */}
@@ -105,7 +108,10 @@ const StartingAccount = () => {
           How do you want to start your Finance Management?
         </h2>
 
-        <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-10 mt-12">
+        <form
+          onSubmit={handleSubmit}
+          className="max-w-lg mx-auto space-y-10 mt-12"
+        >
           <div>
             <label className="flex items-center text-gray-700 font-medium text-lg">
               <input
@@ -152,14 +158,14 @@ const StartingAccount = () => {
           )}
           {error && <p className="text-red-500">{error}</p>}
           {message && <p className="text-green-500">{message}</p>}
-          
+
           <div className="col-span-6 mt-4 sm:flex sm:flex-col sm:items-start sm:gap-4">
-          <button
-            type="submit"
-            className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
-          >
-            Continue
-          </button>
+            <button
+              type="submit"
+              className="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500"
+            >
+              Continue
+            </button>
           </div>
         </form>
       </div>

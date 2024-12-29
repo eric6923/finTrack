@@ -24,7 +24,7 @@ const Header = () => {
         const todayDate = new Date().toISOString().split("T")[0];
 
         const creditDebitResponse = await axios.get(
-          `http://localhost:5000/api/user/total?Date=${todayDate}`,
+          `https://ftbackend.vercel.app/api/user/total?Date=${todayDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -33,7 +33,7 @@ const Header = () => {
         );
 
         const balancesResponse = await axios.get(
-          "http://localhost:5000/api/user/balances",
+          "https://ftbackend.vercel.app/api/user/balances",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -42,7 +42,7 @@ const Header = () => {
         );
 
         const profitResponse = await axios.get(
-          `http://localhost:5000/api/user/profit?date=${todayDate}`,
+          `https://ftbackend.vercel.app/api/user/profit?date=${todayDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ const Header = () => {
           outline: "2px solid rgba(15, 219, 127, 0.5)",
           bg: "bg-green-100",
           titleColor: "text-green-800",
-          valueColor: "text-green-600"
+          valueColor: "text-green-600",
         };
       case 1: // Debit
       case 6: // Due
@@ -83,41 +83,41 @@ const Header = () => {
           outline: "2px solid rgba(251, 27, 27, 0.5)",
           bg: "bg-red-100",
           titleColor: "text-red-800",
-          valueColor: "text-red-600"
+          valueColor: "text-red-600",
         };
       case 2: // Box Balance
         return {
           outline: "2px solid rgba(17, 89, 245, 0.5)",
           bg: "bg-blue-100",
           titleColor: "text-blue-800",
-          valueColor: "text-blue-600"
+          valueColor: "text-blue-600",
         };
       case 3: // UPI Balance
         return {
           outline: "2px solid rgba(34, 228, 242, 0.5)",
           bg: "bg-cyan-100",
           titleColor: "text-cyan-800",
-          valueColor: "text-cyan-600"
+          valueColor: "text-cyan-600",
         };
       case 4: // Total Balance
         return {
           outline: "2px solid rgba(246, 139, 219, 0.5)",
           bg: "bg-pink-100",
           titleColor: "text-pink-800",
-          valueColor: "text-pink-600"
+          valueColor: "text-pink-600",
         };
       case 5: // TP
         return {
           outline: "2px solid rgba(15, 219, 127, 0.5)",
           bg: "bg-green-100",
           titleColor: "text-green-800",
-          valueColor: "text-green-600"
+          valueColor: "text-green-600",
         };
       default:
         return {
           bg: "bg-gray-100",
           titleColor: "text-gray-800",
-          valueColor: "text-gray-600"
+          valueColor: "text-gray-600",
         };
     }
   };

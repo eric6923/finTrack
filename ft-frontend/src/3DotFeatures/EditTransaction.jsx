@@ -4,7 +4,7 @@ import axios from "axios";
 const EditTransaction = ({ log, onClose, onUpdate }) => {
   const [editedLog, setEditedLog] = useState({
     ...log,
-    password: "", 
+    password: "",
     transaction: {
       desc: log.desc,
       amount: log.amount,
@@ -42,16 +42,16 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
         const token = localStorage.getItem("token");
 
         const [categoryRes, busRes, agentRes, operatorRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/user/category/", {
+          axios.get("https://ftbackend.vercel.app/api/user/category/", {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/user/bus", {
+          axios.get("https://ftbackend.vercel.app/api/user/bus", {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/user/agent", {
+          axios.get("https://ftbackend.vercel.app/api/user/agent", {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/user/operator", {
+          axios.get("https://ftbackend.vercel.app/api/user/operator", {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -127,15 +127,15 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
     try {
       // Create a sanitized copy of the transaction data
       const sanitizedData = { ...editedLog.transaction };
-  
+
       // Ensure 'amount' is a number (convert it to float)
       sanitizedData.amount = parseFloat(sanitizedData.amount);
-  
+
       // Remove transactionNo if the mode of payment is CASH
       if (sanitizedData.modeOfPayment === "CASH") {
         delete sanitizedData.transactionNo; // Exclude this field entirely
       }
-  
+
       // Exclude 'commission' if unnecessary
       if (
         !sanitizedData.commission ||
@@ -143,15 +143,16 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
       ) {
         delete sanitizedData.commission;
       }
-  
+
       // Exclude 'collection' if unnecessary
       if (
         !sanitizedData.collection ||
-        (!sanitizedData.collection.operatorId && !sanitizedData.collection.amount)
+        (!sanitizedData.collection.operatorId &&
+          !sanitizedData.collection.amount)
       ) {
         delete sanitizedData.collection;
       }
-  
+
       // Remove payLaterDetails entirely if payLater is false
       if (!sanitizedData.payLater) {
         delete sanitizedData.payLaterDetails;
@@ -161,17 +162,17 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
           delete sanitizedData.payLaterDetails.travelDate;
         }
       }
-  
+
       console.log("Sending sanitized data:", sanitizedData);
       const token = localStorage.getItem("token");
-  
+
       // Send the data to the backend with proper headers
       const response = await axios.put(
-        `http://localhost:5000/api/user/transaction/${log.id}`,
+        `https://ftbackend.vercel.app/api/user/transaction/${log.id}`,
         { password: editedLog.password, transaction: sanitizedData },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       console.log("Updated transaction:", response.data);
       onUpdate(response.data.updatedTransaction); // Notify parent with updated transaction data
       onClose(); // Close the modal
@@ -181,9 +182,7 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
       setErrorMessage("Failed to update transaction. Please try again.");
     }
   };
-  
 
-  
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
       <div className="bg-white rounded-lg shadow-lg p-6 w-200 max-w-4xl">

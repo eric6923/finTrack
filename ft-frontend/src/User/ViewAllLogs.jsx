@@ -32,7 +32,7 @@ const ViewAllLogs = () => {
         if (!token) throw new Error("No token found in local storage");
 
         const responseLogs = await axios.get(
-          "http://localhost:5000/api/user/transactions/",
+          "https://ftbackend.vercel.app/api/user/transactions/",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -54,7 +54,7 @@ const ViewAllLogs = () => {
         console.log(responseLogs.data);
 
         const responseBus = await axios.get(
-          "http://localhost:5000/api/user/bus",
+          "https://ftbackend.vercel.app/api/user/bus",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -88,7 +88,7 @@ const ViewAllLogs = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/user/transaction/${log.id}`,
+        `https://ftbackend.vercel.app/api/user/transaction/${log.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -311,7 +311,7 @@ const ViewAllLogs = () => {
                             <p className="flex-1 text-center mr-4">
                               {log.commission?.remainingDue || 0}
                             </p>
-                            
+
                             <p className="flex-1 text-center mr-4">
                               {log.collection?.remainingDue}
                             </p>

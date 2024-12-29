@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
-import Pending from "./Pending"; // Import Pending component
+import Pending from "./Pending"; // Import Pending com
 import AdminImg from "../User/fintrack.webp"
 
 const Adminlogin = () => {
@@ -35,7 +35,7 @@ const Adminlogin = () => {
 
     try {
       const response = await axios.post(
-        "https://ftbackend.vercel.app/api/admin/login",
+        `https://ftbackend.vercel.app/api/admin/login`,
         credentials,
         { headers }
       );

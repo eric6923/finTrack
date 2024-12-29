@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const CreateBus = () => {
   const [buses, setBuses] = useState([]);
-  const [newBusName, setNewBusName] = useState('');
+  const [newBusName, setNewBusName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Function to fetch bus data
   // Update the fetchBuses function to handle cases where the response is not an array
-const fetchBuses = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:5000/api/user/bus', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const busesData = Array.isArray(response.data) ? response.data : [];
-    setBuses(busesData);
-  } catch (error) {
-    console.error('Error fetching buses:', error);
-  }
-};
-
+  const fetchBuses = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "https://ftbackend.vercel.app/api/user/bus",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const busesData = Array.isArray(response.data) ? response.data : [];
+      setBuses(busesData);
+    } catch (error) {
+      console.error("Error fetching buses:", error);
+    }
+  };
 
   useEffect(() => {
     fetchBuses();
@@ -31,33 +33,38 @@ const fetchBuses = async () => {
   // Function to handle creating a new bus
   const handleCreateBus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const payload = { name: newBusName };
 
       const response = await axios.post(
-        'http://localhost:5000/api/user/bus',
+        "https://ftbackend.vercel.app/api/user/bus",
         payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       // Add the new bus to the existing list of buses
       setBuses([...buses, response.data]);
-      setNewBusName('');
+      setNewBusName("");
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error creating bus:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error creating bus:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
   return (
     <div className="p-4 space-y-2">
       {/* <h1 className="text-3xl font-semibold text-center text-black">Bus Category</h1> */}
-      <h1 className="text-xl font-semibold text-center text-black">Create Bus Company</h1>
+      <h1 className="text-xl font-semibold text-center text-black">
+        Create Bus Company
+      </h1>
 
       <div className="flex items-center justify-center space-x-4">
         <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
@@ -75,11 +82,13 @@ const fetchBuses = async () => {
           +
         </button>
       </div>
-  
+
       {isDialogOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4">
-            <h3 className="text-xl font-semibold text-center text-black">Create New Bus</h3>
+            <h3 className="text-xl font-semibold text-center text-black">
+              Create New Bus
+            </h3>
             <input
               type="text"
               value={newBusName}
@@ -105,8 +114,6 @@ const fetchBuses = async () => {
       )}
     </div>
   );
-  
-  
 };
 
 export default CreateBus;

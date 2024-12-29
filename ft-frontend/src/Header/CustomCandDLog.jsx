@@ -21,7 +21,7 @@ const CustomCandDLog = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/user/total?startDate=${startDate}&endDate=${endDate}`,
+        `https://ftbackend.vercel.app/api/user/total?startDate=${startDate}&endDate=${endDate}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -33,7 +33,9 @@ const CustomCandDLog = () => {
       });
       setError("");
     } catch (err) {
-      setError("Failed to fetch data for the selected range. Please try again.");
+      setError(
+        "Failed to fetch data for the selected range. Please try again."
+      );
     }
   };
 
@@ -45,7 +47,9 @@ const CustomCandDLog = () => {
     <div className="custom-log">
       <h1>Custom Credit and Debit Log</h1>
       <div>
-        <label htmlFor="start-date"><strong>Start Date:</strong></label>
+        <label htmlFor="start-date">
+          <strong>Start Date:</strong>
+        </label>
         <input
           type="date"
           id="start-date"
@@ -54,7 +58,9 @@ const CustomCandDLog = () => {
         />
       </div>
       <div>
-        <label htmlFor="end-date"><strong>End Date:</strong></label>
+        <label htmlFor="end-date">
+          <strong>End Date:</strong>
+        </label>
         <input
           type="date"
           id="end-date"
@@ -68,8 +74,12 @@ const CustomCandDLog = () => {
 
       {data.totalCredit !== null && data.totalDebit !== null && (
         <div>
-          <p><strong>Total Credit:</strong> {data.totalCredit}</p>
-          <p><strong>Total Debit:</strong> {data.totalDebit}</p>
+          <p>
+            <strong>Total Credit:</strong> {data.totalCredit}
+          </p>
+          <p>
+            <strong>Total Debit:</strong> {data.totalDebit}
+          </p>
         </div>
       )}
     </div>

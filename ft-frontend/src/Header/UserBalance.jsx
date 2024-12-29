@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 const UserBalance = () => {
   const [balances, setBalances] = useState(null);
@@ -7,10 +7,10 @@ const UserBalance = () => {
 
   useEffect(() => {
     // Get the token from localStorage
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     if (!token) {
-      setError('Token not found');
+      setError("Token not found");
       setLoading(false);
       return;
     }
@@ -18,14 +18,17 @@ const UserBalance = () => {
     // Fetch balance data from the API
     const fetchBalances = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/user/balances', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`, // Include token in the Authorization header
-          },
-        });
+        const response = await fetch(
+          "https://ftbackend.vercel.app/api/user/balances",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Include token in the Authorization header
+            },
+          }
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch balances');
+          throw new Error("Failed to fetch balances");
         }
         const data = await response.json();
         setBalances(data);

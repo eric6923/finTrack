@@ -30,16 +30,16 @@ const Credit = () => {
       const token = localStorage.getItem("token");
       try {
         const [categoryRes, busRes, agentRes, operatorRes] = await Promise.all([
-          fetch("http://localhost:5000/api/user/category/", {
+          fetch("https://ftbackend.vercel.app/api/user/category/", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/bus", {
+          fetch("https://ftbackend.vercel.app/api/user/bus", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/agent", {
+          fetch("https://ftbackend.vercel.app/api/user/agent", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch("http://localhost:5000/api/user/operator", {
+          fetch("https://ftbackend.vercel.app/api/user/operator", {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
         ]);
@@ -65,14 +65,17 @@ const Credit = () => {
     if (newCategory) {
       const token = localStorage.getItem("token");
       try {
-        const response = await fetch("http://localhost:5000/api/user/category/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ name: newCategory }),
-        });
+        const response = await fetch(
+          "https://ftbackend.vercel.app/api/user/category/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name: newCategory }),
+          }
+        );
 
         if (response.ok) {
           const category = await response.json();
@@ -95,7 +98,13 @@ const Credit = () => {
       return;
     }
 
-    if (payLater && (!formData.from || !formData.to || !formData.travelDate || !formData.busId)) {
+    if (
+      payLater &&
+      (!formData.from ||
+        !formData.to ||
+        !formData.travelDate ||
+        !formData.busId)
+    ) {
       alert("Please fill in all 'Pay Later' details.");
       return;
     }
@@ -132,7 +141,7 @@ const Credit = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/user/transaction/create?logType=CREDIT",
+        "https://ftbackend.vercel.app/api/user/transaction/create?logType=CREDIT",
         {
           method: "POST",
           headers: {
@@ -182,250 +191,250 @@ const Credit = () => {
 
               {payLater ? (
                 <>
-                <label>
-            From:
-            <input
-              type="text"
-              name="from"
-              value={formData.from}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            To:
-            <input
-              type="text"
-              name="to"
-              value={formData.to}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Amount:
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Mode of Payment:
-            <select
-              name="modeOfPayment"
-              value={formData.modeOfPayment}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="CASH">Cash</option>
-              <option value="UPI">UPI</option>
-            </select>
-          </label>
-          {formData.modeOfPayment === "UPI" && (
-            <label>
-              Transaction ID:
-              <input
-                type="text"
-                name="transactionId"
-                value={formData.transactionId}
-                onChange={handleChange}
-              />
-            </label>
-          )}
-          <label>
-            Category:
-            <select
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={handleCreateCategory}>
-              Add Category
-            </button>
-          </label>
-          <label>
-            Bus Name:
-            <select
-              name="busId"
-              value={formData.busId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {busOptions.map((bus) => (
-                <option key={bus.id} value={bus.id}>
-                  {bus.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Travel Date:
-            <input
-              type="datetime-local"
-              name="travelDate"
-              value={formData.travelDate}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Commission Amount:
-            <input
-              type="number"
-              name="commissionAmount"
-              value={formData.commissionAmount}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Agent:
-            <select
-              name="agentId"
-              value={formData.agentId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {agentOptions.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Collection Amount:
-            <input
-              type="number"
-              name="collectionAmount"
-              value={formData.collectionAmount}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Operator:
-            <select
-              name="operatorId"
-              value={formData.operatorId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {operatorOptions.map((operator) => (
-                <option key={operator.id} value={operator.id}>
-                  {operator.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Description:
-            <input
-              type="text"
-              name="desc"
-              value={formData.desc}
-              onChange={handleChange}
-            />
-          </label>
-          <label>
-            Remarks:
-            <input
-              type="text"
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-            />
-          </label>
+                  <label>
+                    From:
+                    <input
+                      type="text"
+                      name="from"
+                      value={formData.from}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    To:
+                    <input
+                      type="text"
+                      name="to"
+                      value={formData.to}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Amount:
+                    <input
+                      type="number"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Mode of Payment:
+                    <select
+                      name="modeOfPayment"
+                      value={formData.modeOfPayment}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="CASH">Cash</option>
+                      <option value="UPI">UPI</option>
+                    </select>
+                  </label>
+                  {formData.modeOfPayment === "UPI" && (
+                    <label>
+                      Transaction ID:
+                      <input
+                        type="text"
+                        name="transactionId"
+                        value={formData.transactionId}
+                        onChange={handleChange}
+                      />
+                    </label>
+                  )}
+                  <label>
+                    Category:
+                    <select
+                      name="categoryId"
+                      value={formData.categoryId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {categoryOptions.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={handleCreateCategory}>
+                      Add Category
+                    </button>
+                  </label>
+                  <label>
+                    Bus Name:
+                    <select
+                      name="busId"
+                      value={formData.busId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {busOptions.map((bus) => (
+                        <option key={bus.id} value={bus.id}>
+                          {bus.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Travel Date:
+                    <input
+                      type="datetime-local"
+                      name="travelDate"
+                      value={formData.travelDate}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Commission Amount:
+                    <input
+                      type="number"
+                      name="commissionAmount"
+                      value={formData.commissionAmount}
+                      onChange={handleChange}
+                    />
+                  </label>
+                  <label>
+                    Agent:
+                    <select
+                      name="agentId"
+                      value={formData.agentId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {agentOptions.map((agent) => (
+                        <option key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Collection Amount:
+                    <input
+                      type="number"
+                      name="collectionAmount"
+                      value={formData.collectionAmount}
+                      onChange={handleChange}
+                    />
+                  </label>
+                  <label>
+                    Operator:
+                    <select
+                      name="operatorId"
+                      value={formData.operatorId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {operatorOptions.map((operator) => (
+                        <option key={operator.id} value={operator.id}>
+                          {operator.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Description:
+                    <input
+                      type="text"
+                      name="desc"
+                      value={formData.desc}
+                      onChange={handleChange}
+                    />
+                  </label>
+                  <label>
+                    Remarks:
+                    <input
+                      type="text"
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                    />
+                  </label>
                   {/* Pay Later fields */}
                   {/* Add your Tailwind-styled Pay Later inputs here */}
                 </>
               ) : (
                 <>
-                <label>
-            Description:
-            <input
-              type="text"
-              name="desc"
-              value={formData.desc}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Amount:
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          <label>
-            Mode of Payment:
-            <select
-              name="modeOfPayment"
-              value={formData.modeOfPayment}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="CASH">Cash</option>
-              <option value="UPI">UPI</option>
-            </select>
-          </label>
-          {formData.modeOfPayment === "UPI" && (
-            <label>
-              Transaction ID:
-              <input
-                type="text"
-                name="transactionId"
-                value={formData.transactionId}
-                onChange={handleChange}
-              />
-            </label>
-          )}
-          <label>
-            Category:
-            <select
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              {categoryOptions.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={handleCreateCategory}>
-              Add Category
-            </button>
-          </label>
-          <label>
-            Remarks:
-            <input
-              type="text"
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
-            />
-          </label>
+                  <label>
+                    Description:
+                    <input
+                      type="text"
+                      name="desc"
+                      value={formData.desc}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Amount:
+                    <input
+                      type="number"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Mode of Payment:
+                    <select
+                      name="modeOfPayment"
+                      value={formData.modeOfPayment}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="CASH">Cash</option>
+                      <option value="UPI">UPI</option>
+                    </select>
+                  </label>
+                  {formData.modeOfPayment === "UPI" && (
+                    <label>
+                      Transaction ID:
+                      <input
+                        type="text"
+                        name="transactionId"
+                        value={formData.transactionId}
+                        onChange={handleChange}
+                      />
+                    </label>
+                  )}
+                  <label>
+                    Category:
+                    <select
+                      name="categoryId"
+                      value={formData.categoryId}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      {categoryOptions.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={handleCreateCategory}>
+                      Add Category
+                    </button>
+                  </label>
+                  <label>
+                    Remarks:
+                    <input
+                      type="text"
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                    />
+                  </label>
                   {/* Non-Pay Later fields */}
                   {/* Add your Tailwind-styled Non-Pay Later inputs here */}
                 </>
