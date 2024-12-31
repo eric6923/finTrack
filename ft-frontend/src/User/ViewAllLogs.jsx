@@ -223,28 +223,47 @@ const ViewAllLogs = () => {
             <tbody>
               {logs.map((log) => (
                 <React.Fragment key={log.id}>
-                  {/* Non-PayLater Log */}
+                  {/* Main Log Row */}
                   <tr className="hover:bg-gray-50 border-t border-gray-300">
-                    <td className="py-3 px-4 border border-gray-300">
-                      {log.desc}
+                    <td className="py-4 px-4 border-l border-r border-gray-300 bg-white">
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            log.logType === "CREDIT"
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          }`}
+                        ></div>
+                        <span>{log.desc}</span>
+                      </div>
                     </td>
-                    <td className="py-3 px-4 border border-gray-300 text-center">
+                    <td
+                      className={`py-4 px-4 border border-gray-300 text-center font-medium ${
+                        (console.log("LogType:", log.logType),
+                        log.logType === "CREDIT"
+                          ? "text-green-600"
+                          : "text-red-600")
+                      }`}
+                    >
                       {log.logType}
                     </td>
-                    <td className="py-3 px-4 border border-gray-300 text-center">
-                      {log.amount}
+                    <td className="py-4 px-4 border border-gray-300 text-center font-semibold">
+                      ₹{log.amount}
                     </td>
-                    <td className="py-3 px-4 border border-gray-300 text-center">
-                      {log.modeOfPayment}
+                    <td className="py-4 px-4 border border-gray-300 text-center">
+                      <span className="px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                        {log.modeOfPayment}
+                      </span>
                     </td>
-                    <td className="py-3 px-4 border border-gray-300 text-center">
-                      {log.category?.name || "N/A"}
+                    <td className="py-4 px-4 border border-gray-300 text-center">
+                      <span className="px-3 py-1 rounded-full text-sm bg-gray-100">
+                        {log.category?.name || "N/A"}
+                      </span>
                     </td>
-                    <td className="py-3 px-4 border border-gray-300 text-center">
+                    <td className="py-4 px-4 border border-gray-300 text-center">
                       {log.remarks}
                     </td>
-
-                    <td className="py-3 px-4 border border-gray-300 text-center">
+                    <td className="py-4 px-4 border border-gray-300 text-center">
                       <DropdownMenu
                         onView={() => handleView(log)}
                         onEdit={() => handleEdit(log)}
@@ -253,48 +272,52 @@ const ViewAllLogs = () => {
                     </td>
                   </tr>
 
-                  {/* Payment Status */}
-                  {log.isPaid && (
+                  {/* Pay Later Details Row */}
+                  {log.payLater && (
                     <tr>
                       <td
                         colSpan="7"
-                        className="py-3 px-4 border border-gray-300 bg-green-50 text-green-600 font-semibold text-center"
+                        className="py-2 px-4 border-x border-b border-gray-300"
                       >
-                        Payment Done!
-                      </td>
-                    </tr>
-                  )}
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+                          {/* Pay Later Header */}
+                          <div className="flex items-center space-x-2 mb-4">
+                            <svg
+                              className="w-5 h-5 text-blue-600"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <h3 className="text-lg font-semibold text-blue-900">
+                              Pay Later Details
+                            </h3>
+                          </div>
 
-                  {/* PayLater Log */}
-                  {log.payLater && (
-                    <tr>
-                      <td colSpan="7" className="py-2 px-4 border-b bg-gray-50">
-                        {/* Single Box for "Pay Later Details" */}
-                        <div className="bg-blue-100 text-blue-900 font-semibold py-2 px-4 rounded-t">
-                          Pay Later Details
-                        </div>
-
-                        {/* Headers Row */}
-                        <div className="flex gap-8 mt-2 font-bold border-b border-gray-300 pb-2">
-                          <p className="flex-1">FROM</p>
-                          <p className="flex-1">TO</p>
-                          <p className="flex-1">Bus Name</p>
-                          <p className="flex-1">Travel Date</p>
-                          <p className="flex-1">COMMISSION</p>
-                          <p className="flex-1 ml-2">COLLECTION</p>
-                          <p className="flex-1">DUE</p>
-                          <p className="flex-1">REMARKS</p>
-                        </div>
-
-                        {/* Values Row */}
-                        {log.payLaterDetails ? (
-                          <div className="flex gap-8 mt-2">
-                            <p className="flex-1">{log.payLaterDetails.from}</p>
-                            <p className="flex-1">{log.payLaterDetails.to}</p>
-                            <p className="flex-1">
-                              {getBusName(log.payLaterDetails.busId)}
-                            </p>
-                            <p className="flex-1">
+                          {/* Pay Later Content Grid */}
+                          {log.payLaterDetails ? (
+                            <div className="bg-white rounded-lg p-4 mb-4">
+                              <div className="grid grid-cols-8 gap-4 mb-2 font-semibold text-gray-600">
+                                <div>FROM</div>
+                                <div>TO</div>
+                                <div>BUS NAME</div>
+                                <div>TRAVEL DATE</div>
+                                <div>COMMISSION</div>
+                                <div>COLLECTION</div>
+                                <div>DUE</div>
+                                <div>REMARKS</div>
+                              </div>
+                              <div className="grid grid-cols-8 gap-4 text-gray-800">
+                                <div>{log.payLaterDetails.from}</div>
+                                <div>{log.payLaterDetails.to}</div>
+                                <div className="ml-4">
+                                  {getBusName(log.payLaterDetails.busId)}
+                                </div>
+                                <p className="flex-1">
                               {new Date(
                                 log.payLaterDetails.travelDate
                               ).toLocaleString("en-US", {
@@ -307,61 +330,72 @@ const ViewAllLogs = () => {
                                 hour12: true, // This will display the time in 12-hour format (AM/PM)
                               })}
                             </p>
-
-                            <p className="flex-1 text-center mr-4">
-                              {log.commission?.remainingDue || 0}
-                            </p>
-
-                            <p className="flex-1 text-center mr-4">
-                              {log.collection?.remainingDue}
-                            </p>
-                            <p className="flex-1">{log.dueAmount}</p>
-                            <p className="flex-1">{log.remarks}</p>
-                          </div>
-                        ) : (
-                          <p className="text-red-500 mt-2">
-                            No details available
-                          </p>
-                        )}
-
-                        {/* Buttons Section */}
-                        <div className="mt-4">
-                          <button
-                            className={`${
-                              log.dueAmount === "0"
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-700 text-white"
-                            } font-bold py-2 px-4 rounded`}
-                            onClick={() => setSelectedLogForPartialPayment(log)}
-                            disabled={log.dueAmount === "0"}
-                          >
-                            Partial Payment
-                          </button>
-                          <button
-                            className={`${
-                              log.dueAmount === "0"
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-green-500 hover:bg-green-700 text-white"
-                            } font-bold py-2 px-4 rounded ml-2`}
-                            onClick={() => {
-                              setSelectedLogForFullPayment(log);
-                              setShowFullPaymentModal(true);
-                            }}
-                            disabled={log.dueAmount === "0"}
-                          >
-                            Mark as Paid
-                          </button>
-                          {log.dueAmount === 0 && (
-                            <span className="ml-4 text-green-500 font-semibold">
-                              Payment Done!
-                            </span>
+                                <div className="ml-8">₹{log.commission?.remainingDue || 0}</div>
+                                <div className="ml-6">₹{log.collection?.remainingDue || 0}</div>
+                                <div className="font-medium text-red-600">
+                                  ₹{log.dueAmount}
+                                </div>
+                                <div className="ml-4">{log.remarks}</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-red-500">No details available</p>
                           )}
+
+                          {/* Payment Actions */}
+                          <div className="flex space-x-3">
+                            <button
+                              className={`flex items-center px-4 py-2 rounded-lg ${
+                                log.dueAmount === "0"
+                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-blue-500 hover:bg-blue-700 text-white"
+                              }`}
+                              onClick={() =>
+                                setSelectedLogForPartialPayment(log)
+                              }
+                              disabled={log.dueAmount === "0"}
+                            >
+                              <span>Partial Payment</span>
+                            </button>
+                            <button
+                              className={`flex items-center px-4 py-2 rounded-lg ${
+                                log.dueAmount === "0"
+                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-green-500 hover:bg-green-700 text-white"
+                              }`}
+                              onClick={() => {
+                                setSelectedLogForFullPayment(log);
+                                setShowFullPaymentModal(true);
+                              }}
+                              disabled={log.dueAmount === "0"}
+                            >
+                              <span>Mark as Paid</span>
+                            </button>
+                            {log.dueAmount === "0" && (
+                              <span className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
+                                <svg
+                                  className="w-5 h-5 mr-2"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                Payment Done!
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
                   )}
+
+                  {/* Spacer Row */}
                   <tr>
-                    <td colSpan="7" className="py-3"></td>
+                    <td colSpan="7" className="h-4 border-none bg-gray-50"></td>
                   </tr>
                 </React.Fragment>
               ))}

@@ -22,6 +22,7 @@ export default function Custom({ logType }) {
   const [agents, setAgents] = useState([]);
   const [operators, setOperators] = useState([]);
   const [error, setError] = useState(null);
+  const [monthYear, setMonthYear] = useState("");
   const [filters, setFilters] = useState({
     modeOfPayment: "",
     payLater: null,
@@ -128,6 +129,26 @@ export default function Custom({ logType }) {
 
     doc.save(`Reports-${formatDate(startDate)}-to-${formatDate(endDate)}.pdf`);
   };
+  const calculateCategorySummary = (logs) => {
+    const summary = {};
+    
+    logs.forEach(log => {
+      const categoryName = log.category?.name || 'Uncategorized';
+      const amount = parseFloat(log.amount) || 0;
+      
+      if (!summary[categoryName]) {
+        summary[categoryName] = { credit: 0, debit: 0 };
+      }
+      
+      if (log.logType === 'CREDIT') {
+        summary[categoryName].credit += amount;
+      } else if (log.logType === 'DEBIT') {
+        summary[categoryName].debit += amount;
+      }
+    });
+    
+    return summary;
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -137,77 +158,73 @@ export default function Custom({ logType }) {
           setError("Authentication token is missing. Please log in.");
           return;
         }
-        const logsResponse = await axios.get(
-          `https://ftbackend.vercel.app/api/user/transaction?startDate=${startDate}&endDate=${endDate}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setLogs(logsResponse.data);
-        console.log(logsResponse.data);
-        const busResponse = await axios.get(
-          "https://ftbackend.vercel.app/api/user/bus",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+  
+        // First fetch all the reference data
+        const [busResponse, categoriesResponse, agentsResponse, operatorsResponse] = await Promise.all([
+          axios.get("https://ftbackend.vercel.app/api/user/bus", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("https://ftbackend.vercel.app/api/user/category/", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("https://ftbackend.vercel.app/api/user/agent", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get("https://ftbackend.vercel.app/api/user/operator", {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+  
         setBusData(busResponse.data);
-        const categoriesResponse = await axios.get(
-          "https://ftbackend.vercel.app/api/user/category/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
         setCategories(categoriesResponse.data);
-        console.log(
-          "Categories:",
-          categoriesResponse.data.map((category) => category.name)
-        );
-        const agentsResponse = await axios.get(
-          "https://ftbackend.vercel.app/api/user/agent",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
         setAgents(agentsResponse.data);
-        console.log(
-          "Agents:",
-          agentsResponse.data.map((agent) => agent.name)
-        ); // Log agent names
-        const operatorsResponse = await axios.get(
-          "https://ftbackend.vercel.app/api/user/operator",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
         setOperators(operatorsResponse.data);
-        console.log(
-          "Operators:",
-          operatorsResponse.data.map((operator) => operator.name)
-        ); // Log operator names// Set operators list
+  
+        // Then fetch the transaction data
+        let url;
+        if (monthYear) {
+          url = `https://ftbackend.vercel.app/api/user/transaction?Date=${monthYear}`;
+        } else {
+          url = `https://ftbackend.vercel.app/api/user/transaction?startDate=${startDate}&endDate=${endDate}`;
+        }
+  
+        const logsResponse = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+  
+        const totalsUrl = monthYear
+          ? `https://ftbackend.vercel.app/api/user/total?Date=${monthYear}`
+          : `https://ftbackend.vercel.app/api/user/total?startDate=${startDate}&endDate=${endDate}`;
+  
+        const totalsResponse = await axios.get(totalsUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+  
+        setLogs(logsResponse.data);
+        setTotals(totalsResponse.data);
+        setCategorySummary(calculateCategorySummary(logsResponse.data));
+
+        
+  
       } catch (err) {
-        // setError("Error fetching data. Please try again.");
+        console.error('Error fetching data:', err);
+        setError("Error fetching data. Please try again.");
+        setLogs([]);
+        setTotals({ totalCredit: 0, totalDebit: 0 });
       }
     };
+  
     fetchData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, monthYear]);
+  
   const handleFilterChange = (e) => {
     const { name, type, value, checked } = e.target;
     setFilters((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value, // Correctly set value for non-checkbox inputs
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
+  
   const applyFilters = async () => {
     try {
       setError(null);
@@ -216,93 +233,112 @@ export default function Custom({ logType }) {
         setError("Authentication token is missing. Please log in.");
         return;
       }
-      const queryParams = new URLSearchParams({
-        ...(filters.modeOfPayment && { modeOfPayment: filters.modeOfPayment }),
-        ...(filters.busName && { busName: filters.busName }),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.logType && { logType: filters.logType }),
-        ...(filters.agentName && { agentName: filters.agentName }),
-        ...(filters.operatorName && { operatorName: filters.operatorName }),
-      }).toString();
-      const response = await axios.get(
-        `https://ftbackend.vercel.app/api/user/filter-transaction?${queryParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      let filteredLogs = response.data;
-      if (filters.payLater && filters.others) {
-        filteredLogs = filteredLogs.filter(
-          (log) =>
-            log.logType === "CREDIT" && // Include credit logs
-            log.payLater === true // Include logs with payLater true
-        );
-      } else if (filters.payLater) {
-        filteredLogs = filteredLogs.filter((log) => log.payLater === true);
-      } else if (filters.others) {
-        filteredLogs = filteredLogs.filter(
-          (log) =>
-            log.logType === "CREDIT" && // Include credit logs
-            (!log.payLater || log.payLater === false) // Exclude logs with payLater true
-        );
+  
+      // Create monthly query params for totals
+      const monthQueryParams = new URLSearchParams();
+      if (monthYear) {
+        monthQueryParams.append('Date', monthYear);
+      } else if (startDate) {
+        // Extract month and year from startDate for totals
+        const monthYearFromDate = startDate.substring(0, 7);
+        monthQueryParams.append('Date', monthYearFromDate);
       }
-      setLogs(filteredLogs);
-      console.log("Filtered Logs:", filteredLogs);
+  
+      // Create separate query params for filtered logs
+      const queryParams = new URLSearchParams();
+      if (monthYear) {
+        queryParams.append('Date', monthYear);
+      } else {
+        if (startDate) queryParams.append('startDate', startDate);
+        if (endDate) queryParams.append('endDate', endDate);
+      }
+  
+      // Add filter parameters if they have values
+      if (filters.modeOfPayment) queryParams.append('modeOfPayment', filters.modeOfPayment);
+      if (filters.busName) queryParams.append('busName', filters.busName);
+      if (filters.category) queryParams.append('category', filters.category);
+      if (filters.logType) queryParams.append('logType', filters.logType);
+      if (filters.agentName) queryParams.append('agentName', filters.agentName);
+      if (filters.operatorName) queryParams.append('operatorName', filters.operatorName);
+  
+      // Make parallel API calls for monthly totals and filtered logs
+      const [monthlyTotalsResponse, logsResponse] = await Promise.all([
+        axios.get(
+          `https://ftbackend.vercel.app/api/user/total?${monthQueryParams.toString()}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        ),
+        axios.get(
+          `https://ftbackend.vercel.app/api/user/transaction?${queryParams.toString()}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+      ]);
+  
+      let filteredLogs = logsResponse.data;
+  
+      // Apply client-side filters
+      filteredLogs = filteredLogs.filter(log => {
+        let matchesFilter = true;
+  
+        // Apply date range filter
+        if (monthYear) {
+          const logDate = new Date(log.updatedAt);
+          const [year, month] = monthYear.split('-');
+          matchesFilter = logDate.getFullYear() === parseInt(year) && 
+                         logDate.getMonth() === parseInt(month) - 1;
+        } else if (startDate && endDate) {
+          const logDate = new Date(log.updatedAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999); // Include the entire end date
+          matchesFilter = logDate >= start && logDate <= end;
+        }
+  
+        // Apply other filters only if they are set
+        if (matchesFilter && filters.modeOfPayment) {
+          matchesFilter = log.modeOfPayment === filters.modeOfPayment;
+        }
+        if (matchesFilter && filters.busName) {
+          matchesFilter = log.payLaterDetails?.busName === filters.busName;
+        }
+        if (matchesFilter && filters.category) {
+          matchesFilter = log.category?.name === filters.category;
+        }
+        if (matchesFilter && filters.logType) {
+          matchesFilter = log.logType === filters.logType;
+        }
+        if (matchesFilter && filters.agentName) {
+          matchesFilter = log.agentName === filters.agentName;
+        }
+        if (matchesFilter && filters.operatorName) {
+          matchesFilter = log.operatorName === filters.operatorName;
+        }
+  
+        // Apply payLater filter
+        if (matchesFilter && filters.payLater !== null) {
+          matchesFilter = log.payLater === filters.payLater;
+        }
+  
+        return matchesFilter;
+      });
+  
+      // Update states
+      setLogs(filteredLogs); // Update filtered logs in table
+      setTotals(monthlyTotalsResponse.data); // Update top totals with monthly data
+      setCategorySummary(calculateCategorySummary(filteredLogs));
+      closeFilterDialog();
+      
     } catch (err) {
+      console.error('Error applying filters:', err);
       setError("Error applying filters. Please try again.");
-      console.error(err);
+      setLogs([]);
+      setTotals({ totalCredit: 0, totalDebit: 0 });
+      setCategorySummary({});
     }
   };
-  useEffect(() => {
-    if (logs.length > 0) {
-      const categorySummary = logs.reduce((acc, log) => {
-        const { category, logType, amount } = log;
-        console.log("Category", category);
-        if (!category) return acc;
-
-        const categoryName = category.name; // Use `name` or `id` as the unique key
-
-        if (!acc[categoryName]) {
-          acc[categoryName] = { credit: 0, debit: 0 };
-        }
-
-        if (logType === "CREDIT") {
-          acc[categoryName].credit += parseFloat(amount || 0);
-        } else if (logType === "DEBIT") {
-          acc[categoryName].debit += parseFloat(amount || 0);
-        }
-
-        return acc;
-      }, {});
-
-      setCategorySummary(categorySummary);
-      console.log("Category Summary", categorySummary);
-    }
-  }, [logs]);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setError(null);
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Authentication token is missing. Please log in.");
-          return;
-        }
-        const totalsResponse = await axios.get(
-          `https://ftbackend.vercel.app/api/user/total?startDate=${startDate}&endDate=${endDate}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setTotals(totalsResponse.data);
-      } catch (err) {}
-    };
-    fetchData();
-  }, [startDate, endDate]);
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-2xl font-bold mb-6">Reports</h1>
@@ -335,44 +371,78 @@ export default function Custom({ logType }) {
         </div>
       </div>
       <div className="bg-white p-6 rounded-lg shadow mb-8">
-    <div className="flex flex-col md:flex-row md:items-center gap-4">
-      <div className="flex items-center gap-2">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="border border-gray-300 p-2 rounded-md"
-        />
-        <span className="text-gray-500">to</span>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="border border-gray-300 p-2 rounded-md"
-        />
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4 md:ml-auto">
-        <button
-          onClick={openFilterDialog}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
-        >
-          Filter Logs
-        </button>
-        <button
-          onClick={downloadPDF}
-          className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center"
-        >
-          Download
-        </button>
-        <button
-          onClick={() => setDialogOpen(true)}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
-        >
-          Category Expense
-        </button>
-      </div>
-      </div>
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+    
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  // Clear month-year when date range is used
+                  if (e.target.value) {
+                    setMonthYear("");
+                  }
+                }}
+                className="border border-gray-300 p-2 rounded-md"
+                disabled={!!monthYear}
+              />
+              <span className="text-gray-500">to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  // Clear month-year when date range is used
+                  if (e.target.value) {
+                    setMonthYear("");
+                  }
+                }}
+                className="border border-gray-300 p-2 rounded-md"
+                disabled={!!monthYear}
+              />
+            </div>
+            <div className="text-gray-500">OR</div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="month"
+                value={monthYear}
+                onChange={(e) => {
+                  setMonthYear(e.target.value);
+                  // Clear date range when month-year is selected
+                  if (e.target.value) {
+                    setStartDate("");
+                    setEndDate("");
+                  }
+                }}
+                className="border border-gray-300 p-2 rounded-md"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 md:ml-auto">
+            <button
+              onClick={openFilterDialog}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
+            >
+              Filter Logs
+            </button>
+            <button
+              onClick={downloadPDF}
+              className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center"
+            >
+              Download
+            </button>
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center"
+            >
+              Category Expense
+            </button>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -527,10 +597,11 @@ export default function Custom({ logType }) {
       </div>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
-      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+      <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
         <table className="min-w-full bg-white border border-gray-200 TO be Converted to PDF">
           <thead>
             <tr>
+            <th className="py-2 px-4 border-b">S No</th>
               {filters.payLater ? (
                 <>
                   <th className="py-2 px-4 border-b">FROM</th>
@@ -542,9 +613,11 @@ export default function Custom({ logType }) {
                   <th className="py-2 px-4 border-b">Category</th>
                   <th className="py-2 px-4 border-b">Bus Name</th>
                   <th className="py-2 px-4 border-b">Travel Date</th>
+                  <th className="py-2 px-4 border-b">Transaction Date</th>
                   <th className="py-2 px-4 border-b">COMMISSION</th>
                   <th className="py-2 px-4 border-b">COLLECTION</th>
                   <th className="py-2 px-4 border-b">DUE</th>
+                  <th className="py-2 px-4 border-b">Status</th>
                 </>
               ) : (
                 <>
@@ -562,159 +635,248 @@ export default function Custom({ logType }) {
             {logs.length === 0 ? (
               <tr>
                 <td
-                  colSpan={filters.payLater ? 12 : 6}
+                  colSpan={filters.payLater ? 13 : 7}
                   className="py-4 px-4 text-center text-gray-500"
                 >
                   No logs found.
                 </td>
               </tr>
             ) : (
-              logs.map((log) => {
-                const busName =
-                  busData.find((bus) => bus.id === log.payLaterDetails?.busId)
-                    ?.name || "N/A";
-                const travelDate = log.payLaterDetails?.travelDate
-                  ? new Date(
-                      log.payLaterDetails.travelDate
-                    ).toLocaleDateString()
-                  : "N/A";
+              <>
+                {logs.map((log,index) => {
+                  const busName =
+                    busData.find((bus) => bus.id === log.payLaterDetails?.busId)
+                      ?.name || "N/A";
+                  const travelDate = log.payLaterDetails?.travelDate
+                    ? new Date(
+                        log.payLaterDetails.travelDate
+                      ).toLocaleDateString()
+                    : "N/A";
+                    const transactionDate = log.updatedAt
+                    ? new Date(
+                        log.updatedAt
+                      ).toLocaleDateString()
+                    : "N/A";
 
-                return (
-                  <tr
-                    key={log.id}
-                    className="hover:bg-gray-100 transition duration-150"
-                  >
-                    {filters.payLater ? (
-                      <>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.payLaterDetails?.from || "N/A"}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.payLaterDetails?.to || "N/A"}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.logType}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.amount}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.modeOfPayment}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.remarks}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.category?.name}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {busName}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {travelDate}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.commission?.amount || "N/A"}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.collection?.amount || "N/A"}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.dueAmount || "N/A"}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.desc}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.logType}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.amount}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.modeOfPayment}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.remarks}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {log.category?.name}
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })
+                  return (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-gray-100 transition duration-150"
+                    >
+                      <td className="py-2 px-4 border-b text-center">{index + 1}</td>
+                      {filters.payLater ? (
+                        <>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.payLaterDetails?.from || "N/A"}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.payLaterDetails?.to || "N/A"}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.logType}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.amount}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.modeOfPayment}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.remarks}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.category?.name}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {busName}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {travelDate}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {transactionDate}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.commission?.amount || "N/A"}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.collection?.amount || "N/A"}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.dueAmount || "N/A"}
+                          </td>
+                          <td
+                            className={`py-2 px-4 border-b text-center ${
+                              parseFloat(log.dueAmount || 0) === 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(log.dueAmount || 0) === 0
+                              ? "Paid"
+                              : "Not Paid"}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.desc}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.logType}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.amount}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.modeOfPayment}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.remarks}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {log.category?.name}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+                {/* Total Row */}
+
+                <tr className="bg-gray-100 font-semibold">
+                  {filters.payLater ? (
+                    <>
+                      <td colSpan={4} className="py-2 px-4 border-b text-right">
+                        Total:
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {logs
+                          .reduce((total, log) => {
+                            const amount = parseFloat(log.amount) || 0;
+                            return log.logType === "CREDIT"
+                              ? total + amount
+                              : total - amount;
+                          }, 0)
+                          .toFixed(2)}
+                      </td>
+                      <td colSpan={6} className="py-2 px-4 border-b"></td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {logs
+                          .reduce(
+                            (total, log) =>
+                              total + (parseFloat(log.commission?.amount) || 0),
+                            0
+                          )
+                          .toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {logs
+                          .reduce(
+                            (total, log) =>
+                              total + (parseFloat(log.collection?.amount) || 0),
+                            0
+                          )
+                          .toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {logs
+                          .reduce(
+                            (total, log) =>
+                              total + (parseFloat(log.dueAmount) || 0),
+                            0
+                          )
+                          .toFixed(2)}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td colSpan={2} className="py-2 px-4 border-b text-right">
+                        Total:
+                      </td>
+                      <td className="py-2 px-4 border-b text-center">
+                        {logs
+                          .reduce((total, log) => {
+                            const amount = parseFloat(log.amount) || 0;
+                            return log.logType === "CREDIT"
+                              ? total + amount
+                              : total - amount;
+                          }, 0)
+                          .toFixed(2)}
+                      </td>
+                      <td colSpan={3} className="py-2 px-4 border-b"></td>
+                    </>
+                  )}
+                </tr>
+              </>
             )}
           </tbody>
         </table>
-        {dialogOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-            <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-4xl">
-              <h2 className="text-2xl font-semibold mb-6">Category Expense</h2>
+      </div>
 
-              <table className="min-w-full bg-white">
-                <thead>
-                  <tr>
-                    <th className="py-2 text-left">Category</th>
-                    <th className="py-2 text-left">Credit</th>
-                    <th className="py-2 text-left">Debit</th>
-                    <th className="py-2 text-left">Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Replace with your actual data */}
-                  {Object.entries(categorySummary).map(
-                    ([categoryName, { credit, debit }]) => (
-                      <tr key={categoryName}>
-                        <td className="py-2">{categoryName}</td>
-                        <td className="py-2">{credit.toFixed(2)}</td>
-                        <td className="py-2">{debit.toFixed(2)}</td>
-                        <td className="py-2">{(credit - debit).toFixed(2)}</td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-                <tfoot className="bg-gray-50 font-semibold">
-                  <tr>
-                    <td className="py-2 text-left ">Total</td>
-                    <td className="py-2 text-left">
-                      {Object.values(categorySummary)
-                        .reduce((sum, { credit }) => sum + credit, 0)
-                        .toFixed(2)}
-                    </td>
-                    <td className="py-2 text-left">
-                      {Object.values(categorySummary)
-                        .reduce((sum, { debit }) => sum + debit, 0)
-                        .toFixed(2)}
-                    </td>
-                    <td className="py-2 text-left">
-                      {Object.values(categorySummary)
-                        .reduce(
-                          (sum, { credit, debit }) => sum + (credit - debit),
-                          0
-                        )
-                        .toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+      {dialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+          <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-4xl">
+            <h2 className="text-2xl font-semibold mb-6">Category Expense</h2>
 
-              <div className="mt-6 text-right">
-                <button
-                  onClick={closeDialog}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md"
-                >
-                  Close
-                </button>
-              </div>
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="py-2 text-left">Category</th>
+                  <th className="py-2 text-left">Credit</th>
+                  <th className="py-2 text-left">Debit</th>
+                  <th className="py-2 text-left">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Replace with your actual data */}
+                {Object.entries(categorySummary).map(
+                  ([categoryName, { credit, debit }]) => (
+                    <tr key={categoryName}>
+                      <td className="py-2">{categoryName}</td>
+                      <td className="py-2">{credit.toFixed(2)}</td>
+                      <td className="py-2">{debit.toFixed(2)}</td>
+                      <td className="py-2">{(credit - debit).toFixed(2)}</td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+              <tfoot className="bg-gray-50 font-semibold">
+                <tr>
+                  <td className="py-2 text-left ">Total</td>
+                  <td className="py-2 text-left">
+                    {Object.values(categorySummary)
+                      .reduce((sum, { credit }) => sum + credit, 0)
+                      .toFixed(2)}
+                  </td>
+                  <td className="py-2 text-left">
+                    {Object.values(categorySummary)
+                      .reduce((sum, { debit }) => sum + debit, 0)
+                      .toFixed(2)}
+                  </td>
+                  <td className="py-2 text-left">
+                    {Object.values(categorySummary)
+                      .reduce(
+                        (sum, { credit, debit }) => sum + (credit - debit),
+                        0
+                      )
+                      .toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div className="mt-6 text-right">
+              <button
+                onClick={closeDialog}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md"
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
