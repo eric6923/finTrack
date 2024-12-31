@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import CreateBus from "../User/CreateBus";
 import CreateAgent from "../User/CreateAgent";
@@ -9,6 +10,7 @@ import Category from "../User/Category";
 
 const OwnerDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -80,6 +82,14 @@ const OwnerDashboard = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-black"
             />
+          </div>
+          <div className="mt-2 text-sm">
+            <span
+              onClick={() => navigate("/ownersendlink")}
+              className="font-medium text-blue-600 cursor-pointer hover:underline ml-40"
+            >
+              Forgot password?
+            </span>
           </div>
           <button
             type="submit"
