@@ -539,21 +539,15 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
   
       // Define the predefined categories
       const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-  
-      // Loop through the categories and create them if they don't exist
-      for (const categoryName of predefinedCategories) {
-        
-  
-        
-          // Create the category if it doesn't exist
-          await prisma.category.create({
-            data: {
-              name: categoryName,
-              createdBy: userId,
-            },
-          });
-        
-      }
+
+      // Create all categories at once using createMany
+      await prisma.category.createMany({
+        data: predefinedCategories.map(name => ({
+          name,
+          createdBy: userId
+        })),
+        skipDuplicates: true  // This will skip any duplicates instead of throwing an error
+      });
   
       return res.status(200).json({
         message: "Opening balances set successfully, and categories created.",

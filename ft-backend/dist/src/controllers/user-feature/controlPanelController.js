@@ -479,16 +479,14 @@ const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, functi
         });
         // Define the predefined categories
         const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-        // Loop through the categories and create them if they don't exist
-        for (const categoryName of predefinedCategories) {
-            // Create the category if it doesn't exist
-            yield client_1.default.category.create({
-                data: {
-                    name: categoryName,
-                    createdBy: userId,
-                },
-            });
-        }
+        // Create all categories at once using createMany
+        yield client_1.default.category.createMany({
+            data: predefinedCategories.map(name => ({
+                name,
+                createdBy: userId
+            })),
+            skipDuplicates: true // This will skip any duplicates instead of throwing an error
+        });
         return res.status(200).json({
             message: "Opening balances set successfully, and categories created.",
             user: updatedUser,
