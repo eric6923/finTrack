@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Side from '../assets/wel-frame.png'
+import Logo from '../assets/fintrack-logo.png'
 const StartingAccount = () => {
   const navigate = useNavigate(); // Hook to navigate
   const [startWithZero, setStartWithZero] = useState(false);
@@ -88,7 +89,7 @@ const StartingAccount = () => {
       {/* Sidebar with Background Image */}
       <div
         className="w-1/4 min-h-screen bg-cover bg-no-repeat bg-gray-100 flex items-center justify-center"
-        style={{ backgroundImage: "url('/src/assets/wel-frame.png')" }}
+        style={{ backgroundImage: `url(${Side})` }}
       ></div>
 
       {/* Main Content */}
@@ -96,7 +97,7 @@ const StartingAccount = () => {
         {/* Logo and Title */}
         <div className="flex items-center justify-center mb-8">
           <img
-            src="/src/assets/fintrack-logo.png"
+            src={Logo}
             alt="FinTrack Logo"
             className="w-16 h-16"
           />

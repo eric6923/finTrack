@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Logo from "../assets/fintrack-logo.png";
+import Side from "../assets/wel-frame.png";
 
 const Welcome = () => {
   const [businessName, setBusinessName] = useState("");
@@ -21,19 +23,27 @@ const Welcome = () => {
 
   const handleShareholderChange = (index, field, value) => {
     const updatedShareholders = [...shareholders];
-    updatedShareholders[index][field] = value;
+    if (field === "name") {
+      updatedShareholders[index][field] = value.toUpperCase(); // Convert name to uppercase
+    } else {
+      updatedShareholders[index][field] = value;
+    }
     setShareholders(updatedShareholders);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const updatedShareholders = shareholders.map((shareholder) => ({
+      ...shareholder,
+      name: shareholder.name.toUpperCase(),
+    }));
 
     const businessData = {
       businessName,
       businessCategory,
       businessType,
       numberOfShareHolders: numberOfShareholders,
-      shareholders, // Make sure shareholders data is included
+      shareholders: updatedShareholders, // Make sure shareholders data is included
     };
 
     // Get the token from localStorage
@@ -82,27 +92,16 @@ const Welcome = () => {
       {/* Sidebar with Background Image */}
       <div
         className="w-1/4 min-h-screen bg-cover bg-no-repeat bg-gray-100 flex items-center justify-center"
-        style={{ backgroundImage: "url('/src/assets/wel-frame.png')" }}
+        style={{ backgroundImage: `url(${Side})` }}
       ></div>
 
       {/* Content Area */}
       <div className="ml-1/4 w-3/4 bg-white p-10 overflow-auto">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <img
-            src="/src/assets/fintrack-logo.png"
-            alt="FinTrack Logo"
-            className="w-16 h-16"
-          />
+          <img src={Logo} alt="FinTrack Logo" className="w-16 h-16" />
           <h2 className="text-4xl font-bold ml-4 text-blue-600">FinTrack</h2>
         </div>
-        {/* <div className="flex flex-col items-start mb-8">
-  <h2 className="text-3xl font-semibold text-gray-900 mb-2">Welcome!</h2>
-  <p className="text-lg font-medium text-gray-600">
-    Let’s Get Your Business Started
-  </p>
-</div> */}
-
         <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-6">
           <div>
             <label className="block text-gray-700 font-medium mb-2 mt-28  ">

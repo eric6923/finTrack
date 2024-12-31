@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import Control from "../assets/control.png";
+import Logo from "../assets/logo-2.png";
+import User from "../assets/User.png";
+import Folder from "../assets/Folder.png";
+import Chart from "../assets/Chart.png";
+import Setting from "../assets/Setting.png";
+
 
 const Sidebar = ({ children }) => {
   const [open, setOpen] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
 
   const Menus = [
-    { title: "Transactions", src: "User", path: "/transactions" },
-    { title: "Paylater", src: "Folder", path: "/paylater" },
-    { title: "Reports", src: "Chart", path: "/reports" },
-    { title: "Control Panel", src: "Setting", path: "/controlpannel" },
+    { title: "Transactions", src: User, path: "/transactions" },
+    { title: "Paylater", src: Folder, path: "/paylater" },
+    { title: "Reports", src: Chart, path: "/reports" },
+    { title: "Control Panel", src: Setting, path: "/controlpannel" },
   ];
 
   const location = useLocation();
@@ -20,11 +27,11 @@ const Sidebar = ({ children }) => {
       setUserInfo(JSON.parse(storedUserInfo));
     }
     const storedSidebarState = localStorage.getItem("sidebarOpen");
-  if (storedSidebarState !== null) {
-    setOpen(JSON.parse(storedSidebarState));  // Set the sidebar state from localStorage
-  } else {
-    setOpen(true);  // Default to open if no stored state
-  }
+    if (storedSidebarState !== null) {
+      setOpen(JSON.parse(storedSidebarState)); // Set the sidebar state from localStorage
+    } else {
+      setOpen(true); // Default to open if no stored state
+    }
   }, []);
 
   const handleSidebarToggle = () => {
@@ -37,7 +44,7 @@ const Sidebar = ({ children }) => {
       localStorage.setItem("sidebarOpen", JSON.stringify(false)); // Save closed state
     }
   };
-  
+
   return (
     <div className="flex h-screen overflow-hidden">
       <div
@@ -48,7 +55,7 @@ const Sidebar = ({ children }) => {
         <div>
           {/* Control Button */}
           <img
-            src="./src/assets/control.png"
+            src={Control}
             className={`absolute cursor-pointer -right-3 top-6 w-5 border-black
               border-2 rounded-full ${!open && "rotate-180"} z-20`}
             onClick={handleSidebarToggle}
@@ -57,7 +64,7 @@ const Sidebar = ({ children }) => {
           {/* Logo Section */}
           <div className="flex gap-x-2 items-center w-12 max-h-16">
             <img
-              src="./src/assets/logo-2.png"
+              src={Logo}
               className={`cursor-pointer duration-500 ${
                 open && "rotate-[360deg]"
               }`}
@@ -107,11 +114,7 @@ const Sidebar = ({ children }) => {
                   to={Menu.path}
                   className="flex items-center gap-x-2 w-full"
                 >
-                  <img
-                    src={`./src/assets/${Menu.src}.png`}
-                    alt={Menu.title}
-                    className="scale-110"
-                  />
+                  <img src={Menu.src} alt={Menu.title} className="scale-110" />
                   <span
                     className={`${
                       !open && "hidden"
