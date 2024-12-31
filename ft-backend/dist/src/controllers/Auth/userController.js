@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userLogin = exports.userRegister = void 0;
+exports.userLogin = exports.userRegister = exports.Logout = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const client_1 = __importDefault(require("../../../prisma/client"));
@@ -146,3 +146,22 @@ const userLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.userLogin = userLogin;
+const Logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Clear any HTTP-only cookies if you're using them
+        res.clearCookie('token');
+        res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
+        });
+    }
+    catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error during logout",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
+    }
+});
+exports.Logout = Logout;

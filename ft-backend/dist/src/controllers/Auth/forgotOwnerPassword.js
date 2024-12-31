@@ -17,6 +17,7 @@ const crypto_1 = __importDefault(require("crypto"));
 const email_1 = require("../../utils/email"); // Utility function for sending emails
 const client_1 = __importDefault(require("../../../prisma/client"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const zod_1 = require("zod");
 const forgotOwnerPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.body;
     try {
@@ -58,42 +59,69 @@ const forgotOwnerPassword = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.forgotOwnerPassword = forgotOwnerPassword;
+const resetOwnerPasswordSchema = zod_1.z.object({
+    token: zod_1.z.string().min(1, "Reset token is required"),
+    newPassword: zod_1.z.string().min(8, "Password must be at least 8 characters long")
+});
 const resetOwnerPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { token, newPassword } = req.body;
     try {
-        // Find user by reset token
+        // Validate input
+        const result = resetOwnerPasswordSchema.safeParse(req.body);
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Invalid input",
+                errors: result.error.errors
+            });
+        }
+        const { token, newPassword } = result.data;
+        // Find user with valid reset token
         const user = yield client_1.default.user.findFirst({
             where: {
                 resetToken: token,
                 resetTokenExpiry: {
-                    gte: new Date(), // Ensure token is still valid
-                },
+                    gte: new Date()
+                }
             },
+            include: {
+                ownerPassword: true
+            }
         });
-        if (!user) {
-            return res.status(400).json({ error: "Invalid or expired token" });
+        if (!user || !user.ownerPassword) {
+            return res.status(400).json({
+                message: "Invalid or expired token, or user is not an owner"
+            });
         }
         // Hash the new password
-        const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
-        // Update the OwnerPassword and clear the resetToken fields
-        yield client_1.default.$transaction([
-            client_1.default.ownerPassword.update({
-                where: { userId: user.id },
-                data: { password: hashedPassword },
-            }),
-            client_1.default.user.update({
-                where: { id: user.id },
-                data: {
-                    resetToken: null,
-                    resetTokenExpiry: null,
-                },
-            }),
-        ]);
-        res.status(200).json({ message: "Owner password reset successfully" });
+        const hashedPassword = yield bcrypt_1.default.hash(newPassword, 12);
+        // Update owner password and clear reset token
+        yield client_1.default.ownerPassword.update({
+            where: {
+                userId: user.id
+            },
+            data: {
+                password: hashedPassword
+            }
+        });
+        // Clear reset token fields
+        yield client_1.default.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        });
+        res.status(200).json({
+            message: "Owner password has been reset successfully"
+        });
     }
     catch (error) {
-        console.error("Error during password reset:", error);
-        res.status(500).json({ error: "Failed to reset owner password" });
+        console.error("Reset Owner Password Error:", error);
+        res.status(500).json({
+            message: "An error occurred while resetting your owner password",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 });
 exports.resetOwnerPassword = resetOwnerPassword;

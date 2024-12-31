@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { userRegister, userLogin } from "../controllers/Auth/userController";
+import { userRegister, userLogin , Logout } from "../controllers/Auth/userController";
 import { 
   createTransaction, 
   getAllTransactions, 
@@ -225,6 +225,16 @@ router.get('/settings',verifyUser,checkOwner, async (req: Request, res: Response
     await res.send("setting") // Ensure this is awaited
   } catch (error) {
     res.status(500).json({ error: "error seeing settings" });
+  }
+});
+
+//logout
+
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    await Logout(req,res)// Ensure this is awaited
+  } catch (error) {
+    res.status(500).json({ error: "error logging out" });
   }
 });
 

@@ -144,4 +144,24 @@ const userLogin = async (req: Request, res: Response) => {
   }
 };
 
-export { userRegister, userLogin };
+
+export const Logout = async (req: Request, res: Response) => {
+  try {
+    // Clear any HTTP-only cookies if you're using them
+    res.clearCookie('token');
+    
+    res.status(200).json({ 
+      success: true,
+      message: "Logged out successfully" 
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error during logout",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
+
+export { userRegister, userLogin  };

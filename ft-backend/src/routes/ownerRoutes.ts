@@ -100,7 +100,7 @@ router.get("/check-onboard",verifyUser, async (req: Request, res: Response) => {
     }
   });
 
-router.post("/forgot-ownerpassword", async (req: Request, res: Response) => {
+router.post("/forgot-ownerpassword",verifyUser, async (req: Request, res: Response) => {
     try {
       await forgotOwnerPassword(req, res); // Ensure this is awaited
     } catch (error) {
@@ -108,9 +108,9 @@ router.post("/forgot-ownerpassword", async (req: Request, res: Response) => {
     }
   });
 
-router.get("/reset-ownerpassword", async (req: Request, res: Response) => {
+router.post("/reset-ownerpassword",verifyUser, async (req: Request, res: Response) => {
     try {
-      await checkOnboard(req, res); // Ensure this is awaited
+      await resetOwnerPassword(req, res); // Ensure this is awaited
     } catch (error) {
       res.status(500).json({ error: "Error fetching details." });
     }

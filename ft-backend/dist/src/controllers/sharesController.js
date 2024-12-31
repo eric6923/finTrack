@@ -144,11 +144,12 @@ const generateFinanceCategories = (userId, shareholders) => __awaiter(void 0, vo
     }
 });
 exports.generateFinanceCategories = generateFinanceCategories;
-const getTotalProfitByMonth = (startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
+const getTotalProfitByMonth = (userId, startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Fetch transactions and calculate profit for the given date range
         const transactions = yield prisma.transaction.findMany({
             where: {
+                userId,
                 createdAt: {
                     gte: startDate,
                     lte: endDate,
@@ -202,7 +203,7 @@ const calculateShareDistribution = (req, res) => __awaiter(void 0, void 0, void 
         const endOfMonth = new Date(startOfMonth);
         endOfMonth.setMonth(startOfMonth.getMonth() + 1);
         // Fetch the total profit for the specified month
-        const totalProfit = yield (0, exports.getTotalProfitByMonth)(startOfMonth.toISOString(), endOfMonth.toISOString());
+        const totalProfit = yield (0, exports.getTotalProfitByMonth)(userId, startOfMonth.toISOString(), endOfMonth.toISOString());
         // Distribute profit among shareholders and update their shareProfit
         const shareDistribution = yield Promise.all(companyShares.shareholders.map((shareholder) => __awaiter(void 0, void 0, void 0, function* () {
             const shareholderProfit = new library_1.Decimal((totalProfit * shareholder.sharePercentage) / 100); // Convert profit to Decimal

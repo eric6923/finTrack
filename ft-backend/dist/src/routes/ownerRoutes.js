@@ -117,9 +117,9 @@ router.post("/forgot-ownerpassword", userMiddleware_1.verifyUser, (req, res) => 
         res.status(500).json({ error: "Error fetching details." });
     }
 }));
-router.get("/reset-ownerpassword", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/reset-ownerpassword", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield (0, checkOnboard_1.checkOnboard)(req, res); // Ensure this is awaited
+        yield (0, forgotOwnerPassword_1.resetOwnerPassword)(req, res); // Ensure this is awaited
     }
     catch (error) {
         res.status(500).json({ error: "Error fetching details." });

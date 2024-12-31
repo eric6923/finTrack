@@ -4,6 +4,7 @@ import prisma from "../../../prisma/client";
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import {z} from "zod";
 
 export const forgotOwnerPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -57,45 +58,78 @@ export const forgotOwnerPassword = async (req: Request, res: Response) => {
   };
   
 
-  export const resetOwnerPassword = async (req: Request, res: Response) => {
-    const { token, newPassword } = req.body;
+
+  const resetOwnerPasswordSchema = z.object({
+    token: z.string().min(1, "Reset token is required"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters long")
+  });
   
+  export const resetOwnerPassword = async (req: Request, res: Response) => {
     try {
-      // Find user by reset token
+      // Validate input
+      const result = resetOwnerPasswordSchema.safeParse(req.body);
+  
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: result.error.errors 
+        });
+      }
+  
+      const { token, newPassword } = result.data;
+  
+      // Find user with valid reset token
       const user = await prisma.user.findFirst({
         where: {
           resetToken: token,
           resetTokenExpiry: {
-            gte: new Date(), // Ensure token is still valid
-          },
+            gte: new Date()
+          }
         },
+        include: {
+          ownerPassword: true
+        }
       });
   
-      if (!user) {
-        return res.status(400).json({ error: "Invalid or expired token" });
+      if (!user || !user.ownerPassword) {
+        return res.status(400).json({ 
+          message: "Invalid or expired token, or user is not an owner" 
+        });
       }
   
       // Hash the new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
   
-      // Update the OwnerPassword and clear the resetToken fields
-      await prisma.$transaction([
-        prisma.ownerPassword.update({
-          where: { userId: user.id },
-          data: { password: hashedPassword },
-        }),
-        prisma.user.update({
-          where: { id: user.id },
-          data: {
-            resetToken: null,
-            resetTokenExpiry: null,
-          },
-        }),
-      ]);
+      // Update owner password and clear reset token
+      await prisma.ownerPassword.update({
+        where: {
+          userId: user.id
+        },
+        data: {
+          password: hashedPassword
+        }
+      });
   
-      res.status(200).json({ message: "Owner password reset successfully" });
+      // Clear reset token fields
+      await prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          resetToken: null,
+          resetTokenExpiry: null
+        }
+      });
+  
+      res.status(200).json({ 
+        message: "Owner password has been reset successfully" 
+      });
+      
     } catch (error) {
-      console.error("Error during password reset:", error);
-      res.status(500).json({ error: "Failed to reset owner password" });
+      console.error("Reset Owner Password Error:", error);
+      res.status(500).json({ 
+        message: "An error occurred while resetting your owner password",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   };

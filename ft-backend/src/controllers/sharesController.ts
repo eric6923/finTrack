@@ -169,40 +169,42 @@ export const generateFinanceCategories = async (
 };
 
 
-export const getTotalProfitByMonth = async (startDate: string, endDate: string): Promise<number> => {
-    try {
-      // Fetch transactions and calculate profit for the given date range
-      const transactions = await prisma.transaction.findMany({
-        where: {
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-          logType: 'CREDIT',
-          OR: [
-            { payLater: false }, 
-            { payLater: true, dueAmount: 0 },
-          ],
+export const getTotalProfitByMonth = async (userId: number, startDate: string, endDate: string): Promise<number> => {
+  try {
+    // Fetch transactions and calculate profit for the given date range
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
         },
-        include: {
-          commission: true, 
-          collection: true, 
-        },
-      });
-  
-      const totalProfit = transactions.reduce((sum, transaction) => {
-        const agentAmount = transaction.commission?.amount.toNumber() || 0;
-        const operatorAmount = transaction.collection?.amount.toNumber() || 0;
-        const profit = transaction.amount.toNumber() - (agentAmount + operatorAmount);
-        return sum + profit;
-      }, 0);
-  
-      return totalProfit;
-    } catch (error) {
-      console.error('Error calculating monthly profit:', error);
-      return 0; // Default to 0 if an error occurs
-    }
-  };
+        logType: 'CREDIT',
+        OR: [
+          { payLater: false }, 
+          { payLater: true, dueAmount: 0 },
+        ],
+      },
+      include: {
+        commission: true, 
+        collection: true, 
+      },
+    });
+
+    const totalProfit = transactions.reduce((sum, transaction) => {
+      const agentAmount = transaction.commission?.amount.toNumber() || 0;
+      const operatorAmount = transaction.collection?.amount.toNumber() || 0;
+      const profit = transaction.amount.toNumber() - (agentAmount + operatorAmount);
+      return sum + profit;
+    }, 0);
+
+    return totalProfit;
+  } catch (error) {
+    console.error('Error calculating monthly profit:', error);
+    return 0; // Default to 0 if an error occurs
+  }
+};
+
 
 
 
@@ -235,6 +237,7 @@ export const getTotalProfitByMonth = async (startDate: string, endDate: string):
   
       // Fetch the total profit for the specified month
       const totalProfit = await getTotalProfitByMonth(
+        userId,
         startOfMonth.toISOString(),
         endOfMonth.toISOString()
       );

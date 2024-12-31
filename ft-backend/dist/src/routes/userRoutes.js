@@ -216,4 +216,13 @@ router.get('/settings', userMiddleware_1.verifyUser, checkOwner_1.checkOwner, (r
         res.status(500).json({ error: "error seeing settings" });
     }
 }));
+//logout
+router.post('/logout', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, userController_1.Logout)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "error logging out" });
+    }
+}));
 exports.default = router;

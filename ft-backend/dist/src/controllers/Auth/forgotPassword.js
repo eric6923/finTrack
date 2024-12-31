@@ -17,6 +17,7 @@ const crypto_1 = __importDefault(require("crypto"));
 const email_1 = require("../../utils/email"); // Utility function for sending emails
 const client_1 = __importDefault(require("../../../prisma/client"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const zod_1 = require("zod");
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.body;
     try {
@@ -36,7 +37,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             },
         });
         // Send the reset link via email
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        const resetLink = `${process.env.FRONTEND_URL}?token=${resetToken}`;
         yield (0, email_1.sendEmail)(user.email, "Password Reset Request", `Click this link to reset your password: ${resetLink}`);
         res.status(200).json({ message: "Password reset link sent to your email" });
     }
@@ -46,37 +47,76 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
+const resetPasswordSchema = zod_1.z.object({
+    token: zod_1.z.string().min(1, "Reset token is required"),
+    newPassword: zod_1.z.string().min(8, "Password must be at least 8 characters long")
+});
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { token, newPassword } = req.body;
     try {
+        // Get token from either query parameters or URL parameters
+        const token = req.query.token || req.params.token;
+        const { newPassword } = req.body;
+        // Validate input
+        const result = resetPasswordSchema.safeParse({
+            token,
+            newPassword
+        });
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Invalid input",
+                errors: result.error.errors
+            });
+        }
+        const validatedData = result.data;
         // Hash the provided token to match the stored hash
-        const hashedToken = crypto_1.default.createHash("sha256").update(token).digest("hex");
+        const hashedToken = crypto_1.default
+            .createHash("sha256")
+            .update(validatedData.token)
+            .digest("hex");
         // Find the user with the reset token and ensure it's not expired
         const user = yield client_1.default.user.findFirst({
             where: {
                 resetToken: hashedToken,
-                resetTokenExpiry: { gte: new Date() }, // Token not expired
+                resetTokenExpiry: {
+                    gte: new Date(),
+                    not: null // Ensure resetTokenExpiry exists
+                },
             },
         });
         if (!user) {
-            return res.status(400).json({ message: "Invalid or expired token" });
+            return res.status(400).json({
+                message: "Invalid or expired password reset token"
+            });
         }
-        // Hash the new password
-        const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
-        // Update the user's password and clear the reset token
-        yield client_1.default.user.update({
-            where: { id: user.id },
-            data: {
-                password: hashedPassword,
-                resetToken: null,
-                resetTokenExpiry: null,
-            },
+        // Prevent reuse of the same password
+        const isSamePassword = yield bcrypt_1.default.compare(validatedData.newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({
+                message: "New password must be different from the current password"
+            });
+        }
+        // Hash the new password with a cost factor of 12
+        const hashedPassword = yield bcrypt_1.default.hash(validatedData.newPassword, 12);
+        // Update the user's password and clear the reset token in a transaction
+        yield client_1.default.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            yield tx.user.update({
+                where: { id: user.id },
+                data: {
+                    password: hashedPassword,
+                    resetToken: null,
+                    resetTokenExpiry: null
+                },
+            });
+        }));
+        res.status(200).json({
+            message: "Password has been reset successfully"
         });
-        res.status(200).json({ message: "Password reset successful" });
     }
     catch (error) {
         console.error("Reset Password Error:", error);
-        res.status(500).json({ message: "Error resetting password" });
+        res.status(500).json({
+            message: "An error occurred while resetting your password"
+        });
     }
 });
 exports.resetPassword = resetPassword;
