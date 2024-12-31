@@ -66,7 +66,7 @@ const PayLater = () => {
           setError(null);
         } else {
           setError(
-            "No bus data found. Please create Bus, Agent, and Operator first."
+            "No data found. Please create Bus, Agent, and Operator first."
           );
         }
       } catch (error) {
@@ -84,7 +84,7 @@ const PayLater = () => {
   }, []);
 
   const busMap = useMemo(
-    () => new Map(busData.map((bus) => [bus.id, bus.name])),
+    () => new Map(Array.isArray(busData) ? busData.map((bus) => [bus.id, bus.name]) : []),
     [busData]
   );
 
@@ -175,7 +175,7 @@ const PayLater = () => {
   }, [successMessage]);
 
   const agentMap = useMemo(
-    () => new Map(agentData.map((agent) => [agent.id, agent.name])),
+    () => new Map(Array.isArray(agentData) ? agentData.map((agent) => [agent.id, agent.name]) : []),
     [agentData]
   );
 

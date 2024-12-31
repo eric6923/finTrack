@@ -126,60 +126,76 @@ const EditTransaction = ({ log, onClose, onUpdate }) => {
   const handleSubmit = async () => {
     try {
       // Create a sanitized copy of the transaction data
-      const sanitizedData = { ...editedLog.transaction };
-
-      // Ensure 'amount' is a number (convert it to float)
-      sanitizedData.amount = parseFloat(sanitizedData.amount);
-
-      // Remove transactionNo if the mode of payment is CASH
-      if (sanitizedData.modeOfPayment === "CASH") {
-        delete sanitizedData.transactionNo; // Exclude this field entirely
+      const sanitizedData = {
+        desc: editedLog.transaction.desc,
+        amount: parseFloat(editedLog.transaction.amount),
+        modeOfPayment: editedLog.transaction.modeOfPayment,
+        categoryId: parseInt(editedLog.transaction.categoryId, 10),
+        remarks: editedLog.transaction.remarks,
+        payLater: editedLog.transaction.payLater
+      };
+  
+      // Handle commission if it exists
+      if (editedLog.transaction.commission?.agentId) {
+        sanitizedData.commission = {
+          agentId: parseInt(editedLog.transaction.commission.agentId, 10),
+          amount: parseFloat(editedLog.transaction.commission.amount)
+        };
       }
-
-      // Exclude 'commission' if unnecessary
-      if (
-        !sanitizedData.commission ||
-        (!sanitizedData.commission.agentId && !sanitizedData.commission.amount)
-      ) {
-        delete sanitizedData.commission;
+  
+      // Handle collection if it exists
+      if (editedLog.transaction.collection?.operatorId) {
+        sanitizedData.collection = {
+          operatorId: parseInt(editedLog.transaction.collection.operatorId, 10),
+          amount: parseFloat(editedLog.transaction.collection.amount)
+        };
       }
-
-      // Exclude 'collection' if unnecessary
-      if (
-        !sanitizedData.collection ||
-        (!sanitizedData.collection.operatorId &&
-          !sanitizedData.collection.amount)
-      ) {
-        delete sanitizedData.collection;
-      }
-
-      // Remove payLaterDetails entirely if payLater is false
-      if (!sanitizedData.payLater) {
-        delete sanitizedData.payLaterDetails;
-      } else {
-        // Remove undefined travelDate if payLaterDetails exist
-        if (!sanitizedData.payLaterDetails?.travelDate) {
-          delete sanitizedData.payLaterDetails.travelDate;
+  
+      // Handle payLater details if payLater is true
+      if (sanitizedData.payLater) {
+        sanitizedData.payLaterDetails = {
+          busId: parseInt(editedLog.transaction.payLaterDetails.busId, 10),
+          from: editedLog.transaction.payLaterDetails.from,
+          to: editedLog.transaction.payLaterDetails.to
+        };
+  
+        // Only include travelDate if it exists and is valid
+        if (editedLog.transaction.payLaterDetails.travelDate) {
+          sanitizedData.payLaterDetails.travelDate = 
+            editedLog.transaction.payLaterDetails.travelDate;
         }
       }
-
+  
+      // Add transaction number only for non-cash payments
+      if (sanitizedData.modeOfPayment !== "CASH" && editedLog.transaction.transactionNo) {
+        sanitizedData.transactionNo = editedLog.transaction.transactionNo;
+      }
+  
       console.log("Sending sanitized data:", sanitizedData);
       const token = localStorage.getItem("token");
-
-      // Send the data to the backend with proper headers
+  
       const response = await axios.put(
         `https://ftbackend.vercel.app/api/user/transaction/${log.id}`,
-        { password: editedLog.password, transaction: sanitizedData },
+        { 
+          password: editedLog.password, 
+          transaction: sanitizedData 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       console.log("Updated transaction:", response.data);
-      onUpdate(response.data.updatedTransaction); // Notify parent with updated transaction data
-      onClose(); // Close the modal
+      onUpdate(response.data.updatedTransaction);
+      onClose();
       window.location.reload();
     } catch (error) {
       console.error("Error updating transaction:", error);
-      setErrorMessage("Failed to update transaction. Please try again.");
+      if (error.response) {
+        // Log the detailed error response
+        console.error("Error details:", error.response.data);
+        setErrorMessage(error.response.data.message || "Failed to update transaction. Please try again.");
+      } else {
+        setErrorMessage("Failed to update transaction. Please try again.");
+      }
     }
   };
 
