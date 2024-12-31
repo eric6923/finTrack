@@ -542,11 +542,9 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
   
       // Loop through the categories and create them if they don't exist
       for (const categoryName of predefinedCategories) {
-        const existingCategory = await prisma.category.findFirst({
-          where: { name: categoryName,createdBy: userId },
-        });
+        
   
-        if (!existingCategory) {
+        
           // Create the category if it doesn't exist
           await prisma.category.create({
             data: {
@@ -554,7 +552,7 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
               createdBy: userId,
             },
           });
-        }
+        
       }
   
       return res.status(200).json({
