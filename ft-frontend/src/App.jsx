@@ -39,6 +39,7 @@ import BackToHome from "./PayLater/BackToHome";
 import ViewShare from "./Owner/ViewShare";
 import SendResetLink from "./ForgotPassword/SendResetLink";
 import RestPassword from "./ForgotPassword/RestPassword";
+import OwnerResetLink from "./Owner/OwnerResetLink";
 
 const App = () => {
   return (
@@ -89,6 +90,8 @@ const App = () => {
         {/* <Route path="/controlpannel" element={<OwnerDashboard />} /> */}
         <Route path="/sendlink" element={<SendResetLink />} />
         <Route path="/resetpassword" element={<RestPassword />} />
+        <Route path = "/ownersendlink" element ={<OwnerResetLink/>}/>
+        <Route path ="/ownerresetpassword" element = {<OwnerPassword/>}/>
 
         {/* Routes with Sidebar */}
         <Route
