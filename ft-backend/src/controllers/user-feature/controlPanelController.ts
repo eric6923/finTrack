@@ -499,81 +499,68 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
   
   export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
     try {
-      const userId = req.user?.id; 
+      const userId = req.user?.id; // Extract user ID from token
       const { boxBalance, accountBalance } = req.body;
-    
+  
+      // Ensure user ID is provided
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized access." });
       }
-    
+  
       // Validate the balances
       if (boxBalance === undefined || accountBalance === undefined) {
-        return res.status(400).json({ 
-          message: "Both boxBalance and accountBalance are required." 
-        });
+        return res
+          .status(400)
+          .json({ message: "Both boxBalance and accountBalance are required." });
       }
-    
+  
       if (isNaN(parseFloat(boxBalance)) || isNaN(parseFloat(accountBalance))) {
-        return res.status(400).json({ 
-          message: "Both balances must be valid numbers." 
-        });
+        return res
+          .status(400)
+          .json({ message: "Both balances must be valid numbers." });
       }
-    
+  
       const totalBalance = parseFloat(boxBalance) + parseFloat(accountBalance);
-    
-      // Use a transaction to ensure both operations succeed or fail together
-      const result = await prisma.$transaction(async (prisma) => {
-        // Update user balances
-        const updatedUser = await prisma.user.update({
-          where: { id: userId },
-          data: {
-            boxBalance: parseFloat(boxBalance),
-            accountBalance: parseFloat(accountBalance),
-          },
-          select: {
-            id: true,
-            name: true,
-            boxBalance: true,
-            accountBalance: true,
-          },
-        });
-    
-        // Create predefined categories
-        const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-        
-        console.log('Creating categories for user:', userId);
-        
-        // Create categories one by one with error handling
-        for (const categoryName of predefinedCategories) {
-          try {
-            await prisma.category.create({
-              data: {
-                name: categoryName,
-                createdBy: userId
-              }
-            });
-            console.log(`Created category: ${categoryName}`);
-          } catch (error) {
-            console.error(`Failed to create category ${categoryName}:`, error);
-            // Continue with other categories even if one fails
-          }
-        }
-    
-        return updatedUser;
+  
+      // Update the user's balances in the database
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          boxBalance: parseFloat(boxBalance),
+          accountBalance: parseFloat(accountBalance),
+        },
+        select: {
+          id: true,
+          name: true,
+          boxBalance: true,
+          accountBalance: true,
+        },
       });
-    
+  
+      // Define the predefined categories
+      const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
+  
+      // Log userId for debugging
+      console.log("User ID for category creation:", userId);
+  
+      // Create all categories at once using createMany
+      await prisma.category.createMany({
+        data: predefinedCategories.map(name => ({
+          name: name.toUpperCase(), // Standardize to uppercase
+          createdBy: userId,
+        })),
+        skipDuplicates: true, // Skips duplicates instead of throwing an error
+      });
+  
       return res.status(200).json({
         message: "Opening balances set successfully, and categories created.",
-        user: result,
+        user: updatedUser,
         totalBalance,
       });
-      
     } catch (error) {
-      console.error("Error in setOpeningBalance:", error);
-      return res.status(500).json({ 
-        message: "An error occurred while setting up initial data.",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      console.error("Error setting opening balance:", error);
+      return res.status(500).json({ message: "An error occurred.", error });
     }
   };
+  
   

@@ -184,6 +184,7 @@ model Category {
   createdBy    Int
   user         User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  @@unique([name, createdBy])
 }
 
 model Bus {
