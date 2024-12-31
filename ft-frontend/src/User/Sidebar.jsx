@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import Control from "../assets/control.png";
 import Logo from "../assets/logo-2.png";
 import User from "../assets/User.png";
 import Folder from "../assets/Folder.png";
 import Chart from "../assets/Chart.png";
 import Setting from "../assets/Setting.png";
-
+import { LogOut } from "lucide-react";
 
 const Sidebar = ({ children }) => {
   const [open, setOpen] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const Menus = [
     { title: "Transactions", src: User, path: "/transactions" },
@@ -19,8 +22,6 @@ const Sidebar = ({ children }) => {
     { title: "Control Panel", src: Setting, path: "/controlpannel" },
   ];
 
-  const location = useLocation();
-
   useEffect(() => {
     const storedUserInfo = localStorage.getItem("userInfo");
     if (storedUserInfo) {
@@ -28,20 +29,35 @@ const Sidebar = ({ children }) => {
     }
     const storedSidebarState = localStorage.getItem("sidebarOpen");
     if (storedSidebarState !== null) {
-      setOpen(JSON.parse(storedSidebarState)); // Set the sidebar state from localStorage
+      setOpen(JSON.parse(storedSidebarState));
     } else {
-      setOpen(true); // Default to open if no stored state
+      setOpen(true);
     }
   }, []);
 
   const handleSidebarToggle = () => {
     const newState = !open;
     setOpen(newState);
-    // Store the sidebar state in localStorage
-    if (newState) {
-      localStorage.setItem("sidebarOpen", JSON.stringify(true)); // Save open state
-    } else {
-      localStorage.setItem("sidebarOpen", JSON.stringify(false)); // Save closed state
+    localStorage.setItem("sidebarOpen", JSON.stringify(newState));
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint
+      await axios.post('/api/user/logout');
+      
+      // Clear stored data
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('sidebarOpen');
+      
+      // Redirect to login
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local data even if server request fails
+      localStorage.clear();
+      navigate('/login');
     }
   };
 
@@ -77,19 +93,17 @@ const Sidebar = ({ children }) => {
               FinTrack
             </h1>
           </div>
+
           {/* User Info Box */}
           {userInfo ? (
             <div
-              className={`mt-4 flex items-center bg-white  p-3 rounded-lg shadow-md ${
+              className={`mt-4 flex items-center bg-white p-3 rounded-lg shadow-md ${
                 !open && "hidden"
               }`}
             >
-              {/* Avatar */}
               <div className="MuiAvatar-root MuiAvatar-square bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
                 {userInfo.name.charAt(0)}
               </div>
-
-              {/* User Info */}
               <div className="ml-3 flex flex-col">
                 <p className="text-lg font-semibold">{userInfo.userName}</p>
               </div>
@@ -127,6 +141,22 @@ const Sidebar = ({ children }) => {
             ))}
           </ul>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className={`mt-auto mb-4 flex items-center rounded-md p-2 cursor-pointer text-gray-300 text-xs gap-x-2 
+          border border-white hover:bg-[#074b91] focus:bg-[#074b91] transition-colors duration-200`}
+        >
+          <LogOut size={16} className="scale-110" />
+          <span
+            className={`${
+              !open && "hidden"
+            } origin-left duration-200`}
+          >
+            Logout
+          </span>
+        </button>
       </div>
 
       {/* Main Content Area */}
