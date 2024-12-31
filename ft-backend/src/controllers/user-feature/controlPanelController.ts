@@ -538,12 +538,12 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
       });
   
       // Define the predefined categories
-      const predefinedCategories = ['TEA', 'BUSBOOKING', 'MONEYTRANSFER', 'RENT'];
+      const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
   
       // Loop through the categories and create them if they don't exist
       for (const categoryName of predefinedCategories) {
         const existingCategory = await prisma.category.findFirst({
-          where: { name: categoryName },
+          where: { name: categoryName,createdBy: userId },
         });
   
         if (!existingCategory) {
