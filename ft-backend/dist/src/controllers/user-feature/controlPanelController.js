@@ -445,57 +445,72 @@ exports.getOperators = getOperators;
 const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id; // Extract user ID from token
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { boxBalance, accountBalance } = req.body;
-        // Ensure user ID is provided
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized access." });
         }
         // Validate the balances
         if (boxBalance === undefined || accountBalance === undefined) {
-            return res
-                .status(400)
-                .json({ message: "Both boxBalance and accountBalance are required." });
+            return res.status(400).json({
+                message: "Both boxBalance and accountBalance are required."
+            });
         }
         if (isNaN(parseFloat(boxBalance)) || isNaN(parseFloat(accountBalance))) {
-            return res
-                .status(400)
-                .json({ message: "Both balances must be valid numbers." });
+            return res.status(400).json({
+                message: "Both balances must be valid numbers."
+            });
         }
         const totalBalance = parseFloat(boxBalance) + parseFloat(accountBalance);
-        // Update the user's balances in the database
-        const updatedUser = yield client_1.default.user.update({
-            where: { id: userId },
-            data: {
-                boxBalance: parseFloat(boxBalance),
-                accountBalance: parseFloat(accountBalance),
-            },
-            select: {
-                id: true,
-                name: true,
-                boxBalance: true,
-                accountBalance: true,
-            },
-        });
-        // Define the predefined categories
-        const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-        // Create all categories at once using createMany
-        yield client_1.default.category.createMany({
-            data: predefinedCategories.map(name => ({
-                name,
-                createdBy: userId
-            })),
-            skipDuplicates: true // This will skip any duplicates instead of throwing an error
-        });
+        // Use a transaction to ensure both operations succeed or fail together
+        const result = yield client_1.default.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            // Update user balances
+            const updatedUser = yield prisma.user.update({
+                where: { id: userId },
+                data: {
+                    boxBalance: parseFloat(boxBalance),
+                    accountBalance: parseFloat(accountBalance),
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    boxBalance: true,
+                    accountBalance: true,
+                },
+            });
+            // Create predefined categories
+            const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
+            console.log('Creating categories for user:', userId);
+            // Create categories one by one with error handling
+            for (const categoryName of predefinedCategories) {
+                try {
+                    yield prisma.category.create({
+                        data: {
+                            name: categoryName,
+                            createdBy: userId
+                        }
+                    });
+                    console.log(`Created category: ${categoryName}`);
+                }
+                catch (error) {
+                    console.error(`Failed to create category ${categoryName}:`, error);
+                    // Continue with other categories even if one fails
+                }
+            }
+            return updatedUser;
+        }));
         return res.status(200).json({
             message: "Opening balances set successfully, and categories created.",
-            user: updatedUser,
+            user: result,
             totalBalance,
         });
     }
     catch (error) {
-        console.error("Error setting opening balance:", error);
-        return res.status(500).json({ message: "An error occurred.", error });
+        console.error("Error in setOpeningBalance:", error);
+        return res.status(500).json({
+            message: "An error occurred while setting up initial data.",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 });
 exports.setOpeningBalance = setOpeningBalance;
