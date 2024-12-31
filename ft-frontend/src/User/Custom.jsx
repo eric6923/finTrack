@@ -208,7 +208,7 @@ export default function Custom({ logType }) {
   
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError("Error fetching data. Please try again.");
+        // setError("Error fetching data. Please try again.");
         setLogs([]);
         setTotals({ totalCredit: 0, totalDebit: 0 });
       }

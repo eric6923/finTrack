@@ -58,7 +58,7 @@ const Header = () => {
           upiBalance: balancesResponse.data.accountBalance,
           due: balancesResponse.data.due,
           totalBalance: balancesResponse.data.totalBalance,
-          totalProfit: profitResponse.data.totalProfit,
+          totalProfit: profitResponse.data.adjustedProfit,
         }));
       } catch (error) {
         console.error("Error fetching data:", error);

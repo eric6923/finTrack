@@ -5,6 +5,7 @@ import CreateAgent from "../User/CreateAgent";
 import CreateOperator from "../User/CreateOperator";
 import BackToHome from "../PayLater/BackToHome";
 import ViewShare from "./ViewShare";
+import Category from "../User/Category";
 
 const OwnerDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,21 +49,15 @@ const OwnerDashboard = () => {
   if (isAuthenticated) {
     return (
       <div className="p-8 bg-gray-100 min-h-screen ">
-        {/* <BackToHome /> */}
         <h1 className="text-3xl font-bold mb-6 text-center text-black">
           Owner Dashboard
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="col-span-1">
-            <CreateBus />
-          </div>
-          <div className="col-span-1">
-            <CreateAgent />
-          </div>
-          <div className="col-span-1">
-            <CreateOperator />
-          </div>
-          <div className="col-span-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <CreateBus />
+          <CreateAgent />
+          <CreateOperator />
+          <Category />
+          <div className="col-span-4">
             <ViewShare />
           </div>
         </div>

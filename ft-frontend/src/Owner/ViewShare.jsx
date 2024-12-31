@@ -4,6 +4,7 @@ import axios from "axios";
 const ViewShare = () => {
   const [date, setDate] = useState("2024-12");
   const [data, setData] = useState(null);
+  const [val, setVal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,6 +19,22 @@ const ViewShare = () => {
         setError("No token found. Please log in.");
         setLoading(false);
         return;
+      }
+      try {
+        const value = await axios.get(
+          `https://ftbackend.vercel.app/api/user/profit?date=${date}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setVal(value.data);
+        console.log(value.data)
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
 
       try {
@@ -36,6 +53,7 @@ const ViewShare = () => {
         setLoading(false);
       }
     };
+    
 
     fetchData();
   }, [date]);
@@ -73,13 +91,13 @@ const ViewShare = () => {
           <p className="text-red-600">Error: {error}</p>
         </div>
       )}
-      {data && (
+      {data && val && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-center text-black">
             Month: {data.month}
           </h2>
           <p className="text-lg text-center text-black">
-            Total Profit: {data.totalProfit}
+            Total Profit: {val.adjustedProfit}
           </p>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse border border-gray-300">
