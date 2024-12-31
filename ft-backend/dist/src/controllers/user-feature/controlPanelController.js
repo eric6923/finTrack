@@ -478,11 +478,11 @@ const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, functi
             },
         });
         // Define the predefined categories
-        const predefinedCategories = ['TEA', 'BUSBOOKING', 'MONEYTRANSFER', 'RENT'];
+        const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
         // Loop through the categories and create them if they don't exist
         for (const categoryName of predefinedCategories) {
             const existingCategory = yield client_1.default.category.findFirst({
-                where: { name: categoryName },
+                where: { name: categoryName, createdBy: userId },
             });
             if (!existingCategory) {
                 // Create the category if it doesn't exist
