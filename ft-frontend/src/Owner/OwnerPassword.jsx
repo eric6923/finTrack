@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import Side from '../assets/wel-frame.png'
+import Logo from '../assets/fintrack-logo.png'
 const OwnerPassword = () => {
   const [ownerPassword, setOwnerPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -52,13 +53,13 @@ const OwnerPassword = () => {
     <div className="flex min-h-screen">
       <div
         className="w-1/4 min-h-screen bg-cover bg-no-repeat bg-gray-100 flex items-center justify-center"
-        style={{ backgroundImage: "url('/src/assets/wel-frame.png')" }}
+        style={{ backgroundImage: `url(${Side})` }}
       ></div>
       <div className="ml-1/4 w-3/4 bg-white p-10 overflow-auto">
         {/* Logo and Title */}
         <div className="flex items-center justify-center mb-8">
           <img
-            src="/src/assets/fintrack-logo.png"
+            src={Logo}
             alt="FinTrack Logo"
             className="w-16 h-16"
           />

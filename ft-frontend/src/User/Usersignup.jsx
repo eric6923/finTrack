@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Img from '../User/fintrack.webp'
 
 const UserSignup = () => {
   const navigate = useNavigate(); // Initialize navigate
@@ -99,7 +100,7 @@ const UserSignup = () => {
           <section className="relative flex h-32 items-end bg-gray-900 lg:col-span-5 lg:h-full xl:col-span-6">
             <img
               alt=""
-              src="./src/User/fintrack.webp"
+              src={Img}
               className="absolute inset-0 h-full w-full object-cover opacity-80"
             />
             <div className="hidden lg:relative lg:block lg:p-12">
