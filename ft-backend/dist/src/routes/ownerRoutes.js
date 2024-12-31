@@ -18,6 +18,7 @@ const sharesController_1 = require("../controllers/sharesController");
 const sharesController_2 = require("../controllers/sharesController");
 const checkOnboard_1 = require("../controllers/user-feature/checkOnboard");
 const userMiddleware_1 = require("../middleware/userMiddleware");
+const forgotOwnerPassword_1 = require("../controllers/Auth/forgotOwnerPassword");
 const router = express_1.default.Router();
 router.post("/verify-password", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -101,6 +102,22 @@ router.delete("/operator/:id", userMiddleware_1.verifyUser, (req, res) => __awai
     }
 }));
 router.get("/check-onboard", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, checkOnboard_1.checkOnboard)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error fetching details." });
+    }
+}));
+router.post("/forgot-ownerpassword", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield (0, forgotOwnerPassword_1.forgotOwnerPassword)(req, res); // Ensure this is awaited
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error fetching details." });
+    }
+}));
+router.get("/reset-ownerpassword", userMiddleware_1.verifyUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield (0, checkOnboard_1.checkOnboard)(req, res); // Ensure this is awaited
     }

@@ -4,6 +4,7 @@ import { calculateShareDistribution } from "../controllers/sharesController";
 import { createCompanyShares } from "../controllers/sharesController";
 import { checkOnboard } from "../controllers/user-feature/checkOnboard"; 
 import { verifyUser } from "../middleware/userMiddleware";
+import { forgotOwnerPassword,resetOwnerPassword } from "../controllers/Auth/forgotOwnerPassword";
 
 const router = express.Router();
 
@@ -92,6 +93,22 @@ router.get("/shares",verifyUser, async (req: Request, res: Response) => {
   });
 
 router.get("/check-onboard",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await checkOnboard(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error fetching details." });
+    }
+  });
+
+router.post("/forgot-ownerpassword",verifyUser, async (req: Request, res: Response) => {
+    try {
+      await forgotOwnerPassword(req, res); // Ensure this is awaited
+    } catch (error) {
+      res.status(500).json({ error: "Error fetching details." });
+    }
+  });
+
+router.get("/reset-ownerpassword",verifyUser, async (req: Request, res: Response) => {
     try {
       await checkOnboard(req, res); // Ensure this is awaited
     } catch (error) {
