@@ -38,7 +38,19 @@ export const payLater = async (req: CustomRequest, res: Response) => {
     // Find the transaction
     const transaction = await prisma.transaction.findUnique({
       where: { id: Number(transactionId) },
-      include: { collection: true, commission: true },
+      include: {
+        collection: {
+          include: {
+            operator: true  // Include operator details
+          }
+        },
+        commission: true,
+        payLaterDetails: {
+          include: {
+            bus: true  // Include bus details
+          }
+        }
+      }
     });
 
     if (!transaction || transaction.userId !== userId) {
@@ -140,18 +152,23 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           accountBalance: updatedAccountBalance,
         },
       });
-    
+
+      
+      const desc = transaction.payLaterDetails && transaction.collection?.operator 
+  ? `${transaction.payLaterDetails.from} - ${transaction.payLaterDetails.to}, ${transaction.payLaterDetails.bus.name}, ${transaction.collection.operator.name}`
+  : "PayLater payment";
+
       // Create a debit log for the payment
       await prisma.transaction.create({
         data: {
           userId,
           logType: "DEBIT",
-          desc: `PayLater ${paymentType} payment`,
+          desc: desc,
           amount: totalPayment,
           modeOfPayment,
           transactionNo: transactionNumber,
           categoryId: transaction.categoryId, // Use the categoryId from the original transaction
-          remarks: `Partial payment of operator/agent`,
+          remarks: `PayLater ${paymentType} payment`,
         },
       });
     
@@ -215,13 +232,15 @@ export const payLater = async (req: CustomRequest, res: Response) => {
           accountBalance: updatedAccountBalance,
         },
       });
-    
+      const desc = transaction.payLaterDetails && transaction.collection?.operator 
+  ? `${transaction.payLaterDetails.from} - ${transaction.payLaterDetails.to}, ${transaction.payLaterDetails.bus.name}, ${transaction.collection.operator.name}`
+  : "PayLater full payment";
       // Create a debit log for the full payment
       await prisma.transaction.create({
         data: {
           userId,
           logType: "DEBIT",
-          desc: "PayLater FULL payment",
+          desc: desc,
           amount: totalPayment,
           modeOfPayment,
           transactionNo: transactionNumber,

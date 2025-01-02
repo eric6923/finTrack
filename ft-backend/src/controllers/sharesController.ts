@@ -169,10 +169,14 @@ export const generateFinanceCategories = async (
 };
 
 
-export const getTotalProfitByMonth = async (userId: number, startDate: string, endDate: string): Promise<number> => {
+export const getTotalProfitByMonth = async (
+  userId: number,
+  startDate: string,
+  endDate: string
+): Promise<number> => {
   try {
-    // Fetch transactions and calculate profit for the given date range
-    const transactions = await prisma.transaction.findMany({
+    // Fetch CREDIT transactions
+    const creditTransactions = await prisma.transaction.findMany({
       where: {
         userId,
         createdAt: {
@@ -181,105 +185,133 @@ export const getTotalProfitByMonth = async (userId: number, startDate: string, e
         },
         logType: 'CREDIT',
         OR: [
-          { payLater: false }, 
+          { payLater: false },
           { payLater: true, dueAmount: 0 },
         ],
       },
       include: {
-        commission: true, 
-        collection: true, 
+        commission: true,
+        collection: true,
       },
     });
 
-    const totalProfit = transactions.reduce((sum, transaction) => {
+    // Fetch DEBIT transactions, excluding "BUS BOOKING" category
+    const debitTransactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        logType: 'DEBIT',
+        category: {
+          NOT: {
+            name: 'BUS BOOKING', // Assuming "name" is the field for category name
+          },
+        },
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    // Calculate total CREDIT profit
+    const totalCreditProfit = creditTransactions.reduce((sum, transaction) => {
       const agentAmount = transaction.commission?.amount.toNumber() || 0;
       const operatorAmount = transaction.collection?.amount.toNumber() || 0;
       const profit = transaction.amount.toNumber() - (agentAmount + operatorAmount);
       return sum + profit;
     }, 0);
 
-    return totalProfit;
+    // Calculate total DEBIT amount (excluding "BUS BOOKING")
+    const totalDebitAmount = debitTransactions.reduce(
+      (sum, transaction) => sum + transaction.amount.toNumber(),
+      0
+    );
+
+    // Final adjusted profit
+    return totalCreditProfit - totalDebitAmount;
   } catch (error) {
     console.error('Error calculating monthly profit:', error);
     return 0; // Default to 0 if an error occurs
   }
 };
 
+// Fixed version of calculateShareDistribution function
+export const calculateShareDistribution = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = Number(req.user?.id);
 
+    // Fetch company share details
+    const companyShares = await prisma.companyShareDetails.findUnique({
+      where: { userId },
+      include: { shareholders: true },
+    });
 
-
-  export const calculateShareDistribution = async (req: CustomRequest, res: Response) => {
-    try {
-      const userId = Number(req.user?.id);
-  
-      // Fetch the company share details for the user
-      const companyShares = await prisma.companyShareDetails.findUnique({
-        where: { userId },
-        include: { shareholders: true },
-      });
-  
-      // Validate company shares exist
-      if (!companyShares || !companyShares.shareholders) {
-        return res.status(400).json({ error: 'Company share details not found' });
-      }
-  
-      const { date } = req.query;
-  
-      // Validate date format
-      if (!date || typeof date !== 'string' || date.length !== 7) {
-        return res.status(400).json({ error: 'Provide date in YYYY-MM format' });
-      }
-  
-      // Prepare date range for profit calculation
-      const startOfMonth = parseISO(`${date}-01`);
-      const endOfMonth = new Date(startOfMonth);
-      endOfMonth.setMonth(startOfMonth.getMonth() + 1);
-  
-      // Fetch the total profit for the specified month
-      const totalProfit = await getTotalProfitByMonth(
-        userId,
-        startOfMonth.toISOString(),
-        endOfMonth.toISOString()
-      );
-  
-      // Distribute profit among shareholders and update their shareProfit
-      const shareDistribution = await Promise.all(
-        companyShares.shareholders.map(async (shareholder) => {
-          const shareholderProfit = new Decimal((totalProfit * shareholder.sharePercentage) / 100); // Convert profit to Decimal
-  
-          // Calculate the final profit after deducting finance value
-          const financeValue = shareholder.finance || new Decimal(0);
-          const finalProfit = shareholderProfit.minus(financeValue);
-  
-          // Update the shareProfit field in the database
-          await prisma.shareholder.update({
-            where: { id: shareholder.id },
-            data: {
-              shareProfit: shareholder.shareProfit.plus(finalProfit), // Update with the remaining profit
-            },
-          });
-  
-          return {
-            shareholder: shareholder.name,
-            percentage: shareholder.sharePercentage,
-            originalProfit: shareholderProfit.toNumber(), // Profit before finance deduction
-            financeDeducted: financeValue.toNumber(), // Finance value deducted
-            finalProfit: finalProfit.toNumber(), // Profit after finance deduction
-          };
-        })
-      );
-  
-      // Return the distribution details
-      res.status(200).json({
-        month: date,
-        totalProfit,
-        shareDistribution,
-      });
-    } catch (error) {
-      console.error('Share Distribution Error:', error);
-      res.status(500).json({ error: 'Failed to calculate share distribution' });
+    if (!companyShares || !companyShares.shareholders.length) {
+      return res.status(400).json({ error: 'Company share details not found or no shareholders available.' });
     }
-  };
+
+    const { date } = req.query;
+
+    // Validate date format (YYYY-MM)
+    if (!date || typeof date !== 'string' || date.length !== 7) {
+      return res.status(400).json({ error: 'Provide a valid date in YYYY-MM format.' });
+    }
+
+    // Prepare date range
+    const startOfMonthDate = parseISO(`${date}-01`);
+    const endOfMonthDate = new Date(startOfMonthDate);
+    endOfMonthDate.setMonth(startOfMonthDate.getMonth() + 1);
+
+    // Fetch total profit for the month
+    const totalProfit = await getTotalProfitByMonth(
+      userId,
+      startOfMonthDate.toISOString(),
+      endOfMonthDate.toISOString()
+    );
+
+    if (totalProfit === 0) {
+      return res.status(200).json({
+        message: 'No profit generated for the given month.',
+        totalProfit,
+        shareDistribution: [],
+      });
+    }
+
+    // Distribute profit among shareholders
+    const shareDistribution = await Promise.all(
+      companyShares.shareholders.map(async (shareholder) => {
+        const shareholderProfit = new Decimal((totalProfit * shareholder.sharePercentage) / 100);
+        const financeValue = shareholder.finance || new Decimal(0);
+        const finalProfit = shareholderProfit.minus(financeValue);
+
+        // Update the shareholder's profit in the database
+        await prisma.shareholder.update({
+          where: { id: shareholder.id },
+          data: {
+            shareProfit: shareholder.shareProfit.plus(finalProfit),
+          },
+        });
+
+        return {
+          shareholder: shareholder.name,
+          percentage: shareholder.sharePercentage,
+          originalProfit: shareholderProfit.toNumber(),
+          financeDeducted: financeValue.toNumber(),
+          finalProfit: finalProfit.toNumber(),
+        };
+      })
+    );
+
+    // Return response
+    res.status(200).json({
+      month: date,
+      totalProfit,
+      shareDistribution,
+    });
+  } catch (error) {
+    console.error('Share Distribution Error:', error);
+    res.status(500).json({ error: 'Failed to calculate share distribution.' });
+  }
+};
   
   
   

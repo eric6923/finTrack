@@ -16,7 +16,7 @@ exports.payLater = void 0;
 const client_1 = __importDefault(require("../../../prisma/client"));
 const library_1 = require("@prisma/client/runtime/library");
 const payLater = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     try {
         const userId = Number((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
         const { paymentType, operatorAmount, agentAmount, modeOfPayment, transactionNumber } = req.body;
@@ -40,7 +40,19 @@ const payLater = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // Find the transaction
         const transaction = yield client_1.default.transaction.findUnique({
             where: { id: Number(transactionId) },
-            include: { collection: true, commission: true },
+            include: {
+                collection: {
+                    include: {
+                        operator: true // Include operator details
+                    }
+                },
+                commission: true,
+                payLaterDetails: {
+                    include: {
+                        bus: true // Include bus details
+                    }
+                }
+            }
         });
         if (!transaction || transaction.userId !== userId) {
             return res.status(404).json({ message: "Transaction not found or unauthorized." });
@@ -125,17 +137,20 @@ const payLater = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     accountBalance: updatedAccountBalance,
                 },
             });
+            const desc = transaction.payLaterDetails && ((_d = transaction.collection) === null || _d === void 0 ? void 0 : _d.operator)
+                ? `${transaction.payLaterDetails.from} - ${transaction.payLaterDetails.to}, ${transaction.payLaterDetails.bus.name}, ${transaction.collection.operator.name}`
+                : "PayLater payment";
             // Create a debit log for the payment
             yield client_1.default.transaction.create({
                 data: {
                     userId,
                     logType: "DEBIT",
-                    desc: `PayLater ${paymentType} payment`,
+                    desc: desc,
                     amount: totalPayment,
                     modeOfPayment,
                     transactionNo: transactionNumber,
                     categoryId: transaction.categoryId, // Use the categoryId from the original transaction
-                    remarks: `Partial payment of operator/agent`,
+                    remarks: `PayLater ${paymentType} payment`,
                 },
             });
             return res.status(200).json({
@@ -190,12 +205,15 @@ const payLater = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     accountBalance: updatedAccountBalance,
                 },
             });
+            const desc = transaction.payLaterDetails && ((_e = transaction.collection) === null || _e === void 0 ? void 0 : _e.operator)
+                ? `${transaction.payLaterDetails.from} - ${transaction.payLaterDetails.to}, ${transaction.payLaterDetails.bus.name}, ${transaction.collection.operator.name}`
+                : "PayLater full payment";
             // Create a debit log for the full payment
             yield client_1.default.transaction.create({
                 data: {
                     userId,
                     logType: "DEBIT",
-                    desc: "PayLater FULL payment",
+                    desc: desc,
                     amount: totalPayment,
                     modeOfPayment,
                     transactionNo: transactionNumber,
