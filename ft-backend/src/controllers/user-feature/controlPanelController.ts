@@ -497,70 +497,78 @@ export const getOperators = async (req: CustomRequest, res: Response) => {
     }
   };
   
-  export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
-    try {
-      const userId = req.user?.id; // Extract user ID from token
-      const { boxBalance, accountBalance } = req.body;
+ export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user?.id; 
+    console.log('Starting setOpeningBalance with userId:', userId);
+
+    const { boxBalance, accountBalance } = req.body;
+    console.log('Received balances:', { boxBalance, accountBalance });
   
-      // Ensure user ID is provided
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized access." });
-      }
-  
-      // Validate the balances
-      if (boxBalance === undefined || accountBalance === undefined) {
-        return res
-          .status(400)
-          .json({ message: "Both boxBalance and accountBalance are required." });
-      }
-  
-      if (isNaN(parseFloat(boxBalance)) || isNaN(parseFloat(accountBalance))) {
-        return res
-          .status(400)
-          .json({ message: "Both balances must be valid numbers." });
-      }
-  
-      const totalBalance = parseFloat(boxBalance) + parseFloat(accountBalance);
-  
-      // Update the user's balances in the database
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          boxBalance: parseFloat(boxBalance),
-          accountBalance: parseFloat(accountBalance),
-        },
-        select: {
-          id: true,
-          name: true,
-          boxBalance: true,
-          accountBalance: true,
-        },
-      });
-  
-      // Define the predefined categories
-      const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-  
-      // Log userId for debugging
-      console.log("User ID for category creation:", userId);
-  
-      // Create all categories at once using createMany
-      await prisma.category.createMany({
-        data: predefinedCategories.map(name => ({
-          name: name.toUpperCase(), // Standardize to uppercase
-          createdBy: userId,
-        })),
-        skipDuplicates: true, // Skips duplicates instead of throwing an error
-      });
-  
-      return res.status(200).json({
-        message: "Opening balances set successfully, and categories created.",
-        user: updatedUser,
-        totalBalance,
-      });
-    } catch (error) {
-      console.error("Error setting opening balance:", error);
-      return res.status(500).json({ message: "An error occurred.", error });
+    if (!userId) {
+      console.log('No userId found');
+      return res.status(401).json({ message: "Unauthorized access." });
     }
-  };
+  
+    // Update user balances first
+    console.log('Updating user balances...');
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        boxBalance: parseFloat(boxBalance),
+        accountBalance: parseFloat(accountBalance),
+      },
+      select: {
+        id: true,
+        name: true,
+        boxBalance: true,
+        accountBalance: true,
+      },
+    });
+    console.log('User balances updated successfully:', updatedUser);
+
+    // Try creating categories separately
+    console.log('Starting category creation...');
+    const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
+    
+    // Try a single category first as a test
+    console.log('Creating test category TEA...');
+    const testCategory = await prisma.category.create({
+      data: {
+        name: 'TEA',
+        createdBy: userId
+      }
+    });
+    console.log('Test category created:', testCategory);
+
+    // If test succeeds, create the rest
+    const categoryPromises = predefinedCategories.slice(1).map(name => 
+      prisma.category.create({
+        data: {
+          name,
+          createdBy: userId
+        }
+      })
+    );
+
+    const categories = await Promise.all(categoryPromises);
+    console.log('All categories created:', categories);
+
+    return res.status(200).json({
+      message: "Opening balances set successfully, and categories created.",
+      user: updatedUser,
+      totalBalance: parseFloat(boxBalance) + parseFloat(accountBalance),
+      categories
+    });
+    
+  } catch (error) {
+    console.error("Detailed error in setOpeningBalance:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    return res.status(500).json({ 
+      message: "An error occurred while setting up initial data.",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
   
   

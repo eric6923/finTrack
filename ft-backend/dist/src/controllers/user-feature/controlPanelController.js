@@ -445,25 +445,16 @@ exports.getOperators = getOperators;
 const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id; // Extract user ID from token
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        console.log('Starting setOpeningBalance with userId:', userId);
         const { boxBalance, accountBalance } = req.body;
-        // Ensure user ID is provided
+        console.log('Received balances:', { boxBalance, accountBalance });
         if (!userId) {
+            console.log('No userId found');
             return res.status(401).json({ message: "Unauthorized access." });
         }
-        // Validate the balances
-        if (boxBalance === undefined || accountBalance === undefined) {
-            return res
-                .status(400)
-                .json({ message: "Both boxBalance and accountBalance are required." });
-        }
-        if (isNaN(parseFloat(boxBalance)) || isNaN(parseFloat(accountBalance))) {
-            return res
-                .status(400)
-                .json({ message: "Both balances must be valid numbers." });
-        }
-        const totalBalance = parseFloat(boxBalance) + parseFloat(accountBalance);
-        // Update the user's balances in the database
+        // Update user balances first
+        console.log('Updating user balances...');
         const updatedUser = yield client_1.default.user.update({
             where: { id: userId },
             data: {
@@ -477,27 +468,42 @@ const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 accountBalance: true,
             },
         });
-        // Define the predefined categories
+        console.log('User balances updated successfully:', updatedUser);
+        // Try creating categories separately
+        console.log('Starting category creation...');
         const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-        // Log userId for debugging
-        console.log("User ID for category creation:", userId);
-        // Create all categories at once using createMany
-        yield client_1.default.category.createMany({
-            data: predefinedCategories.map(name => ({
-                name: name.toUpperCase(), // Standardize to uppercase
-                createdBy: userId,
-            })),
-            skipDuplicates: true, // Skips duplicates instead of throwing an error
+        // Try a single category first as a test
+        console.log('Creating test category TEA...');
+        const testCategory = yield client_1.default.category.create({
+            data: {
+                name: 'TEA',
+                createdBy: userId
+            }
         });
+        console.log('Test category created:', testCategory);
+        // If test succeeds, create the rest
+        const categoryPromises = predefinedCategories.slice(1).map(name => client_1.default.category.create({
+            data: {
+                name,
+                createdBy: userId
+            }
+        }));
+        const categories = yield Promise.all(categoryPromises);
+        console.log('All categories created:', categories);
         return res.status(200).json({
             message: "Opening balances set successfully, and categories created.",
             user: updatedUser,
-            totalBalance,
+            totalBalance: parseFloat(boxBalance) + parseFloat(accountBalance),
+            categories
         });
     }
     catch (error) {
-        console.error("Error setting opening balance:", error);
-        return res.status(500).json({ message: "An error occurred.", error });
+        console.error("Detailed error in setOpeningBalance:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+        return res.status(500).json({
+            message: "An error occurred while setting up initial data.",
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 });
 exports.setOpeningBalance = setOpeningBalance;

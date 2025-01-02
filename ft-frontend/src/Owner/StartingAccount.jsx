@@ -34,10 +34,41 @@ const StartingAccount = () => {
     }
 
     if (startWithZero) {
-      console.log("Finance Management starts with ZERO balance.");
-      setError("");
-      alert("Preferences saved successfully!");
-      navigate("/ownerpassword"); // Navigate to the next page
+      try {
+        const token = localStorage.getItem("token"); // Retrieve token
+    
+        if (!token) {
+          setError("You need to be logged in to perform this action.");
+          return;
+        }
+    
+        const response = await fetch(
+          "https://ftbackend.vercel.app/api/user/balance",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              boxBalance: 0, // Send zero balances
+              accountBalance: 0,
+            }),
+          }
+        );
+    
+        const data = await response.json();
+    
+        if (response.ok) {
+          setMessage(data.message);
+          navigate("/ownerpassword");
+        } else {
+          setError(data.message || "Something went wrong!");
+        }
+      } catch (error) {
+        setError("Error connecting to the API.");
+        console.error("API Error:", error);
+      }
       return; // Stop further execution
     }
 
