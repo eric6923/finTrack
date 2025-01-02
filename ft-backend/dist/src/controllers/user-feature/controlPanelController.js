@@ -442,24 +442,90 @@ const getOperators = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getOperators = getOperators;
+//  export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
+//   try {
+//     const userId = req.user?.id; 
+//     console.log('Starting setOpeningBalance with userId:', userId);
+//     const { boxBalance, accountBalance } = req.body;
+//     console.log('Received balances:', { boxBalance, accountBalance });
+//     if (!userId) {
+//       console.log('No userId found');
+//       return res.status(401).json({ message: "Unauthorized access." });
+//     }
+//     // Update user balances first
+//     console.log('Updating user balances...');
+//     const updatedUser = await prisma.user.update({
+//       where: { id: userId },
+//       data: {
+//         boxBalance: parseFloat(boxBalance),
+//         accountBalance: parseFloat(accountBalance),
+//       },
+//       select: {
+//         id: true,
+//         name: true,
+//         boxBalance: true,
+//         accountBalance: true,
+//       },
+//     });
+//     console.log('User balances updated successfully:', updatedUser);
+//     // Try creating categories separately
+//     console.log('Starting category creation...');
+//     const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
+//     // Try a single category first as a test
+//     console.log('Creating test category TEA...');
+//     const testCategory = await prisma.category.create({
+//       data: {
+//         name: 'TEA',
+//         createdBy: userId
+//       }
+//     });
+//     console.log('Test category created:', testCategory);
+//     // If test succeeds, create the rest
+//     const categoryPromises = predefinedCategories.slice(1).map(name => 
+//       prisma.category.create({
+//         data: {
+//           name,
+//           createdBy: userId
+//         }
+//       })
+//     );
+//     const categories = await Promise.all(categoryPromises);
+//     console.log('All categories created:', categories);
+//     return res.status(200).json({
+//       message: "Opening balances set successfully, and categories created.",
+//       user: updatedUser,
+//       totalBalance: parseFloat(boxBalance) + parseFloat(accountBalance),
+//       categories
+//     });
+//   } catch (error) {
+//     console.error("Detailed error in setOpeningBalance:", error);
+//     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+//     return res.status(500).json({ 
+//       message: "An error occurred while setting up initial data.",
+//       error: error instanceof Error ? error.message : "Unknown error"
+//     });
+//   }
+// };
 const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        console.log('Starting setOpeningBalance with userId:', userId);
+        console.log("Starting setOpeningBalance with userId:", userId);
         const { boxBalance, accountBalance } = req.body;
-        console.log('Received balances:', { boxBalance, accountBalance });
+        const boxBalanceNum = parseFloat(boxBalance) || 0; // Default to 0 if null/undefined
+        const accountBalanceNum = parseFloat(accountBalance) || 0;
+        console.log("Received balances:", { boxBalanceNum, accountBalanceNum });
         if (!userId) {
-            console.log('No userId found');
+            console.log("No userId found");
             return res.status(401).json({ message: "Unauthorized access." });
         }
-        // Update user balances first
-        console.log('Updating user balances...');
+        // Update user balances
+        console.log("Updating user balances...");
         const updatedUser = yield client_1.default.user.update({
             where: { id: userId },
             data: {
-                boxBalance: parseFloat(boxBalance),
-                accountBalance: parseFloat(accountBalance),
+                boxBalance: boxBalanceNum,
+                accountBalance: accountBalanceNum,
             },
             select: {
                 id: true,
@@ -468,41 +534,34 @@ const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 accountBalance: true,
             },
         });
-        console.log('User balances updated successfully:', updatedUser);
-        // Try creating categories separately
-        console.log('Starting category creation...');
+        console.log("User balances updated successfully:", updatedUser);
+        // Create predefined categories
+        console.log("Starting category creation...");
         const predefinedCategories = ['TEA', 'BUS BOOKING', 'MONEYTRANSFER', 'RENT'];
-        // Try a single category first as a test
-        console.log('Creating test category TEA...');
-        const testCategory = yield client_1.default.category.create({
-            data: {
-                name: 'TEA',
-                createdBy: userId
-            }
+        const createdCategories = yield client_1.default.category.createMany({
+            data: predefinedCategories.map((name) => ({
+                name: name.toUpperCase(),
+                createdBy: userId,
+            })),
+            skipDuplicates: true, // Prevent errors from duplicate entries
         });
-        console.log('Test category created:', testCategory);
-        // If test succeeds, create the rest
-        const categoryPromises = predefinedCategories.slice(1).map(name => client_1.default.category.create({
-            data: {
-                name,
-                createdBy: userId
-            }
-        }));
-        const categories = yield Promise.all(categoryPromises);
-        console.log('All categories created:', categories);
+        console.log("Categories created successfully:", createdCategories);
         return res.status(200).json({
             message: "Opening balances set successfully, and categories created.",
             user: updatedUser,
-            totalBalance: parseFloat(boxBalance) + parseFloat(accountBalance),
-            categories
+            totalBalance: boxBalanceNum + accountBalanceNum,
         });
     }
     catch (error) {
-        console.error("Detailed error in setOpeningBalance:", error);
-        console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+        console.error("Detailed error in setOpeningBalance:", {
+            error: error instanceof Error ? error.message : "Unknown error",
+            stack: error instanceof Error ? error.stack : "No stack trace",
+            userId: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id,
+            body: req.body,
+        });
         return res.status(500).json({
             message: "An error occurred while setting up initial data.",
-            error: error instanceof Error ? error.message : "Unknown error"
+            error: error instanceof Error ? error.message : "Unknown error",
         });
     }
 });
