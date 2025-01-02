@@ -619,6 +619,18 @@ export const setOpeningBalance = async (req: CustomRequest, res: Response) => {
 
     console.log("Categories created successfully:", createdCategories);
 
+    const predefinedOperators = ['SEAT SELLER', 'PHONE BOOKING', 'ID'];
+
+    // Create predefined operators
+    await prisma.operator.createMany({
+      data: predefinedOperators.map(name => ({
+        name,
+        userId,
+      })),
+      skipDuplicates: true,
+    });
+    console.log('Default operators created.');
+
     return res.status(200).json({
       message: "Opening balances set successfully, and categories created.",
       user: updatedUser,

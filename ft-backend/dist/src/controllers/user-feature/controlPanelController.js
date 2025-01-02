@@ -546,6 +546,16 @@ const setOpeningBalance = (req, res) => __awaiter(void 0, void 0, void 0, functi
             skipDuplicates: true, // Prevent errors from duplicate entries
         });
         console.log("Categories created successfully:", createdCategories);
+        const predefinedOperators = ['SEAT SELLER', 'PHONE BOOKING', 'ID'];
+        // Create predefined operators
+        yield client_1.default.operator.createMany({
+            data: predefinedOperators.map(name => ({
+                name,
+                userId,
+            })),
+            skipDuplicates: true,
+        });
+        console.log('Default operators created.');
         return res.status(200).json({
             message: "Opening balances set successfully, and categories created.",
             user: updatedUser,
