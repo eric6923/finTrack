@@ -66,7 +66,7 @@ const CreateAgent = () => {
       </h1>
 
       <div className="flex items-center justify-center space-x-4">
-        <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
+        <select className="w-40 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
           <option value="">Select Agent</option>
           {agents.map((agent) => (
             <option key={agent.id} value={agent.name}>

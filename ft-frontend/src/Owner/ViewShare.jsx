@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const ViewShare = () => {
-  const [date, setDate] = useState("2024-12");
+  const [date, setDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [data, setData] = useState(null);
   const [val, setVal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,9 +96,9 @@ const ViewShare = () => {
       )}
       {data && val && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-center text-black">
+          {/* <h2 className="text-xl font-semibold text-center text-black">
             Month: {data.month}
-          </h2>
+          </h2> */}
           <p className="text-lg text-center text-black">
             Total Profit: {val.adjustedProfit}
           </p>

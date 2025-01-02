@@ -133,19 +133,19 @@ const Header = () => {
   ];
 
   return (
-    <div className="flex flex-wrap justify-around items-center bg-gray-50 p-4 shadow-md">
+    <div className="flex flex-wrap justify-around items-center bg-gray-50 p-4 shadow-md max-w-[2000px] mx-auto min-w-[1024px]">
       {items.map((item, index) => {
         const styles = getItemStyles(index);
         return (
           <div
             key={index}
-            className={`w-40 h-24 ${styles.bg} shadow-lg rounded-lg flex flex-col justify-center items-center m-2 p-4`}
+            className={`min-w-[160px] w-[calc(14%-1rem)] h-28 ${styles.bg} shadow-lg rounded-lg flex flex-col justify-center items-center m-2 p-4 transition-all duration-200`}
             style={{ outline: styles.outline }}
           >
             <h3 className={`text-lg font-semibold ${styles.titleColor}`}>
               {item.label}
             </h3>
-            <p className={`text-2xl font-bold ${styles.valueColor}`}>
+            <p className={`text-xl font-bold ${styles.valueColor} mt-2`}>
               ₹{item.value || 0}
             </p>
           </div>

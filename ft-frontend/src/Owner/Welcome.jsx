@@ -11,7 +11,9 @@ const Welcome = () => {
   const [shareholders, setShareholders] = useState([]);
 
   const navigate = useNavigate(); // Initialize useNavigate
-
+  const preventWheelChange = (e) => {
+    e.target.blur();
+  };
   // Update shareholders array when numberOfShareholders changes
   useEffect(() => {
     const newShareholders = [];
@@ -153,6 +155,7 @@ const Welcome = () => {
                 const value = e.target.value.replace(/^0+(?!$)/, ""); // Remove leading zeros
                 setNumberOfShareholders(value === "" ? 0 : parseInt(value, 10)); // Handle empty input gracefully
               }}
+              onWheel={preventWheelChange}
               min="0"
               required
               className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -200,6 +203,7 @@ const Welcome = () => {
                       );
                     }}
                     required
+                    onWheel={preventWheelChange}
                     min="0"
                     max="100"
                     className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
