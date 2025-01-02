@@ -83,10 +83,10 @@ const OwnerDashboard = () => {
               className="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-black"
             />
           </div>
-          <div className="mt-2 text-sm">
+          <div className="mt-2 text-sm text-right">
             <span
               onClick={() => navigate("/ownersendlink")}
-              className="font-medium text-blue-600 cursor-pointer hover:underline ml-40"
+              className="font-medium text-blue-600 cursor-pointer hover:underline "
             >
               Forgot password?
             </span>

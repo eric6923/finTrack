@@ -31,28 +31,28 @@ const UserSignup = () => {
   const validateForm = () => {
     const { name, userName, email, phone, password, passwordConfirmation, aadhar, pan, gstin } = formData;
 
-    if (!name || !userName || !email || !phone || !password || !passwordConfirmation || !aadhar || !pan) {
-      return "All fields are required.";
-    }
+    // if (!name || !userName || !email || !phone || !password || !passwordConfirmation || !aadhar || !pan) {
+    //   return "All fields are required.";
+    // }
 
-    if (password !== passwordConfirmation) {
-      return "Passwords do not match.";
-    }
+    // if (password !== passwordConfirmation) {
+    //   return "Passwords do not match.";
+    // }
 
-    const aadharRegex = /^\d{12}$/;
-    if (!aadharRegex.test(aadhar)) {
-      return "Aadhaar number must be 12 digits.";
-    }
+    // const aadharRegex = /^\d{12}$/;
+    // if (!aadharRegex.test(aadhar)) {
+    //   return "Aadhaar number must be 12 digits.";
+    // }
 
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!panRegex.test(pan)) {
-      return "Invalid PAN number format.";
-    }
+    // const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    // if (!panRegex.test(pan)) {
+    //   return "Invalid PAN number format.";
+    // }
 
-    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[0-9A-Z]{1}$/;
-    if (gstin && !gstinRegex.test(gstin)) {
-      return "Invalid GST number format.";
-    }
+    // const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[0-9A-Z]{1}$/;
+    // if (gstin && !gstinRegex.test(gstin)) {
+    //   return "Invalid GST number format.";
+    // }
 
     return null;
   };
