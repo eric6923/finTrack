@@ -67,7 +67,7 @@ const CreateBus = () => {
       </h1>
 
       <div className="flex items-center justify-center space-x-4">
-        <select className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
+        <select className=" w-40 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black">
           <option value="">Select Bus</option>
           {buses.map((bus) => (
             <option key={bus.id} value={bus.name}>

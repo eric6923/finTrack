@@ -117,18 +117,18 @@ const Category = () => {
       </h1>
 
       <div className="flex items-center justify-center space-x-4">
-      <select 
-  value={selectedCategoryId} 
-  onChange={(e) => setSelectedCategoryId(e.target.value)}
-  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
->
-  <option value="">Select Category</option>
-  {categories.map((category) => (
-    <option key={category.id} value={category.id}>
-      {category.name}
-    </option>
-  ))}
-</select>
+        <select
+          value={selectedCategoryId}
+          onChange={(e) => setSelectedCategoryId(e.target.value)}
+          className=" w-40 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+        >
+          <option value="">Select Category</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
         <button
           onClick={() => setIsDialogOpen(true)}
           className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -143,9 +143,7 @@ const Category = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="text-red-500 text-center mt-2">{error}</div>
-      )}
+      {error && <div className="text-red-500 text-center mt-2">{error}</div>}
 
       {/* Existing Create Dialog */}
       {isDialogOpen && (
