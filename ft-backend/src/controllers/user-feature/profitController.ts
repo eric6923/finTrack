@@ -72,6 +72,11 @@ interface CustomRequest extends Request {
         where: {
           userId,
           logType: 'DEBIT',
+          category: {
+            NOT: {
+              name: 'BUS BOOKING', 
+            },
+          },
           createdAt: {
             gte: startDateParsed,
             lte: endDateParsed,

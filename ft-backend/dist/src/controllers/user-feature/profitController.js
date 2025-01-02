@@ -72,6 +72,11 @@ const calculateProfitByDateRange = (req, res) => __awaiter(void 0, void 0, void 
             where: {
                 userId,
                 logType: 'DEBIT',
+                category: {
+                    NOT: {
+                        name: 'BUS BOOKING',
+                    },
+                },
                 createdAt: {
                     gte: startDateParsed,
                     lte: endDateParsed,
