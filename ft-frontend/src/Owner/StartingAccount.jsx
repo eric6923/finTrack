@@ -36,6 +36,7 @@ const StartingAccount = () => {
     if (startWithZero) {
       try {
         const token = localStorage.getItem("token"); // Retrieve token
+        console.log("Token:", token)
     
         if (!token) {
           setError("You need to be logged in to perform this action.");
@@ -58,6 +59,7 @@ const StartingAccount = () => {
         );
     
         const data = await response.json();
+        console.log("API Response:", data); 
     
         if (response.ok) {
           setMessage(data.message);
