@@ -20,6 +20,7 @@ const Alluser = () => {
           }
         );
         const data = await response.json();
+        console.log(data.Users)
         setUsers(data.Users);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch users.");
@@ -104,6 +105,7 @@ const Alluser = () => {
                     <InfoItem label="Aadhar" value={user.aadhar} />
                     <InfoItem label="PAN" value={user.pan} />
                     <InfoItem label="GSTIN" value={user.gstin} />
+                    <InfoItem label="Status" value={user.status} />
                     <InfoItem
                       label="Created"
                       value={new Date(user.createdAt).toLocaleDateString(

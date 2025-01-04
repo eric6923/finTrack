@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-
+import User from '../assets/User.png'
+import Folder from '../assets/Folder.png'
+import Control from '../assets/control.png'
+import Logo from '../assets/logo.png'
 const Adminsidebar = ({ children }) => {
   const [open, setOpen] = useState(true);
 
   const Menus = [
-    { title: "All Users", src: "User", path: "/all-users" },
-    { title: "Pending", src: "Folder", path: "/pending" },
+    { title: "All Users", src: User, path: "/all-users" },
+    { title: "Pending", src: Folder, path: "/pending" },
   ];
 
   const userInfo = {
@@ -32,7 +35,7 @@ const Adminsidebar = ({ children }) => {
         <div>
           {/* Control Button */}
           <img
-            src="./src/assets/control.png"
+            src={Control}
             className={`absolute cursor-pointer -right-4 top-6 w-6 border-black
              border-2 rounded-full ${!open && "rotate-180"} z-20`}
             onClick={() => setOpen(!open)}
@@ -41,7 +44,7 @@ const Adminsidebar = ({ children }) => {
           {/* Logo Section */}
           <div className="flex gap-x-3 items-center">
             <img
-              src="./src/assets/logo.png"
+              src={Logo}
               className={`cursor-pointer duration-500 scale-110 ${
                 open && "rotate-[360deg]"
               }`}
@@ -85,7 +88,7 @@ const Adminsidebar = ({ children }) => {
               >
                 <Link to={Menu.path} className="flex items-center gap-x-3 w-full">
                   <img
-                    src={`./src/assets/${Menu.src}.png`}
+                    src={Menu.src}
                     alt={Menu.title}
                     className="scale-110"
                   />

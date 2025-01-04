@@ -40,6 +40,7 @@ import ViewShare from "./Owner/ViewShare";
 import SendResetLink from "./ForgotPassword/SendResetLink";
 import RestPassword from "./ForgotPassword/RestPassword";
 import OwnerResetLink from "./Owner/OwnerResetLink";
+import OwnerResetPassword from "./Owner/OwnerResetPassword";
 
 const App = () => {
   return (
@@ -91,7 +92,7 @@ const App = () => {
         <Route path="/sendlink" element={<SendResetLink />} />
         <Route path="/resetpassword" element={<RestPassword />} />
         <Route path="/ownersendlink" element={<OwnerResetLink />} />
-        <Route path="/ownerresetpassword" element={<OwnerPassword />} />
+        <Route path="/ownerresetpassword" element={<OwnerResetPassword />} />
 
 
         <Route
