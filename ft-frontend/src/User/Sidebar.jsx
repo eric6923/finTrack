@@ -12,6 +12,7 @@ import { LogOut } from "lucide-react";
 const Sidebar = ({ children }) => {
   const [open, setOpen] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
+  const [isActive, setIsActive] = useState(false); // State for user status
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,6 +27,8 @@ const Sidebar = ({ children }) => {
     const storedUserInfo = localStorage.getItem("userInfo");
     if (storedUserInfo) {
       setUserInfo(JSON.parse(storedUserInfo));
+      // Fetch active/inactive status
+      fetchUserStatus(JSON.parse(storedUserInfo).id);
     }
     const storedSidebarState = localStorage.getItem("sidebarOpen");
     if (storedSidebarState !== null) {
@@ -35,6 +38,29 @@ const Sidebar = ({ children }) => {
     }
   }, []);
 
+  const fetchUserStatus = async (id) => {
+    try {
+      const response = await axios.get(
+        `https://ftbackend.vercel.app/api/admin/users/${id}/status`
+      );
+      setIsActive(response.data.isActive); // Assume API returns { isActive: true/false }
+    } catch (error) {
+      console.error("Error fetching user status:", error);
+    }
+  };
+
+  const toggleUserStatus = async () => {
+    try {
+      const apiUrl = `https://ftbackend.vercel.app/api/admin/users/${userInfo.id}/${
+        isActive ? "inactivate" : "activate"
+      }`;
+      await axios.post(apiUrl);
+      setIsActive((prev) => !prev); // Toggle the status locally
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+    }
+  };
+
   const handleSidebarToggle = () => {
     const newState = !open;
     setOpen(newState);
@@ -43,21 +69,13 @@ const Sidebar = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      // Call logout endpoint
-      await axios.post('/api/user/logout');
-      
-      // Clear stored data
-      localStorage.removeItem('token');
-      localStorage.removeItem('userInfo');
-      localStorage.removeItem('sidebarOpen');
-      
-      // Redirect to login
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local data even if server request fails
+      await axios.post("/api/user/logout");
       localStorage.clear();
-      navigate('/login');
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      localStorage.clear();
+      navigate("/login");
     }
   };
 
@@ -72,8 +90,9 @@ const Sidebar = ({ children }) => {
           {/* Control Button */}
           <img
             src={Control}
-            className={`absolute cursor-pointer -right-3 top-6 w-5 border-black
-              border-2 rounded-full ${!open && "rotate-180"} z-20`}
+            className={`absolute cursor-pointer -right-3 top-6 w-5 border-black border-2 rounded-full ${
+              !open && "rotate-180"
+            } z-20`}
             onClick={handleSidebarToggle}
           />
 
@@ -86,7 +105,7 @@ const Sidebar = ({ children }) => {
               }`}
             />
             <h1
-              className={`text-white origin-left font-medium text-2xl mb- duration-200 ${
+              className={`text-white origin-left font-medium text-2xl duration-200 ${
                 !open && "scale-0"
               }`}
             >
@@ -105,8 +124,18 @@ const Sidebar = ({ children }) => {
                 {userInfo.name.charAt(0)}
               </div>
               <div className="ml-3 flex flex-col">
-                <p className="text-lg font-semibold">{userInfo.userName}</p>
-              </div>
+  <p className="text-lg font-semibold">{userInfo.userName}</p>
+  <span
+    onClick={toggleUserStatus}
+    className={` text-sm cursor-pointer ${
+      isActive ? "text-red-500" : "text-green-500"
+    }`}
+  >
+    {isActive ? "Inactive" : "Active"}
+  </span>
+  
+</div>
+
             </div>
           ) : (
             <div className="mt-4 text-gray-500">No user info found</div>
@@ -149,11 +178,7 @@ const Sidebar = ({ children }) => {
           border border-white hover:bg-[#074b91] focus:bg-[#074b91] transition-colors duration-200`}
         >
           <LogOut size={16} className="scale-110" />
-          <span
-            className={`${
-              !open && "hidden"
-            } origin-left duration-200`}
-          >
+          <span className={`${!open && "hidden"} origin-left duration-200`}>
             Logout
           </span>
         </button>

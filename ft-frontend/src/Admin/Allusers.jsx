@@ -20,7 +20,7 @@ const Alluser = () => {
           }
         );
         const data = await response.json();
-        console.log(data.Users)
+        console.log(data.Users);
         setUsers(data.Users);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch users.");
@@ -48,6 +48,55 @@ const Alluser = () => {
       </div>
     );
   }
+
+  const handleMenuToggle = (id) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === id ? { ...user, showMenu: !user.showMenu } : user
+      )
+    );
+  };
+
+  const handleStatusToggle = async (id) => {
+    const user = users.find((u) => u.id === id);
+    if (!user) return;
+  
+    const isCurrentlyInactive = user.status === "INACTIVE";
+    const apiUrl = `https://ftbackend.vercel.app/api/admin/users/${id}/${
+      isCurrentlyInactive ? "activate" : "inactivate"
+    }`;
+    const token = localStorage.getItem("token");
+  
+    try {
+      const response = await fetch(apiUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to update user status");
+      }
+  
+      // Update the local state after successful API call
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === id
+            ? {
+                ...u,
+                status: isCurrentlyInactive ? "ACTIVE" : "INACTIVE",
+                showMenu: false, // Close the menu
+              }
+            : u
+        )
+      );
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -86,15 +135,48 @@ const Alluser = () => {
                 className="bg-white rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.05)] hover:shadow-[0_0_25px_rgba(0,0,0,0.1)] transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-100"
               >
                 <div className="border-b border-gray-100/50 px-8 py-6 bg-gradient-to-r from-gray-50 to-white">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center shadow-inner">
-                      <span className="text-blue-600 font-bold text-xl">
-                        {user.name ? user.name[0].toUpperCase() : "U"}
-                      </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center shadow-inner">
+                        <span className="text-blue-600 font-bold text-xl">
+                          {user.name ? user.name[0].toUpperCase() : "U"}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                          {user.name || "Unnamed User"}
+                        </h3>
+                        <p
+                          className={`text-sm font-medium ${
+                            user.status === "ACTIVE"
+                              ? "text-green-500"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {user.status}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">
-                      {user.name || "Unnamed User"}
-                    </h3>
+                    <div className="relative">
+                      <button
+                        className="text-gray-500 hover:text-gray-700 text-xl"
+                        onClick={() => handleMenuToggle(user.id)}
+                      >
+                        &#x22EE;
+                      </button>
+                      {user.showMenu && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleStatusToggle(user.id)}
+                          >
+                            {user.status === "INACTIVE"
+                              ? "Activate User"
+                              : "Deactivate User"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="p-8">
@@ -105,7 +187,6 @@ const Alluser = () => {
                     <InfoItem label="Aadhar" value={user.aadhar} />
                     <InfoItem label="PAN" value={user.pan} />
                     <InfoItem label="GSTIN" value={user.gstin} />
-                    <InfoItem label="Status" value={user.status} />
                     <InfoItem
                       label="Created"
                       value={new Date(user.createdAt).toLocaleDateString(
